@@ -9,10 +9,10 @@ import lombok.Data;
 public class LoginRequest {
 
     @Email
-    @NotBlank
+    @NotBlank(message = "Email is required")
     private String email;
 
-    @NotBlank
-    @Size(min = 8)
+    @NotBlank(message = "Password is required")
+    @Size(min = 8, message = "Password Size must be greater than 8")
     private String password;
 }

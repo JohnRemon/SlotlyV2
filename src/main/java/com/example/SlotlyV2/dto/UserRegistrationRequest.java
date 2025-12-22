@@ -10,24 +10,24 @@ import lombok.Data;
 public class UserRegistrationRequest {
 
     @Email
-    @NotBlank
+    @NotBlank(message = "Email is required")
     private String email;
 
-    @NotBlank
+    @NotBlank(message = "Username is required")
     @Pattern(regexp = "^[a-zA-Z0-9_]+$", message = "Username can only contain letters, numbers, and underscores")
     private String username;
 
     @NotBlank(message = "Password is required")
-    @Size(min = 8)
+    @Size(min = 8, message = "Password Size must be greater than 8 characters")
     private String password;
 
-    @NotBlank
+    @NotBlank(message = "First name is required")
     private String firstName;
 
-    @NotBlank
+    @NotBlank(message = "Last name is required")
     private String lastName;
 
-    @NotBlank
+    @NotBlank(message = "Timezone is required")
     private String timeZone;
 
 }

@@ -1,8 +1,13 @@
 package com.example.SlotlyV2.service;
 
+import java.util.ArrayList;
+
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.example.SlotlyV2.exception.InvalidCredentialsException;
 import com.example.SlotlyV2.exception.UserAlreadyExistsException;
 import com.example.SlotlyV2.exception.UsernameAlreadyExistsException;
 import com.example.SlotlyV2.model.User;
@@ -41,5 +46,23 @@ public class UserService {
 
         // Save and Return the user
         return userRepository.save(user);
+    }
+
+    public User loginUser(String email, String password) {
+        // Find the user by email
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new InvalidCredentialsException("Invalid Email or Password"));
+
+        // Verify the password
+        if (!passwordEncoder.matches(password, user.getPassword())) {
+            throw new InvalidCredentialsException("Invalid Email or Password");
+        }
+
+        // Create authentication token and set it in security context
+        UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(user, null,
+                new ArrayList<>());
+        SecurityContextHolder.getContext().setAuthentication(authToken);
+
+        return user;
     }
 }
