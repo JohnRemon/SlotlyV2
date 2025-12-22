@@ -39,13 +39,16 @@ public class Slot {
     private LocalDateTime endTime;
 
     // Doesn't need logged in user
-    @Column(name = "booked_by")
-    private String bookedBy;
+    @Column(name = "booked_by_name")
+    private String bookedByName;
+
+    @Column(name = "booked_by_email")
+    private String bookedByEmail;
 
     private LocalDateTime bookedAt;
 
     public boolean isAvailable() {
-        return bookedBy == null;
+        return bookedByEmail == null && bookedByName == null;
     }
 
 }

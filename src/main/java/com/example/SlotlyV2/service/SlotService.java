@@ -31,7 +31,8 @@ public class SlotService {
             slot.setEvent(event);
             slot.setStartTime(start);
             slot.setEndTime(start.plusMinutes(event.getRules().getSlotDurationMinutes()));
-            slot.setBookedBy(null);
+            slot.setBookedByName(null);
+            slot.setBookedByEmail(null);
 
             slots.add(slot);
             start = start.plusMinutes(event.getRules().getSlotDurationMinutes());
@@ -48,7 +49,8 @@ public class SlotService {
         Slot slot = slotRepository.findById(request.getSlotId())
                 .orElseThrow(() -> new SlotNotFoundException("Slot Not Found with Id " + request.getSlotId()));
 
-        slot.setBookedBy(request.getAttendeeName());
+        slot.setBookedByName(request.getAttendeeName());
+        slot.setBookedByEmail(request.getAttendeeEmail());
         slot.setBookedAt(LocalDateTime.now());
 
         return slot;

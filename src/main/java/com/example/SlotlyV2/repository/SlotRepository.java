@@ -20,7 +20,7 @@ public interface SlotRepository extends JpaRepository<Slot, Long> {
 
     Optional<Slot> findById(Long id);
 
-    List<Slot> findBookedBy(User user);
+    List<Slot> findByBookedBy(User user);
 
-    List<Slot> findBookedById(Long userId);
+    List<Slot> findByBookedById(Long userId);
 }
