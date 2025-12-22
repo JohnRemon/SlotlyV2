@@ -1,7 +1,6 @@
 package com.example.SlotlyV2.model;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
@@ -70,6 +69,6 @@ public class Event {
     }
 
     private String generateShareableId() {
-        return UUID.randomUUID().toString();
+        return host.getUsername() + "/" + eventName;
     }
 }

@@ -38,9 +38,9 @@ public class Slot {
     @Column(name = "end_time")
     private LocalDateTime endTime;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "booked_by_user_id")
-    private User bookedBy;
+    // Doesn't need logged in user
+    @Column(name = "booked_by")
+    private String bookedBy;
 
     private LocalDateTime bookedAt;
 

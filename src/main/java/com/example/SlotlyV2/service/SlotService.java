@@ -6,8 +6,11 @@ import java.util.ArrayList;
 
 import org.springframework.stereotype.Service;
 
+import com.example.SlotlyV2.dto.SlotRequest;
+import com.example.SlotlyV2.exception.SlotNotFoundException;
 import com.example.SlotlyV2.model.Event;
 import com.example.SlotlyV2.model.Slot;
+import com.example.SlotlyV2.model.User;
 import com.example.SlotlyV2.repository.SlotRepository;
 
 @Service
@@ -35,5 +38,23 @@ public class SlotService {
         }
 
         slotRepository.saveAll(slots);
+    }
+
+    public List<Slot> getSlots(Long eventId) {
+        return slotRepository.findByEventId(eventId);
+    }
+
+    public Slot bookSlot(SlotRequest request) {
+        Slot slot = slotRepository.findById(request.getSlotId())
+                .orElseThrow(() -> new SlotNotFoundException("Slot Not Found with Id " + request.getSlotId()));
+
+        slot.setBookedBy(request.getAttendeeName());
+        slot.setBookedAt(LocalDateTime.now());
+
+        return slot;
+    }
+
+    public List<Slot> getBookedSlots(User user) {
+        return slotRepository.findBookedBy(user);
     }
 }

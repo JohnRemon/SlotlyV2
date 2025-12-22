@@ -56,6 +56,13 @@ public class GlobalExceptionHandler {
                 .body(ex.getMessage());
     }
 
+    @ExceptionHandler(SlotNotFoundException.class)
+    public ResponseEntity<String> handleSlotNotFound(SlotNotFoundException ex) {
+        return ResponseEntity
+                .badRequest()
+                .body(ex.getMessage());
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<String> handleGenericException(Exception ex) {
         return ResponseEntity

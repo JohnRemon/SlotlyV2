@@ -1,8 +1,11 @@
 package com.example.SlotlyV2.service;
 
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 
 import com.example.SlotlyV2.dto.EventRequest;
+import com.example.SlotlyV2.exception.EventNotFoundException;
 import com.example.SlotlyV2.exception.InvalidEventException;
 import com.example.SlotlyV2.model.Event;
 import com.example.SlotlyV2.repository.EventRepository;
@@ -54,6 +57,19 @@ public class EventService {
         slotService.generateSlots(savedEvent);
 
         return savedEvent;
+    }
+
+    public List<Event> getEvents() {
+        return eventRepository.findAll();
+    }
+
+    public Event getEventById(Long id) {
+        return eventRepository.findById(id)
+                .orElseThrow(() -> new EventNotFoundException("Event Not Found with Id " + id));
+    }
+
+    public void deleteEventById(Long id) {
+        eventRepository.deleteById(id);
     }
 
 }
