@@ -29,7 +29,7 @@ public class Event {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long Id;
+    private Long id;
 
     @Column(name = "event_name")
     private String eventName;
@@ -40,6 +40,15 @@ public class Event {
     private User host;
 
     private LocalDateTime createdAt;
+
+    @Column(name = "event_start")
+    private LocalDateTime eventStart;
+
+    @Column(name = "event_end")
+    private LocalDateTime eventEnd;
+
+    @Column(name = "time_zone")
+    private String timeZone;
 
     @Embedded
     private AvailabilityRules rules;
