@@ -1,5 +1,7 @@
 package com.example.SlotlyV2.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -9,6 +11,7 @@ import jakarta.persistence.Table;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -35,6 +38,12 @@ public class User {
     @Pattern(regexp = "^[a-zA-Z0-9_]+$", message = "Username can only contain letters, numbers, and underscores")
     @Column(unique = true, nullable = false)
     private String username;
+
+    @NotBlank(message = "Password is required")
+    @Size(min = 8)
+    @Column(nullable = false)
+    @JsonIgnore
+    private String password;
 
     @Column(name = "first_name")
     private String firstName;
