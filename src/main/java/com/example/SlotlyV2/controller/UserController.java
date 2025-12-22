@@ -14,6 +14,7 @@ import com.example.SlotlyV2.dto.UserResponse;
 import com.example.SlotlyV2.model.User;
 import com.example.SlotlyV2.service.UserService;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
 @RestController
@@ -47,6 +48,15 @@ public class UserController {
                 request.getPassword());
 
         ApiResponse<UserResponse> response = new ApiResponse<>("Logged in successfully", new UserResponse(user));
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse<Void>> logoutUser(HttpServletRequest request) {
+        userService.logout(request);
+
+        ApiResponse<Void> response = new ApiResponse<Void>("Logged out successfully", null);
 
         return ResponseEntity.ok(response);
     }

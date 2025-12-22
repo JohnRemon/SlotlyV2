@@ -1,6 +1,8 @@
 package com.example.SlotlyV2.service;
 
+import java.util.List;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 
 import org.springframework.stereotype.Service;
 
@@ -19,17 +21,19 @@ public class SlotService {
     public void generateSlots(Event event) {
         LocalDateTime start = event.getEventStart();
         LocalDateTime end = event.getEventEnd();
+        List<Slot> slots = new ArrayList<>();
 
-        while (start.isBefore(end)) {
+        while (start.plusMinutes(event.getRules().getSlotDurationMinutes()).isBefore(end)) {
             Slot slot = new Slot();
             slot.setEvent(event);
             slot.setStartTime(start);
             slot.setEndTime(start.plusMinutes(event.getRules().getSlotDurationMinutes()));
             slot.setBookedBy(null);
 
-            slotRepository.save(slot);
-
+            slots.add(slot);
             start = start.plusMinutes(event.getRules().getSlotDurationMinutes());
         }
+
+        slotRepository.saveAll(slots);
     }
 }

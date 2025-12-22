@@ -1,27 +1,31 @@
 package com.example.SlotlyV2.service;
 
-import java.util.ArrayList;
-
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import com.example.SlotlyV2.exception.InvalidCredentialsException;
 import com.example.SlotlyV2.exception.UserAlreadyExistsException;
 import com.example.SlotlyV2.exception.UsernameAlreadyExistsException;
 import com.example.SlotlyV2.model.User;
 import com.example.SlotlyV2.repository.UserRepository;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
+
 @Service
 public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AuthenticationManager authenticationManager;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder,
+            AuthenticationManager authenticationManager) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.authenticationManager = authenticationManager;
     }
 
     public User registerUser(String email, String username, String password, String firstName, String lastName,
@@ -50,25 +54,27 @@ public class UserService {
     }
 
     public User loginUser(String email, String password) {
-        // Find the user by email
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new InvalidCredentialsException("Invalid Email or Password"));
+        // Spring handles authentication and session creation
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(email, password));
 
-        // Verify the password
-        if (!passwordEncoder.matches(password, user.getPassword())) {
-            throw new InvalidCredentialsException("Invalid Email or Password");
-        }
+        SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        // Create authentication token and set it in security context
-        UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(user, null,
-                new ArrayList<>());
-        SecurityContextHolder.getContext().setAuthentication(authToken);
-
-        return user;
+        return (User) authentication.getPrincipal();
     }
 
     public User getCurrentUser() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         return (User) auth.getPrincipal();
+    }
+
+    public void logout(HttpServletRequest request) {
+        SecurityContextHolder.clearContext();
+
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+            session.invalidate();
+        }
+
     }
 }
