@@ -48,7 +48,6 @@ public class UserController {
 
         ApiResponse<UserResponse> response = new ApiResponse<>("Logged in successfully", new UserResponse(user));
 
-        return ResponseEntity.ok().body(response);
+        return ResponseEntity.ok(response);
     }
-
 }
