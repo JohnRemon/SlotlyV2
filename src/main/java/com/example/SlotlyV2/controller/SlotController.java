@@ -18,6 +18,8 @@ import com.example.SlotlyV2.model.User;
 import com.example.SlotlyV2.service.SlotService;
 import com.example.SlotlyV2.service.UserService;
 
+import jakarta.validation.Valid;
+
 @RestController
 @RequestMapping("api/")
 public class SlotController {
@@ -43,11 +45,26 @@ public class SlotController {
     }
 
     @PostMapping("{shareableId}")
-    public ResponseEntity<ApiResponse<SlotResponse>> bookSlot(@RequestBody SlotRequest request) {
+    public ResponseEntity<ApiResponse<SlotResponse>> bookSlot(@RequestBody @Valid SlotRequest request) {
         Slot bookedSlot = slotService.bookSlot(request);
 
         ApiResponse<SlotResponse> response = new ApiResponse<>("Slot booked successfully",
                 new SlotResponse(bookedSlot));
+
+        return ResponseEntity.ok().body(response);
+    }
+
+    @GetMapping("{shareableId}")
+    public ResponseEntity<ApiResponse<List<SlotResponse>>> getAvailableSlotsByShareableId(
+            @PathVariable String shareableId) {
+        List<Slot> availableSlots = slotService.getAvailableSlotsByShareableId(shareableId);
+
+        List<SlotResponse> availableSlotsRespones = availableSlots.stream()
+                .map(availableSlot -> new SlotResponse(availableSlot))
+                .toList();
+
+        ApiResponse<List<SlotResponse>> response = new ApiResponse<>("Slots fetched successfully",
+                availableSlotsRespones);
 
         return ResponseEntity.ok().body(response);
     }

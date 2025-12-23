@@ -1,5 +1,6 @@
 package com.example.SlotlyV2.repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -8,7 +9,6 @@ import org.springframework.stereotype.Repository;
 
 import com.example.SlotlyV2.model.Event;
 import com.example.SlotlyV2.model.Slot;
-import com.example.SlotlyV2.model.User;
 
 @Repository
 public interface SlotRepository extends JpaRepository<Slot, Long> {
@@ -16,11 +16,11 @@ public interface SlotRepository extends JpaRepository<Slot, Long> {
 
     List<Slot> findByEventId(Long eventId);
 
-    List<Slot> findByEventAndBookedByIsNull(Event event);
+    List<Slot> findByEventAndBookedByEmailIsNullAndBookedByNameIsNull(Event event);
 
     Optional<Slot> findById(Long id);
 
-    List<Slot> findByBookedBy(User user);
+    List<Slot> findByBookedByEmail(String email);
 
-    List<Slot> findByBookedById(Long userId);
+    Optional<Slot> findByEventIdAndStartTime(Long eventId, LocalDateTime startTime);
 }

@@ -13,12 +13,9 @@ public class SlotRequest {
     @NotNull(message = "Event ID is required")
     private Long eventId;
 
-    @NotNull(message = "Slot ID is required")
-    private Long slotId;
-
     @NotNull(message = "Start time is required")
     @Future(message = "Booking must be in the future")
-    private LocalDateTime slotStartTime;
+    private LocalDateTime startTime;
 
     @NotBlank(message = "Attendee name is required")
     private String attendeeName;

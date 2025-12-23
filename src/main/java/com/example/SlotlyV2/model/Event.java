@@ -69,6 +69,9 @@ public class Event {
     }
 
     private String generateShareableId() {
-        return host.getUsername() + "/" + eventName;
+        return "event-" + System.currentTimeMillis() + "-" +
+                eventName.toLowerCase()
+                        .replaceAll("[^a-z0-9]+", "-")
+                        .replaceAll("^-|-$", "");
     }
 }
