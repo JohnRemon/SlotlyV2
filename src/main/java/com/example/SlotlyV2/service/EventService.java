@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import com.example.SlotlyV2.dto.EventRequest;
 import com.example.SlotlyV2.exception.EventNotFoundException;
 import com.example.SlotlyV2.exception.InvalidEventException;
+import com.example.SlotlyV2.exception.UnauthorizedAccessException;
 import com.example.SlotlyV2.model.Event;
 import com.example.SlotlyV2.repository.EventRepository;
 import com.example.SlotlyV2.model.*;
@@ -69,7 +70,19 @@ public class EventService {
     }
 
     public void deleteEventById(Long id) {
+        Event event = eventRepository.findById(id)
+                .orElseThrow(() -> new EventNotFoundException("Event Not Found"));
+
+        if (!event.getHost().getId().equals(userService.getCurrentUser().getId())) {
+            throw new UnauthorizedAccessException("You are not authorized to delete other user's event");
+        }
+
         eventRepository.deleteById(id);
+    }
+
+    public Event getEventByShareableId(String shareableId) {
+        return eventRepository.findByShareableId(shareableId)
+                .orElseThrow(() -> new EventNotFoundException("Event Not Found"));
     }
 
 }

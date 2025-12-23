@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import org.springframework.stereotype.Service;
 
 import com.example.SlotlyV2.dto.SlotRequest;
+import com.example.SlotlyV2.exception.SlotAlreadyBookedException;
 import com.example.SlotlyV2.exception.SlotNotFoundException;
 import com.example.SlotlyV2.model.Event;
 import com.example.SlotlyV2.model.Slot;
@@ -49,6 +50,10 @@ public class SlotService {
         Slot slot = slotRepository.findById(request.getSlotId())
                 .orElseThrow(() -> new SlotNotFoundException("Slot Not Found with Id " + request.getSlotId()));
 
+        if (!slot.isAvailable()) {
+            throw new SlotAlreadyBookedException("This slot is already booked. Please choose another slot");
+        }
+
         slot.setBookedByName(request.getAttendeeName());
         slot.setBookedByEmail(request.getAttendeeEmail());
         slot.setBookedAt(LocalDateTime.now());
@@ -57,6 +62,6 @@ public class SlotService {
     }
 
     public List<Slot> getBookedSlots(User user) {
-        return slotRepository.findBookedBy(user);
+        return slotRepository.findByBookedBy(user);
     }
 }
