@@ -17,7 +17,7 @@ A full-featured scheduling application built with Spring Boot and React.
 ## Getting Started
 ```bash
 # Clone repository
-git clone https://github.com/yourusername/SlotlyV2.git
+git clone https://github.com/JohnRemon/SlotlyV2.git
 
 # Run backend
 cd SlotlyV2
