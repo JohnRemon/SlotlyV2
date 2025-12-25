@@ -37,9 +37,9 @@ public class EmailService {
             fields.put("hostEmail", slot.getEvent().getHost().getEmail());
             fields.put("attendeeName", slot.getBookedByName());
             fields.put("eventName", slot.getEvent().getEventName());
-            fields.put("startTime", slot.getStartTime().toLocalTime());
-            fields.put("endTime", slot.getEndTime().toLocalTime());
-            fields.put("date", slot.getStartTime().toLocalDate());
+            fields.put("startTime", slot.getStartTime());
+            fields.put("endTime", slot.getEndTime());
+            fields.put("date", slot.getStartTime());
             fields.put("timeZone", slot.getEvent().getTimeZone());
 
             String htmlContent = renderTemplate("email/booking-confirmation", fields);
@@ -66,9 +66,9 @@ public class EmailService {
             fields.put("attendeeName", slot.getBookedByName());
             fields.put("attendeeEmail", slot.getBookedByEmail());
             fields.put("eventName", slot.getEvent().getEventName());
-            fields.put("startTime", slot.getStartTime().toLocalTime());
-            fields.put("endTime", slot.getEndTime().toLocalTime());
-            fields.put("date", slot.getStartTime().toLocalDate());
+            fields.put("startTime", slot.getStartTime());
+            fields.put("endTime", slot.getEndTime());
+            fields.put("date", slot.getStartTime());
             fields.put("timeZone", slot.getEvent().getTimeZone());
 
             String htmlContent = renderTemplate("email/booking-notification", fields);
@@ -82,7 +82,7 @@ public class EmailService {
             log.error("Failed to send host notification for slot {}: {}",
                     slot.getId(), e.getMessage(), e);
 
-            // TODO ad in retry queue
+            // TODO add in retry queue
         }
 
     }
