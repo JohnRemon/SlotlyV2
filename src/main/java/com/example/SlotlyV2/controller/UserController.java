@@ -31,7 +31,7 @@ public class UserController {
     public ResponseEntity<ApiResponse<UserResponse>> registerUser(@Valid @RequestBody UserRegistrationRequest request) {
         User user = userService.registerUser(
                 request.getEmail(),
-                request.getUsername(),
+                request.getDisplayName(),
                 request.getPassword(),
                 request.getFirstName(),
                 request.getLastName(),

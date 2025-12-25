@@ -43,7 +43,7 @@ public class User implements UserDetails {
     @NotBlank(message = "Username is required")
     @Pattern(regexp = "^[a-zA-Z0-9_]+$", message = "Username can only contain letters, numbers, and underscores")
     @Column(unique = true, nullable = false)
-    private String username;
+    private String displayName;
 
     @NotBlank(message = "Password is required")
     @Size(min = 8)

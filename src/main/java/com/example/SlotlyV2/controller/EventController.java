@@ -48,7 +48,7 @@ public class EventController {
 
         ApiResponse<List<EventResponse>> response = new ApiResponse<>("Events fetched successfully", eventResponses);
 
-        return ResponseEntity.ok().body(response);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{id}")
@@ -57,7 +57,7 @@ public class EventController {
 
         ApiResponse<EventResponse> response = new ApiResponse<>("Event fetched successfully", new EventResponse(event));
 
-        return ResponseEntity.ok().body(response);
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{id}")
@@ -66,6 +66,6 @@ public class EventController {
 
         ApiResponse<Void> response = new ApiResponse<>("Event deleted successfully", null);
 
-        return ResponseEntity.ok().body(response);
+        return ResponseEntity.ok(response);
     }
 }

@@ -28,7 +28,7 @@ public class UserService {
         this.authenticationManager = authenticationManager;
     }
 
-    public User registerUser(String email, String username, String password, String firstName, String lastName,
+    public User registerUser(String email, String displayName, String password, String firstName, String lastName,
             String timeZone) {
         // Check if email already exsists
         if (userRepository.existsByEmail(email)) {
@@ -36,14 +36,14 @@ public class UserService {
         }
 
         // Check if username already exists
-        if (userRepository.existsByUsername(username)) {
+        if (userRepository.existsByDisplayName(displayName)) {
             throw new UsernameAlreadyExistsException("Username Already Exists. Please Choose Another One");
         }
 
         // Create the user
         User user = new User();
         user.setEmail(email);
-        user.setUsername(username);
+        user.setDisplayName(displayName);
         user.setPassword(passwordEncoder.encode(password));
         user.setFirstName(firstName);
         user.setLastName(lastName);

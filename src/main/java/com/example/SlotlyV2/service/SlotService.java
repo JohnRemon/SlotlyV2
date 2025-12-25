@@ -4,9 +4,11 @@ import java.util.List;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import com.example.SlotlyV2.dto.SlotRequest;
+import com.example.SlotlyV2.event.SlotBookedEvent;
 import com.example.SlotlyV2.exception.EventNotFoundException;
 import com.example.SlotlyV2.exception.SlotAlreadyBookedException;
 import com.example.SlotlyV2.exception.SlotNotFoundException;
@@ -22,10 +24,13 @@ import jakarta.transaction.Transactional;
 public class SlotService {
     private final SlotRepository slotRepository;
     private final EventRepository eventRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
-    public SlotService(SlotRepository slotRepository, EventRepository eventRepository) {
+    public SlotService(SlotRepository slotRepository, EventRepository eventRepository,
+            ApplicationEventPublisher eventPublisher) {
         this.slotRepository = slotRepository;
         this.eventRepository = eventRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     public void generateSlots(Event event) {
@@ -33,6 +38,7 @@ public class SlotService {
         LocalDateTime end = event.getEventEnd();
         List<Slot> slots = new ArrayList<>();
 
+        // TODO Improve the slot generation algorithm
         while (start.plusMinutes(event.getRules().getSlotDurationMinutes()).isBefore(end)) {
             Slot slot = new Slot();
             slot.setEvent(event);
@@ -61,11 +67,17 @@ public class SlotService {
             throw new SlotAlreadyBookedException("This slot is already booked. Please choose another slot");
         }
 
+        // TODO add more validation on slots
+
         slot.setBookedByName(request.getAttendeeName());
         slot.setBookedByEmail(request.getAttendeeEmail());
         slot.setBookedAt(LocalDateTime.now());
 
-        return slot;
+        Slot savedSlot = slotRepository.save(slot);
+
+        eventPublisher.publishEvent(new SlotBookedEvent(savedSlot));
+
+        return savedSlot;
     }
 
     public List<Slot> getBookedSlots(User user) {
