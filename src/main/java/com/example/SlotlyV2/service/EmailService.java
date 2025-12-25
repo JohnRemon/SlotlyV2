@@ -108,10 +108,10 @@ public class EmailService {
         User host = slot.getEvent().getHost();
         String displayName = "";
         if (host.getFirstName() != null) {
-            displayName += host.getFirstName() + " ";
+            displayName += host.getFirstName();
         }
         if (host.getLastName() != null) {
-            displayName += host.getLastName();
+            displayName += " " + host.getLastName();
         }
 
         return displayName;
