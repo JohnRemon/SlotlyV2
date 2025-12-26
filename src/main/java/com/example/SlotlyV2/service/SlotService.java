@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
+import com.example.SlotlyV2.dto.BookingEmailData;
 import com.example.SlotlyV2.dto.SlotRequest;
 import com.example.SlotlyV2.event.SlotBookedEvent;
 import com.example.SlotlyV2.exception.EventNotFoundException;
@@ -75,9 +76,34 @@ public class SlotService {
 
         Slot savedSlot = slotRepository.save(slot);
 
-        eventPublisher.publishEvent(new SlotBookedEvent(savedSlot));
+        String hostDisplayName = getHostDisplayName(savedSlot.getEvent().getHost());
+        BookingEmailData bookingData = new BookingEmailData(
+            savedSlot.getBookedByEmail(),
+            savedSlot.getEvent().getHost().getEmail(),
+            savedSlot.getBookedByName(),
+            savedSlot.getBookedByEmail(),
+            savedSlot.getEvent().getEventName(),
+            savedSlot.getStartTime(),
+            savedSlot.getEndTime(),
+            savedSlot.getEvent().getTimeZone(),
+            hostDisplayName,
+            savedSlot.getId()
+        );
+
+        eventPublisher.publishEvent(new SlotBookedEvent(bookingData));
 
         return savedSlot;
+    }
+
+    private String getHostDisplayName(User host) {
+        String displayName = "";
+        if (host.getFirstName() != null) {
+            displayName += host.getFirstName();
+        }
+        if (host.getLastName() != null) {
+            displayName += " " + host.getLastName();
+        }
+        return displayName.trim();
     }
 
     public List<Slot> getBookedSlots(User user) {

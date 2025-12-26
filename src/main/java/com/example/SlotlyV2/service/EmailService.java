@@ -9,8 +9,7 @@ import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import com.example.SlotlyV2.config.EmailConfig;
-import com.example.SlotlyV2.model.Slot;
-import com.example.SlotlyV2.model.User;
+import com.example.SlotlyV2.dto.BookingEmailData;
 import com.resend.Resend;
 import com.resend.core.exception.ResendException;
 import com.resend.services.emails.model.CreateEmailOptions;
@@ -28,61 +27,61 @@ public class EmailService {
     private final Resend resend;
 
     @Async("emailTaskExecutor")
-    public void sendBookingConfirmation(Slot slot) {
+    public void sendBookingConfirmation(BookingEmailData data) {
         try {
-            log.info("Sending booking confirmation to: {}", slot.getBookedByEmail());
+            log.info("Sending booking confirmation to: {}", data.getToEmail());
 
             Map<String, Object> fields = new HashMap<>();
-            fields.put("hostName", getHostDisplayName(slot));
-            fields.put("hostEmail", slot.getEvent().getHost().getEmail());
-            fields.put("attendeeName", slot.getBookedByName());
-            fields.put("eventName", slot.getEvent().getEventName());
-            fields.put("startTime", slot.getStartTime());
-            fields.put("endTime", slot.getEndTime());
-            fields.put("date", slot.getStartTime());
-            fields.put("timeZone", slot.getEvent().getTimeZone());
-            fields.put("calendarLink", "http://localhost:8080/api/slots/" + slot.getId() + "/calendar");
+            fields.put("hostName", data.getHostDisplayName());
+            fields.put("hostEmail", data.getHostEmail());
+            fields.put("attendeeName", data.getAttendeeName());
+            fields.put("eventName", data.getEventName());
+            fields.put("startTime", data.getStartTime());
+            fields.put("endTime", data.getEndTime());
+            fields.put("date", data.getStartTime());
+            fields.put("timeZone", data.getTimeZone());
+            fields.put("calendarLink", "http://localhost:8080/api/slots/" + data.getSlotId() + "/calendar");
 
             String htmlContent = renderTemplate("email/booking-confirmation", fields);
 
-            sendEmail(slot.getBookedByEmail(),
-                    "Booking Confirmed: " + slot.getEvent().getEventName(),
+            sendEmail(data.getToEmail(),
+                    "Booking Confirmed: " + data.getEventName(),
                     htmlContent);
 
-            log.info("Booking confirmation sent successfully to: {}", slot.getBookedByEmail());
+            log.info("Booking confirmation sent successfully to: {}", data.getToEmail());
         } catch (Exception e) {
             log.error("Failed to send booking confirmation for slot {}: {}",
-                    slot.getId(), e.getMessage(), e);
+                    data.getSlotId(), e.getMessage(), e);
 
             // TODO add in retry queue
         }
     }
 
     @Async("emailTaskExecutor")
-    public void sendHostNotification(Slot slot) {
-        log.info("Sending booking confirmation to: {}", slot.getEvent().getHost().getEmail());
+    public void sendHostNotification(BookingEmailData data) {
+        log.info("Sending booking notification to: {}", data.getHostEmail());
 
         try {
             Map<String, Object> fields = new HashMap<>();
-            fields.put("hostName", getHostDisplayName(slot));
-            fields.put("attendeeName", slot.getBookedByName());
-            fields.put("attendeeEmail", slot.getBookedByEmail());
-            fields.put("eventName", slot.getEvent().getEventName());
-            fields.put("startTime", slot.getStartTime());
-            fields.put("endTime", slot.getEndTime());
-            fields.put("date", slot.getStartTime());
-            fields.put("timeZone", slot.getEvent().getTimeZone());
+            fields.put("hostName", data.getHostDisplayName());
+            fields.put("attendeeName", data.getAttendeeName());
+            fields.put("attendeeEmail", data.getAttendeeEmail());
+            fields.put("eventName", data.getEventName());
+            fields.put("startTime", data.getStartTime());
+            fields.put("endTime", data.getEndTime());
+            fields.put("date", data.getStartTime());
+            fields.put("timeZone", data.getTimeZone());
 
             String htmlContent = renderTemplate("email/booking-notification", fields);
 
-            sendEmail(slot.getEvent().getHost().getEmail(),
-                    "New Booking: " + slot.getBookedByName(),
+            sendEmail(data.getHostEmail(),
+                    "New Booking: " + data.getAttendeeName(),
                     htmlContent);
 
-            log.info("Host notification sent successfully for slot {}", slot.getId());
+            log.info("Host notification sent successfully for slot {}", data.getSlotId());
         } catch (Exception e) {
             log.error("Failed to send host notification for slot {}: {}",
-                    slot.getId(), e.getMessage(), e);
+                    data.getSlotId(), e.getMessage(), e);
 
             // TODO add in retry queue
         }
@@ -104,18 +103,5 @@ public class EmailService {
         Context context = new Context();
         context.setVariables(fields);
         return templateEngine.process(templateName, context);
-    }
-
-    private String getHostDisplayName(Slot slot) {
-        User host = slot.getEvent().getHost();
-        String displayName = "";
-        if (host.getFirstName() != null) {
-            displayName += host.getFirstName();
-        }
-        if (host.getLastName() != null) {
-            displayName += " " + host.getLastName();
-        }
-
-        return displayName.trim();
     }
 }
