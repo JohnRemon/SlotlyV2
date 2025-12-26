@@ -31,8 +31,8 @@ public class CalendarController {
         String ics = calendarService.generateIcsFile(slot);
 
         return ResponseEntity.ok()
-                .header("Conent-Type", "text/calendar; charset=utf-8")
-                .header("Content-Disposition", "attachement; filenamne:event.ics")
+                .header("Content-Type", "text/calendar; charset=utf-8")
+                .header("Content-Disposition", "attachment; filename:event.ics")
                 .body(ics);
     }
 }

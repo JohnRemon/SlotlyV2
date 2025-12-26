@@ -1,10 +1,62 @@
 <!doctype html>
-<html lang="">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title></title>
-    <link href="css/booking-confirmation" rel="stylesheet" />
-  </head>
-  <body></body>
+<html xmlns:th="http://www.thymeleaf.org">
+  <body>
+    <div th:fragment="content">
+      <h2>✓ Booking Confirmed!</h2>
+
+      <p>Hi <strong th:text="${attendeeName}">Guest</strong>,</p>
+
+      <p>
+        Your booking has been confirmed! We're looking forward to meeting you.
+      </p>
+
+      <div class="event-details">
+        <div class="detail-row">
+          <span class="detail-label">📅 Event:</span>
+          <span class="detail-value" th:text="${eventName}">Event Name</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">👤 Host:</span>
+          <span class="detail-value" th:text="${hostName}">Host Name</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">📧 Host Email:</span>
+          <span class="detail-value" th:text="${hostEmail}"
+            >host@example.com</span
+          >
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">🗓️ Date:</span>
+          <span
+            class="detail-value"
+            th:text="${#temporals.format(startTime, 'EEEE, MMMM dd, yyyy')}"
+            >Date</span
+          >
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">⏰ Time:</span>
+          <span class="detail-value">
+            <span th:text="${#temporals.format(startTime, 'h:mm a')}"
+              >Start</span
+            >
+            -
+            <span th:text="${#temporals.format(endTime, 'h:mm a')}">End</span>
+            <span th:text="${timeZone}">(Timezone)</span>
+          </span>
+        </div>
+      </div>
+      <hr class="divider" />
+
+      <div style="text-align: center; margin: 30px 0">
+        <a th:href="${calendarLink}" class="button">📅 Add to Calendar</a>
+      </div>
+
+      <p style="color: #718096; font-size: 14px">
+        Need to cancel? Please contact the host directly at
+        <a th:href="'mailto:' + ${hostEmail}" th:text="${hostEmail}"
+          >host@example.com</a
+        >
+      </p>
+    </div>
+  </body>
 </html>
