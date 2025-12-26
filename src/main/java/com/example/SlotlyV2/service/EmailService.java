@@ -74,7 +74,7 @@ public class EmailService {
             String htmlContent = renderTemplate("email/booking-notification", fields);
 
             sendEmail(slot.getEvent().getHost().getEmail(),
-                    "New booking: " + slot.getBookedByName(),
+                    "New Booking: " + slot.getBookedByName(),
                     htmlContent);
 
             log.info("Host notification sent successfully for slot {}", slot.getId());
@@ -114,6 +114,6 @@ public class EmailService {
             displayName += " " + host.getLastName();
         }
 
-        return displayName;
+        return displayName.trim();
     }
 }
