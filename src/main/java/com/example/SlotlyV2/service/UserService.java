@@ -1,12 +1,15 @@
 package com.example.SlotlyV2.service;
 
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.example.SlotlyV2.exception.InvalidCredentialsException;
+import com.example.SlotlyV2.exception.UnauthorizedAccessException;
 import com.example.SlotlyV2.exception.UserAlreadyExistsException;
 import com.example.SlotlyV2.exception.UsernameAlreadyExistsException;
 import com.example.SlotlyV2.model.User;
@@ -55,26 +58,37 @@ public class UserService {
 
     public User loginUser(String email, String password) {
         // Spring handles authentication and session creation
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(email, password));
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(email, password));
 
-        SecurityContextHolder.getContext().setAuthentication(authentication);
+            SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        return (User) authentication.getPrincipal();
+            return (User) authentication.getPrincipal();
+        } catch (BadCredentialsException e) {
+            throw new InvalidCredentialsException("Invalid Credentials");
+        }
     }
 
     public User getCurrentUser() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+        if (auth == null || auth.getPrincipal() == null) {
+            throw new UnauthorizedAccessException("User not authenticated");
+        }
         return (User) auth.getPrincipal();
     }
 
     public void logout(HttpServletRequest request) {
+        if (getCurrentUser() == null) {
+            throw new UnauthorizedAccessException("User not authenticated");
+        }
+
         SecurityContextHolder.clearContext();
 
         HttpSession session = request.getSession(false);
         if (session != null) {
             session.invalidate();
         }
-
     }
 }
