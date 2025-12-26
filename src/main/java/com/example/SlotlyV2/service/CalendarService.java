@@ -9,18 +9,12 @@ import org.springframework.stereotype.Service;
 
 import com.example.SlotlyV2.model.Slot;
 import com.example.SlotlyV2.model.User;
-import com.example.SlotlyV2.exception.SlotNotFoundException;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Service
 @Slf4j
 public class CalendarService {
-    private final SlotService slotService;
-
-    public CalendarService(SlotService slotService) {
-        this.slotService = slotService;
-    }
     private static final DateTimeFormatter ICS_DATE_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss'Z'");
 
     public String generateIcsFile(Slot slot) {

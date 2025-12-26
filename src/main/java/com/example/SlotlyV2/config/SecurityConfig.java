@@ -42,7 +42,8 @@ public class SecurityConfig {
                                 "/api/users/register",
                                 "/api/users/login",
                                 "/api/{shareableId}",
-                                "/api/auth/jwt/**")
+                                "/api/auth/jwt/**",
+                                "/api/slots/*/calendar")
                         .permitAll()
                         .anyRequest().authenticated())
                 .formLogin(form -> form.disable())

@@ -41,6 +41,7 @@ public class EmailService {
             fields.put("endTime", slot.getEndTime());
             fields.put("date", slot.getStartTime());
             fields.put("timeZone", slot.getEvent().getTimeZone());
+            fields.put("calendarLink", "http://localhost:8080/api/slots/" + slot.getId() + "/calendar");
 
             String htmlContent = renderTemplate("email/booking-confirmation", fields);
 
@@ -63,6 +64,7 @@ public class EmailService {
 
         try {
             Map<String, Object> fields = new HashMap<>();
+            fields.put("hostName", getHostDisplayName(slot));
             fields.put("attendeeName", slot.getBookedByName());
             fields.put("attendeeEmail", slot.getBookedByEmail());
             fields.put("eventName", slot.getEvent().getEventName());
