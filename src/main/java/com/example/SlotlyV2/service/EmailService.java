@@ -3,6 +3,7 @@ package com.example.SlotlyV2.service;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
@@ -25,6 +26,8 @@ public class EmailService {
     private final SpringTemplateEngine templateEngine;
     private final EmailConfig emailConfig;
     private final Resend resend;
+    @Value("${app.base-url}")
+    private String appBaseUrl;
 
     @Async("emailTaskExecutor")
     public void sendBookingConfirmation(BookingEmailData data) {
@@ -40,7 +43,7 @@ public class EmailService {
             fields.put("endTime", data.getEndTime());
             fields.put("date", data.getStartTime());
             fields.put("timeZone", data.getTimeZone());
-            fields.put("calendarLink", "http://localhost:8080/api/slots/" + data.getSlotId() + "/calendar");
+            fields.put("calendarLink", appBaseUrl + data.getSlotId() + "/calendar");
 
             String htmlContent = renderTemplate("email/booking-confirmation", fields);
 
