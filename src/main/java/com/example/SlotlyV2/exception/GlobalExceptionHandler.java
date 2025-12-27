@@ -11,6 +11,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
+import jakarta.persistence.OptimisticLockException;
+
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -68,6 +70,20 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .badRequest()
                 .body(ex.getMessage());
+    }
+
+    @ExceptionHandler(MaxCapacityExceededException.class)
+    public ResponseEntity<String> handleMaxCapacityExceeded(MaxCapacityExceededException ex) {
+        return ResponseEntity
+                .badRequest()
+                .body(ex.getMessage());
+    }
+
+    @ExceptionHandler(OptimisticLockException.class)
+    public ResponseEntity<String> handleOptimisticLock(OptimisticLockException ex) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body("This slot was just booked by someone else. Please choose another slot");
     }
 
     @ExceptionHandler(Exception.class)

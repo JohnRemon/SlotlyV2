@@ -1,9 +1,10 @@
 package com.example.SlotlyV2.service;
 
-import java.util.List;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.List;
 
+import org.apache.coyote.BadRequestException;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
@@ -11,6 +12,7 @@ import com.example.SlotlyV2.dto.BookingEmailData;
 import com.example.SlotlyV2.dto.SlotRequest;
 import com.example.SlotlyV2.event.SlotBookedEvent;
 import com.example.SlotlyV2.exception.EventNotFoundException;
+import com.example.SlotlyV2.exception.MaxCapacityExceededException;
 import com.example.SlotlyV2.exception.SlotAlreadyBookedException;
 import com.example.SlotlyV2.exception.SlotNotFoundException;
 import com.example.SlotlyV2.model.Event;
@@ -60,36 +62,54 @@ public class SlotService {
     }
 
     @Transactional
-    public Slot bookSlot(SlotRequest request) {
+    public Slot bookSlot(SlotRequest request) throws BadRequestException {
+        // Find the slot
         Slot slot = slotRepository.findByEventIdAndStartTime(request.getEventId(), request.getStartTime())
                 .orElseThrow(() -> new SlotNotFoundException("Slot Not Found"));
 
+        // Check that the slot belongs to the event
+        if (!slot.getEvent().getId().equals(request.getEventId())) {
+            throw new BadRequestException("Slot does not belong to this event");
+        }
+
+        // Check that slot is available
         if (!slot.isAvailable()) {
             throw new SlotAlreadyBookedException("This slot is already booked. Please choose another slot");
         }
 
-        // TODO add more validation on slots
+        // Check event capacity
+        Integer maxCapacity = slot.getEvent().getRules().getMaxCapacity();
+        if (maxCapacity != null) {
+            Integer currentCapacity = slotRepository
+                    .countByEventAndBookedByEmailIsNotNullAndBookedByNameIsNotNull(slot.getEvent());
+            if (currentCapacity >= maxCapacity) {
+                throw new MaxCapacityExceededException("This event has reached maximum capacity");
+            }
+        }
 
+        // Book the Slot
         slot.setBookedByName(request.getAttendeeName());
         slot.setBookedByEmail(request.getAttendeeEmail());
         slot.setBookedAt(LocalDateTime.now());
 
+        // Save the Slot
         Slot savedSlot = slotRepository.save(slot);
 
+        // Prepare Booking data for emails
         String hostDisplayName = getHostDisplayName(savedSlot.getEvent().getHost());
         BookingEmailData bookingData = new BookingEmailData(
-            savedSlot.getBookedByEmail(),
-            savedSlot.getEvent().getHost().getEmail(),
-            savedSlot.getBookedByName(),
-            savedSlot.getBookedByEmail(),
-            savedSlot.getEvent().getEventName(),
-            savedSlot.getStartTime(),
-            savedSlot.getEndTime(),
-            savedSlot.getEvent().getTimeZone(),
-            hostDisplayName,
-            savedSlot.getId()
-        );
+                savedSlot.getBookedByEmail(),
+                savedSlot.getEvent().getHost().getEmail(),
+                savedSlot.getBookedByName(),
+                savedSlot.getBookedByEmail(),
+                savedSlot.getEvent().getEventName(),
+                savedSlot.getStartTime(),
+                savedSlot.getEndTime(),
+                savedSlot.getEvent().getTimeZone(),
+                hostDisplayName,
+                savedSlot.getId());
 
+        // Publish the Booking Event
         eventPublisher.publishEvent(new SlotBookedEvent(bookingData));
 
         return savedSlot;

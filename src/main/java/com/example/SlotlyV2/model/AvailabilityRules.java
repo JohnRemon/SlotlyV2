@@ -1,6 +1,7 @@
 package com.example.SlotlyV2.model;
 
 import jakarta.persistence.Embeddable;
+import jakarta.validation.constraints.Min;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -16,4 +17,6 @@ public class AvailabilityRules {
     private Integer maxSlotsPerUser = 1;
     private Boolean allowCancellations = true;
     private Boolean isPublic = true;
+    @Min(1)
+    private Integer maxCapacity;
 }

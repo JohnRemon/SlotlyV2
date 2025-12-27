@@ -23,4 +23,6 @@ public interface SlotRepository extends JpaRepository<Slot, Long> {
     List<Slot> findByBookedByEmail(String email);
 
     Optional<Slot> findByEventIdAndStartTime(Long eventId, LocalDateTime startTime);
+
+    Integer countByEventAndBookedByEmailIsNotNullAndBookedByNameIsNotNull(Event event);
 }
