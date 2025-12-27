@@ -3,6 +3,7 @@ package com.example.SlotlyV2.security;
 import java.io.IOException;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -29,6 +30,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         try {
+            // Check if user is already authenticated via session
+            Authentication existingAuth = SecurityContextHolder.getContext().getAuthentication();
+            if (existingAuth != null && existingAuth.isAuthenticated()) {
+                log.debug("User already authenticated via session: {}", existingAuth.getName());
+                filterChain.doFilter(request, response);
+                return;
+            }
+
             // Extract JWT from request
             String jwt = getJwtFromRequest(request);
 
