@@ -1,0 +1,102 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      .container {
+        background: #ffffff;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+      }
+      .header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px 20px;
+        text-align: center;
+      }
+      .header h1 {
+        margin: 0;
+        font-size: 24px;
+      }
+      .content {
+        padding: 30px 20px;
+      }
+      .event-details {
+        background: #f7fafc;
+        border-left: 4px solid #667eea;
+        padding: 20px;
+        margin: 20px 0;
+        border-radius: 4px;
+      }
+      .detail-row {
+        display: flex;
+        margin: 10px 0;
+      }
+      .detail-label {
+        font-weight: 600;
+        min-width: 100px;
+        color: #4a5568;
+      }
+      .detail-value {
+        color: #2d3748;
+      }
+      .button {
+        display: inline-block;
+        padding: 12px 24px;
+        background: #667eea;
+        color: white !important;
+        text-decoration: none;
+        border-radius: 6px;
+        margin: 10px 5px;
+        font-weight: 600;
+      }
+      .button:hover {
+        background: #5568d3;
+      }
+      .footer {
+        background: #f7fafc;
+        padding: 20px;
+        text-align: center;
+        font-size: 14px;
+        color: #718096;
+      }
+      .divider {
+        border: 0;
+        height: 1px;
+        background: #e2e8f0;
+        margin: 20px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>📅 Slotly</h1>
+      </div>
+      <div class="content">
+        <h2>Verify Your Account!</h2>
+        <p>Hi <strong th:text="${displayName}">Guest</strong>,</p>
+        <p>Please verify your account by clicking on the button below</p>
+        <hr class="divider" />
+        <div style="text-align: center; margin: 30px 0">
+          <a th:href="${verificationLink}" class="button">Verify</a>
+        </div>
+      </div>
+      <div class="footer">
+        <p>This is an automated message from Slotly.</p>
+      </div>
+    </div>
+  </body>
+</html>

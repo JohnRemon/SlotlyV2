@@ -86,6 +86,34 @@ public class GlobalExceptionHandler {
                 .body("This slot was just booked by someone else. Please choose another slot");
     }
 
+    @ExceptionHandler(AccountAlreadyVerifiedException.class)
+    public ResponseEntity<String> handleAccountAlreadyVerified(AccountAlreadyVerifiedException ex) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(ex.getMessage());
+    }
+
+    @ExceptionHandler(AccountNotVerifiedException.class)
+    public ResponseEntity<String> handleAccountNotVerified(AccountNotVerifiedException ex) {
+        return ResponseEntity
+                .badRequest()
+                .body(ex.getMessage());
+    }
+
+    @ExceptionHandler(InvalidTokenException.class)
+    public ResponseEntity<String> handleInvalidToken(InvalidTokenException ex) {
+        return ResponseEntity
+                .badRequest()
+                .body(ex.getMessage());
+    }
+
+    @ExceptionHandler(TokenAlreadyExpiredException.class)
+    public ResponseEntity<String> handleTokenAlreadyExpired(TokenAlreadyExpiredException ex) {
+        return ResponseEntity
+                .badRequest()
+                .body(ex.getMessage());
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<String> handleGenericException(Exception ex) {
         return ResponseEntity
@@ -107,6 +135,5 @@ public class GlobalExceptionHandler {
         response.put("errors", errors);
 
         return ResponseEntity.badRequest().body(response);
-
     }
 }

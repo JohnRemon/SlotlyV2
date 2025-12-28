@@ -6,47 +6,42 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.SlotlyV2.dto.ApiResponse;
 import com.example.SlotlyV2.dto.LoginRequest;
-import com.example.SlotlyV2.dto.UserRegistrationRequest;
+import com.example.SlotlyV2.dto.RegisterRequest;
 import com.example.SlotlyV2.dto.UserResponse;
 import com.example.SlotlyV2.model.User;
 import com.example.SlotlyV2.service.UserService;
+import com.example.SlotlyV2.service.VerificationTokenService;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/users")
+@RequiredArgsConstructor
 public class UserController {
     private final UserService userService;
-
-    public UserController(UserService userService) {
-        this.userService = userService;
-    }
+    private final VerificationTokenService verificationTokenService;
 
     @PostMapping("/register")
-    public ResponseEntity<ApiResponse<UserResponse>> registerUser(@Valid @RequestBody UserRegistrationRequest request) {
-        User user = userService.registerUser(
-                request.getEmail(),
-                request.getDisplayName(),
-                request.getPassword(),
-                request.getFirstName(),
-                request.getLastName(),
-                request.getTimeZone());
+    public ResponseEntity<ApiResponse<UserResponse>> registerUser(@Valid @RequestBody RegisterRequest request) {
+        User user = userService.registerUser(request);
 
-        ApiResponse<UserResponse> response = new ApiResponse<>("User registered successfully", new UserResponse(user));
+        ApiResponse<UserResponse> response = new ApiResponse<>(
+                "User registered successfully. Please check your email to verify your account.",
+                new UserResponse(user));
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<UserResponse>> loginUser(@Valid @RequestBody LoginRequest request) {
-        User user = userService.loginUser(
-                request.getEmail(),
-                request.getPassword());
+        User user = userService.loginUser(request);
 
         ApiResponse<UserResponse> response = new ApiResponse<>("Logged in successfully", new UserResponse(user));
 
@@ -68,6 +63,17 @@ public class UserController {
 
         ApiResponse<UserResponse> response = new ApiResponse<>("User fetched successfully", new UserResponse(user));
 
-        return ResponseEntity.ok().body(response);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/verify-email")
+    public ResponseEntity<ApiResponse<Void>> verifyEmail(@RequestParam String token) {
+        verificationTokenService.verifyVerificationToken(token);
+
+        ApiResponse<Void> response = new ApiResponse<>(
+                "Account verified successfully. Please login into your account",
+                null);
+
+        return ResponseEntity.ok(response);
     }
 }

@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -21,6 +22,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import com.example.SlotlyV2.dto.LoginRequest;
+import com.example.SlotlyV2.dto.RegisterRequest;
 import com.example.SlotlyV2.exception.InvalidCredentialsException;
 import com.example.SlotlyV2.exception.UnauthorizedAccessException;
 import com.example.SlotlyV2.exception.UserAlreadyExistsException;
@@ -61,14 +64,16 @@ public class UserServiceTest {
         when(passwordEncoder.encode(anyString())).thenReturn("encodedPassword");
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        // Act
-        User user = userService.registerUser(
+        RegisterRequest request = new RegisterRequest(
                 "test@example.com",
                 "testUser",
                 "password123",
                 "John",
                 "Doe",
                 "UTC");
+
+        // Act
+        User user = userService.registerUser(request);
 
         // Assert
         assertNotNull(user);
@@ -84,15 +89,17 @@ public class UserServiceTest {
         // Arrange
         when(userRepository.existsByEmail("test@example.com")).thenReturn(true);
 
+        RegisterRequest request = new RegisterRequest(
+                "test@example.com",
+                "testUser",
+                "password123",
+                "John",
+                "Doe",
+                "UTC");
+
         // Act and Assert
         assertThrows(UserAlreadyExistsException.class,
-                () -> userService.registerUser(
-                        "test@example.com",
-                        "testUser",
-                        "password123",
-                        "John",
-                        "Doe",
-                        "UTC"));
+                () -> userService.registerUser(request));
 
         verify(userRepository, never()).save(any(User.class));
     }
@@ -103,15 +110,17 @@ public class UserServiceTest {
         when(userRepository.existsByEmail(anyString())).thenReturn(false);
         when(userRepository.existsByDisplayName("testUser")).thenReturn(true);
 
+        RegisterRequest request = new RegisterRequest(
+                "test@example.com",
+                "testUser",
+                "password123",
+                "John",
+                "Doe",
+                "UTC");
+
         // Act and Assert
         assertThrows(UsernameAlreadyExistsException.class,
-                () -> userService.registerUser(
-                        "test@example.com",
-                        "testUser",
-                        "password123",
-                        "John",
-                        "Doe",
-                        "UTC"));
+                () -> userService.registerUser(request));
 
         verify(userRepository, never()).save(any(User.class));
     }
@@ -134,9 +143,12 @@ public class UserServiceTest {
         when(authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken("test@example.com", "password123"))).thenReturn(authentication);
 
+        LoginRequest request = new LoginRequest(
+                "test@example.com",
+                "password123");
+
         // Act
-        User loggedInUser = userService.loginUser(
-                "test@example.com", "password123");
+        User loggedInUser = userService.loginUser(request);
 
         // Assert
         assertNotNull(loggedInUser);
@@ -155,9 +167,13 @@ public class UserServiceTest {
                 new UsernamePasswordAuthenticationToken("test@example.com", "wrongPassword")))
                 .thenThrow(new BadCredentialsException("Invalid credentials"));
 
+        LoginRequest request = new LoginRequest(
+                "test@example.com",
+                "wrongPassword");
+
         // Act and Assert
         assertThrows(InvalidCredentialsException.class,
-                () -> userService.loginUser("test@example.com", "wrongPassword"));
+                () -> userService.loginUser(request));
 
         // Verify
         verify(authenticationManager).authenticate(
@@ -171,9 +187,13 @@ public class UserServiceTest {
                 new UsernamePasswordAuthenticationToken("wrongEmail@example.com", "password123")))
                 .thenThrow(new BadCredentialsException("Invalid credentials"));
 
+        LoginRequest request = new LoginRequest(
+                "wrongEmail@example.com",
+                "password123");
+
         // Act and Assert
         assertThrows(InvalidCredentialsException.class,
-                () -> userService.loginUser("wrongEmail@example.com", "password123"));
+                () -> userService.loginUser(request));
 
         // Verify
         verify(authenticationManager).authenticate(

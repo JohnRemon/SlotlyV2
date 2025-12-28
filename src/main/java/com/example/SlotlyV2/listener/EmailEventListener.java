@@ -5,6 +5,8 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import com.example.SlotlyV2.dto.BookingEmailData;
+import com.example.SlotlyV2.dto.UserRegistrationVerificationData;
+import com.example.SlotlyV2.event.EmailVerificationEvent;
 import com.example.SlotlyV2.event.SlotBookedEvent;
 import com.example.SlotlyV2.service.EmailService;
 
@@ -30,9 +32,21 @@ public class EmailEventListener {
             log.info("Emails sent successfully for slot: {}", data.getSlotId());
         } catch (Exception e) {
             log.error("Failed to send emails for slot {}: {}", data.getSlotId(), e.getMessage(), e);
-            // TODO add to retry queue
         }
+    }
 
+    @EventListener
+    @Async("emailTaskExecutor")
+    public void handleEmailVerification(EmailVerificationEvent event) {
+        UserRegistrationVerificationData data = event.getUserRegistrationVerificationData();
+
+        log.debug("Received EmailVerificationEvent for email: {}", data.getEmail());
+
+        try {
+            emailService.sendUserRegistrationVerification(data);
+        } catch (Exception e) {
+            log.error("Failed to send email for email {}: {}", data.getEmail(), e.getMessage(), e);
+        }
     }
 
 }

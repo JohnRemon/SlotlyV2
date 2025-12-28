@@ -12,6 +12,7 @@ public class UserResponse {
     private String firstName;
     private String lastName;
     private String timeZone;
+    private Boolean isVerified;
 
     public UserResponse(User user) {
         this.id = user.getId();
@@ -20,5 +21,6 @@ public class UserResponse {
         this.firstName = user.getFirstName();
         this.lastName = user.getLastName();
         this.timeZone = user.getTimeZone();
+        this.isVerified = user.getIsVerified();
     }
 }

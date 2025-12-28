@@ -11,6 +11,7 @@ import com.example.SlotlyV2.dto.JwtLoginRequest;
 import com.example.SlotlyV2.dto.RefreshTokenRequest;
 import com.example.SlotlyV2.dto.RefreshTokenResponse;
 import com.example.SlotlyV2.dto.UserResponse;
+import com.example.SlotlyV2.exception.AccountNotVerifiedException;
 import com.example.SlotlyV2.exception.InvalidCredentialsException;
 import com.example.SlotlyV2.model.User;
 import com.example.SlotlyV2.repository.UserRepository;
@@ -28,6 +29,13 @@ public class JwtAuthenticationService {
     private final UserRepository userRepository;
 
     public JwtAuthenticationResponse login(JwtLoginRequest request) {
+        // Check if user is verified
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new InvalidCredentialsException("Invalid Credentials"));
+
+        if (!user.getIsVerified()) {
+            throw new AccountNotVerifiedException("Please verify your account first");
+        }
 
         // Authenticate the user with email and password
         Authentication authentication = authenticationManager.authenticate(
@@ -35,7 +43,7 @@ public class JwtAuthenticationService {
                         request.getEmail(), request.getPassword()));
 
         // Get the user
-        User user = (User) authentication.getPrincipal();
+        user = (User) authentication.getPrincipal();
 
         // Generate Access and Refresh Tokens
         String accessToken = jwtTokenProvider.generateAccessToken(user);

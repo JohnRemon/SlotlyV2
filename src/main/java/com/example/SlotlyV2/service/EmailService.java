@@ -11,6 +11,7 @@ import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import com.example.SlotlyV2.config.EmailConfig;
 import com.example.SlotlyV2.dto.BookingEmailData;
+import com.example.SlotlyV2.dto.UserRegistrationVerificationData;
 import com.resend.Resend;
 import com.resend.core.exception.ResendException;
 import com.resend.services.emails.model.CreateEmailOptions;
@@ -55,8 +56,6 @@ public class EmailService {
         } catch (Exception e) {
             log.error("Failed to send booking confirmation for slot {}: {}",
                     data.getSlotId(), e.getMessage(), e);
-
-            // TODO add in retry queue
         }
     }
 
@@ -77,7 +76,8 @@ public class EmailService {
 
             String htmlContent = renderTemplate("email/booking-notification", fields);
 
-            sendEmail(data.getHostEmail(),
+            sendEmail(
+                    data.getHostEmail(),
                     "New Booking: " + data.getAttendeeName(),
                     htmlContent);
 
@@ -85,10 +85,29 @@ public class EmailService {
         } catch (Exception e) {
             log.error("Failed to send host notification for slot {}: {}",
                     data.getSlotId(), e.getMessage(), e);
-
-            // TODO add in retry queue
         }
 
+    }
+
+    public void sendUserRegistrationVerification(UserRegistrationVerificationData data) {
+        log.info("Sending regsitration verification to: {}", data.getEmail());
+
+        try {
+            Map<String, Object> fields = new HashMap<>();
+            fields.put("displayName", data.getDisplayName());
+            fields.put("verificationLink", appBaseUrl + "/api/users/verify-email?token=" + data.getToken());
+
+            String htmlContent = renderTemplate("email/email-verification", fields);
+
+            sendEmail(
+                    data.getEmail(),
+                    "Please verify your account",
+                    htmlContent);
+
+            log.info("Verification email sent successfully to {}", data.getEmail());
+        } catch (Exception e) {
+            log.error("Failed to send verification email for user: {}", data.getEmail());
+        }
     }
 
     public void sendEmail(String to, String subject, String htmlContent) throws ResendException {

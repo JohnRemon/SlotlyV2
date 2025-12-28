@@ -1,5 +1,6 @@
 package com.example.SlotlyV2.model;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -60,6 +61,15 @@ public class User implements UserDetails {
     @Column(name = "timeZone")
     private String timeZone;
 
+    @Column(name = "is_verified")
+    private Boolean isVerified;
+
+    @Column(name = "verification_token")
+    private String verificationToken;
+
+    @Column(name = "verification_token_expires_at")
+    private LocalDateTime verificationTokenExpiresAt;
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return Collections.emptyList();
@@ -87,6 +97,6 @@ public class User implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return isVerified;
     }
 }
