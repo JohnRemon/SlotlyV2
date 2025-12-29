@@ -2,19 +2,25 @@ package com.example.SlotlyV2.service;
 
 import static org.mockito.Mockito.*;
 
+import java.time.LocalDateTime;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -24,6 +30,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.example.SlotlyV2.dto.LoginRequest;
 import com.example.SlotlyV2.dto.RegisterRequest;
+import com.example.SlotlyV2.event.EmailVerificationEvent;
 import com.example.SlotlyV2.exception.InvalidCredentialsException;
 import com.example.SlotlyV2.exception.UnauthorizedAccessException;
 import com.example.SlotlyV2.exception.UserAlreadyExistsException;
@@ -46,12 +53,19 @@ public class UserServiceTest {
     @Mock
     private AuthenticationManager authenticationManager;
 
+    @Mock
+    private VerificationTokenService verificationTokenService;
+
+    @Mock
+    private ApplicationEventPublisher applicationEventPublisher;
+
     @InjectMocks
     private UserService userService;
 
     @BeforeEach
     void setUp() {
-        reset(userRepository, passwordEncoder, authenticationManager);
+        reset(userRepository, passwordEncoder, authenticationManager, verificationTokenService,
+                applicationEventPublisher);
     }
 
     // ============================= Register Tests =============================
@@ -62,7 +76,14 @@ public class UserServiceTest {
         when(userRepository.existsByEmail(anyString())).thenReturn(false);
         when(userRepository.existsByDisplayName(anyString())).thenReturn(false);
         when(passwordEncoder.encode(anyString())).thenReturn("encodedPassword");
-        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(verificationTokenService.generateVerificationToken(any(User.class)))
+                .thenAnswer(invocation -> {
+                    User testUser = invocation.getArgument(0);
+                    testUser.setId(1L);
+                    testUser.setVerificationToken("mock-token");
+                    testUser.setVerificationTokenExpiresAt(LocalDateTime.now().plusHours(24));
+                    return testUser;
+                });
 
         RegisterRequest request = new RegisterRequest(
                 "test@example.com",
@@ -75,13 +96,36 @@ public class UserServiceTest {
         // Act
         User user = userService.registerUser(request);
 
-        // Assert
+        // Assert - Basic Fields
         assertNotNull(user);
         assertEquals("test@example.com", user.getEmail());
         assertEquals("testUser", user.getDisplayName());
-        assertEquals("encodedPassword", user.getPassword(), "Password should be encoded");
-        verify(userRepository).save(any(User.class));
-        verify(passwordEncoder, times(1)).encode("password123");
+        assertEquals("encodedPassword", user.getPassword());
+        assertEquals("John", user.getFirstName());
+        assertEquals("Doe", user.getLastName());
+
+        // Assert - Verification
+        assertFalse(user.getIsVerified(), "Verification should be set to false");
+        assertNotNull(user.getVerificationToken(), "Verification token should not be null");
+        assertNotNull(user.getVerificationTokenExpiresAt(), "Verification Token Expiry should not be null");
+        assertTrue(user.getVerificationTokenExpiresAt().isAfter(LocalDateTime.now()),
+                "Verification Token Expiry should be in the future");
+
+        // Assert - Event Publish
+        ArgumentCaptor<EmailVerificationEvent> eventCaptor = ArgumentCaptor.forClass(EmailVerificationEvent.class);
+        verify(applicationEventPublisher).publishEvent(eventCaptor.capture());
+
+        EmailVerificationEvent event = eventCaptor.getValue();
+        assertEquals(user.getDisplayName(), event.getUserRegistrationVerificationData().getDisplayName());
+        assertEquals(user.getEmail(), event.getUserRegistrationVerificationData().getEmail());
+        assertEquals(user.getVerificationToken(), event.getUserRegistrationVerificationData().getToken());
+
+        // Verify Repository Interactions
+        verify(userRepository).existsByEmail(request.getEmail());
+        verify(userRepository).existsByDisplayName(request.getDisplayName());
+        verify(passwordEncoder).encode(request.getPassword());
+        verify(verificationTokenService).generateVerificationToken(any(User.class));
+        verify(applicationEventPublisher).publishEvent(eventCaptor.capture());
     }
 
     @Test

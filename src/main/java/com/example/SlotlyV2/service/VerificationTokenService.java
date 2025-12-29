@@ -20,14 +20,13 @@ import lombok.extern.slf4j.Slf4j;
 public class VerificationTokenService {
     private final UserRepository userRepository;
 
-    public String generateVerificationToken(User user) {
+    public User generateVerificationToken(User user) {
         String token = UUID.randomUUID().toString();
 
         user.setVerificationToken(token);
         user.setVerificationTokenExpiresAt(LocalDateTime.now().plusHours(24));
-        userRepository.save(user);
+        return userRepository.save(user);
 
-        return token;
     }
 
     public Boolean verifyVerificationToken(String token) {

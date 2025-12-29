@@ -22,10 +22,10 @@ import com.example.SlotlyV2.repository.UserRepository;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
-import lombok.RequiredArgsConstructor;
+import lombok.AllArgsConstructor;
 
 @Service
-@RequiredArgsConstructor
+@AllArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -55,13 +55,13 @@ public class UserService {
         user.setIsVerified(false);
 
         // generate verification token
-        String token = verificationTokenService.generateVerificationToken(user);
+        user = verificationTokenService.generateVerificationToken(user);
 
         // generate the needed verification data
         UserRegistrationVerificationData data = new UserRegistrationVerificationData(
                 user.getDisplayName(),
                 user.getEmail(),
-                token);
+                user.getVerificationToken());
 
         // Publish Verification Email Event
         eventPublisher.publishEvent(new EmailVerificationEvent(data));
