@@ -3,6 +3,7 @@ package com.example.SlotlyV2.service;
 import static org.mockito.Mockito.*;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -29,8 +30,11 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.example.SlotlyV2.dto.LoginRequest;
+import com.example.SlotlyV2.dto.PasswordResetConfirmRequest;
+import com.example.SlotlyV2.dto.PasswordResetRequest;
 import com.example.SlotlyV2.dto.RegisterRequest;
 import com.example.SlotlyV2.event.EmailVerificationEvent;
+import com.example.SlotlyV2.event.PasswordResetEvent;
 import com.example.SlotlyV2.exception.InvalidCredentialsException;
 import com.example.SlotlyV2.exception.UnauthorizedAccessException;
 import com.example.SlotlyV2.exception.UserAlreadyExistsException;
@@ -245,6 +249,79 @@ public class UserServiceTest {
     }
     // ========================= Password Reset Tests =======================
 
+    @Test
+    void shouldResetPasswordRequestSuccessfully() {
+        // Arrange
+        User testUser = createTestUser();
+        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(testUser));
+        when(verificationTokenService.generatePasswordVerificationToken(testUser)).thenReturn(testUser);
+
+        PasswordResetRequest request = new PasswordResetRequest();
+        request.setEmail("test@example.com");
+
+        // Act
+        userService.resetPasswordRequest(request);
+
+        // Assert
+        verify(userRepository).findByEmail("test@example.com");
+        verify(verificationTokenService).generatePasswordVerificationToken(testUser);
+        verify(applicationEventPublisher).publishEvent(any(PasswordResetEvent.class));
+    }
+
+    @Test
+    void shouldHandleResetPasswordRequestForNonExistentEmail() {
+        // Arrange
+        when(userRepository.findByEmail("nonexistent@example.com")).thenReturn(Optional.empty());
+
+        PasswordResetRequest request = new PasswordResetRequest();
+        request.setEmail("nonexistent@example.com");
+
+        // Act
+        userService.resetPasswordRequest(request);
+
+        // Assert - Should not throw exception and should not publish event
+        verify(userRepository).findByEmail("nonexistent@example.com");
+        verify(verificationTokenService, never()).generatePasswordVerificationToken(any(User.class));
+        verify(applicationEventPublisher, never()).publishEvent(any());
+    }
+
+    @Test
+    void shouldResetPasswordSuccessfully() {
+        // Arrange
+        User testUser = createTestUser();
+        when(verificationTokenService.verifyPasswordVerificationToken("valid-token")).thenReturn(testUser);
+        when(passwordEncoder.encode("newPassword123")).thenReturn("encoded-new-password");
+
+        PasswordResetConfirmRequest request = new PasswordResetConfirmRequest("newPassword123", "newPassword123");
+
+        // Act
+        userService.resetPassword("valid-token", request);
+
+        // Assert
+        verify(verificationTokenService).verifyPasswordVerificationToken("valid-token");
+        assertNull(testUser.getPasswordVerificationToken());
+        assertNull(testUser.getPasswordVerificationTokenExpiresAt());
+        verify(passwordEncoder).encode("newPassword123");
+        verify(userRepository).save(testUser);
+    }
+
+    @Test
+    void shouldThrowPasswordMismatchExceptionWhenPasswordsDoNotMatch() {
+        // Arrange
+        User testUser = createTestUser();
+        when(verificationTokenService.verifyPasswordVerificationToken("valid-token")).thenReturn(testUser);
+
+        PasswordResetConfirmRequest request = new PasswordResetConfirmRequest("newPassword123", "differentPassword");
+
+        // Act and Assert
+        assertThrows(com.example.SlotlyV2.exception.PasswordMismatchException.class,
+                () -> userService.resetPassword("valid-token", request));
+
+        verify(verificationTokenService).verifyPasswordVerificationToken("valid-token");
+        verify(passwordEncoder, never()).encode(anyString());
+        verify(userRepository, never()).save(any(User.class));
+    }
+
     // ========================= Current User Tests =========================
 
     @Test
@@ -352,5 +429,16 @@ public class UserServiceTest {
 
         // Clean
         SecurityContextHolder.clearContext();
+    }
+
+    // Helper
+    User createTestUser() {
+        User testUser = new User();
+        testUser.setEmail("test@example.com");
+        testUser.setDisplayName("testUser");
+        testUser.setPassword("encodedPassword");
+        testUser.setFirstName("John");
+        testUser.setLastName("Doe");
+        return testUser;
     }
 }

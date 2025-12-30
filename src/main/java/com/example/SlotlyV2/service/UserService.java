@@ -92,7 +92,7 @@ public class UserService {
     public void resetPasswordRequest(PasswordResetRequest request) {
         // Find user by email (throw null if not found)
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(null);
+                .orElse(null);
 
         // return successfully
         if (user == null)
