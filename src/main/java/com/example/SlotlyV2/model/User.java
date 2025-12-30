@@ -64,11 +64,17 @@ public class User implements UserDetails {
     @Column(name = "is_verified")
     private Boolean isVerified;
 
-    @Column(name = "verification_token")
-    private String verificationToken;
+    @Column(name = "email_verification_token")
+    private String emailVerificationToken;
 
-    @Column(name = "verification_token_expires_at")
-    private LocalDateTime verificationTokenExpiresAt;
+    @Column(name = "email_verification_token_expires_at")
+    private LocalDateTime emailVerificationTokenExpiresAt;
+
+    @Column(name = "password_verification_token")
+    private String passwordVerificationToken;
+
+    @Column(name = "password_verification_token_expires_at")
+    private LocalDateTime passwordVerificationTokenExpiresAt;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

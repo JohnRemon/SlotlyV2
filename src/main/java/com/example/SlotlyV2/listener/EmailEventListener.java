@@ -5,8 +5,10 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import com.example.SlotlyV2.dto.BookingEmailData;
+import com.example.SlotlyV2.dto.PasswordResetData;
 import com.example.SlotlyV2.dto.UserRegistrationVerificationData;
 import com.example.SlotlyV2.event.EmailVerificationEvent;
+import com.example.SlotlyV2.event.PasswordResetEvent;
 import com.example.SlotlyV2.event.SlotBookedEvent;
 import com.example.SlotlyV2.service.EmailService;
 
@@ -46,6 +48,20 @@ public class EmailEventListener {
             emailService.sendUserRegistrationVerification(data);
         } catch (Exception e) {
             log.error("Failed to send email for email {}: {}", data.getEmail(), e.getMessage(), e);
+        }
+    }
+
+    @EventListener
+    @Async("emailTaskExecutor")
+    public void handleResetPassword(PasswordResetEvent event) {
+        PasswordResetData data = event.getPasswordResetData();
+
+        log.debug("Received PasswordResetEvent for email: {}", data.getEmail());
+
+        try {
+            emailService.sendPasswordRequest(data);
+        } catch (Exception e) {
+            log.error("Failed to send password reset email for email {}: {}", data.getEmail(), e.getMessage(), e);
         }
     }
 

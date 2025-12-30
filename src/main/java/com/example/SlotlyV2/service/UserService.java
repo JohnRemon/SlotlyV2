@@ -10,10 +10,15 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.example.SlotlyV2.dto.LoginRequest;
+import com.example.SlotlyV2.dto.PasswordResetConfirmRequest;
+import com.example.SlotlyV2.dto.PasswordResetData;
+import com.example.SlotlyV2.dto.PasswordResetRequest;
 import com.example.SlotlyV2.dto.RegisterRequest;
 import com.example.SlotlyV2.dto.UserRegistrationVerificationData;
 import com.example.SlotlyV2.event.EmailVerificationEvent;
+import com.example.SlotlyV2.event.PasswordResetEvent;
 import com.example.SlotlyV2.exception.InvalidCredentialsException;
+import com.example.SlotlyV2.exception.PasswordMismatchException;
 import com.example.SlotlyV2.exception.UnauthorizedAccessException;
 import com.example.SlotlyV2.exception.UserAlreadyExistsException;
 import com.example.SlotlyV2.exception.UsernameAlreadyExistsException;
@@ -55,13 +60,13 @@ public class UserService {
         user.setIsVerified(false);
 
         // generate verification token
-        user = verificationTokenService.generateVerificationToken(user);
+        user = verificationTokenService.generateEmailVerificationToken(user);
 
         // generate the needed verification data
         UserRegistrationVerificationData data = new UserRegistrationVerificationData(
                 user.getDisplayName(),
                 user.getEmail(),
-                user.getVerificationToken());
+                user.getEmailVerificationToken());
 
         // Publish Verification Email Event
         eventPublisher.publishEvent(new EmailVerificationEvent(data));
@@ -82,6 +87,42 @@ public class UserService {
         } catch (BadCredentialsException e) {
             throw new InvalidCredentialsException("Invalid Credentials");
         }
+    }
+
+    public void resetPasswordRequest(PasswordResetRequest request) {
+        // Find user by email (throw null if not found)
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(null);
+
+        // return successfully
+        if (user == null)
+            return;
+
+        // generate password token and expiry date
+        user = verificationTokenService.generatePasswordVerificationToken(user);
+
+        // generate needed password reset data
+        PasswordResetData data = new PasswordResetData(
+                user.getDisplayName(),
+                user.getEmail(),
+                user.getPasswordVerificationToken());
+
+        // publish password reset event
+        eventPublisher.publishEvent(new PasswordResetEvent(data));
+    }
+
+    public void resetPassword(String token, PasswordResetConfirmRequest request) {
+        User user = verificationTokenService.verifyPasswordVerificationToken(token);
+
+        if (!request.getPassword().equals(request.getConfirmPassword())) {
+            throw new PasswordMismatchException("Passwords don't match");
+        }
+
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setPasswordVerificationToken(null);
+        user.setPasswordVerificationTokenExpiresAt(null);
+
+        userRepository.save(user);
     }
 
     public User getCurrentUser() {

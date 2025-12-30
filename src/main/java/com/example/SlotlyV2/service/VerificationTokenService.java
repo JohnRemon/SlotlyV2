@@ -20,34 +20,52 @@ import lombok.extern.slf4j.Slf4j;
 public class VerificationTokenService {
     private final UserRepository userRepository;
 
-    public User generateVerificationToken(User user) {
+    public User generateEmailVerificationToken(User user) {
         String token = UUID.randomUUID().toString();
 
-        user.setVerificationToken(token);
-        user.setVerificationTokenExpiresAt(LocalDateTime.now().plusHours(24));
+        user.setEmailVerificationToken(token);
+        user.setEmailVerificationTokenExpiresAt(LocalDateTime.now().plusHours(24));
         return userRepository.save(user);
 
     }
 
     public Boolean verifyVerificationToken(String token) {
-        log.info("Verifying the token");
-
-        User user = userRepository.findByVerificationToken(token)
+        User user = userRepository.findByEmailVerificationToken(token)
                 .orElseThrow(() -> new InvalidTokenException("Invalid token"));
 
         if (user.getIsVerified()) {
             throw new AccountAlreadyVerifiedException("Account already verified");
         }
 
-        if (user.getVerificationTokenExpiresAt().isBefore(LocalDateTime.now())) {
+        if (user.getEmailVerificationTokenExpiresAt().isBefore(LocalDateTime.now())) {
             throw new TokenAlreadyExpiredException("Token has expired");
         }
 
         user.setIsVerified(true);
-        user.setVerificationToken(null);
-        user.setVerificationTokenExpiresAt(null);
+        user.setEmailVerificationToken(null);
+        user.setEmailVerificationTokenExpiresAt(null);
         userRepository.save(user);
 
         return true;
+    }
+
+    public User generatePasswordVerificationToken(User user) {
+        String token = UUID.randomUUID().toString();
+
+        user.setPasswordVerificationToken(token);
+        user.setPasswordVerificationTokenExpiresAt(LocalDateTime.now().plusMinutes(30));
+
+        return userRepository.save(user);
+    }
+
+    public User verifyPasswordVerificationToken(String token) {
+        User user = userRepository.findByPasswordVerificationToken(token)
+                .orElseThrow(() -> new InvalidTokenException("Invalid Token"));
+
+        if (user.getPasswordVerificationTokenExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new TokenAlreadyExpiredException("Token has expired");
+        }
+
+        return user;
     }
 }

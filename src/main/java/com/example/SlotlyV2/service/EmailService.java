@@ -11,6 +11,7 @@ import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import com.example.SlotlyV2.config.EmailConfig;
 import com.example.SlotlyV2.dto.BookingEmailData;
+import com.example.SlotlyV2.dto.PasswordResetData;
 import com.example.SlotlyV2.dto.UserRegistrationVerificationData;
 import com.resend.Resend;
 import com.resend.core.exception.ResendException;
@@ -110,6 +111,18 @@ public class EmailService {
         }
     }
 
+    public void sendPasswordRequest(PasswordResetData data) {
+        log.info("Sending Password Reset Email to: {}", data.getEmail());
+
+        try {
+            Map<String, Object> fields = new HashMap<>();
+            fields.put("displayName", data.getDisplayName());
+            fields.put("passwordResetLink", appBaseUrl + "/api/users/reset-password?token=" + data.getToken());
+        } catch (Exception e) {
+            log.error("Failed to send password reset email for user: {}", data.getEmail());
+        }
+    }
+
     public void sendEmail(String to, String subject, String htmlContent) throws ResendException {
         CreateEmailOptions params = CreateEmailOptions.builder()
                 .from(emailConfig.getFromName() + " <" + emailConfig.getFromEmail() + ">")
@@ -126,4 +139,5 @@ public class EmailService {
         context.setVariables(fields);
         return templateEngine.process(templateName, context);
     }
+
 }

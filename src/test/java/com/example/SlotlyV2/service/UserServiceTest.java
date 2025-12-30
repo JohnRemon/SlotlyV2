@@ -76,12 +76,12 @@ public class UserServiceTest {
         when(userRepository.existsByEmail(anyString())).thenReturn(false);
         when(userRepository.existsByDisplayName(anyString())).thenReturn(false);
         when(passwordEncoder.encode(anyString())).thenReturn("encodedPassword");
-        when(verificationTokenService.generateVerificationToken(any(User.class)))
+        when(verificationTokenService.generateEmailVerificationToken(any(User.class)))
                 .thenAnswer(invocation -> {
                     User testUser = invocation.getArgument(0);
                     testUser.setId(1L);
-                    testUser.setVerificationToken("mock-token");
-                    testUser.setVerificationTokenExpiresAt(LocalDateTime.now().plusHours(24));
+                    testUser.setEmailVerificationToken("mock-token");
+                    testUser.setEmailVerificationTokenExpiresAt(LocalDateTime.now().plusHours(24));
                     return testUser;
                 });
 
@@ -106,9 +106,9 @@ public class UserServiceTest {
 
         // Assert - Verification
         assertFalse(user.getIsVerified(), "Verification should be set to false");
-        assertNotNull(user.getVerificationToken(), "Verification token should not be null");
-        assertNotNull(user.getVerificationTokenExpiresAt(), "Verification Token Expiry should not be null");
-        assertTrue(user.getVerificationTokenExpiresAt().isAfter(LocalDateTime.now()),
+        assertNotNull(user.getEmailVerificationToken(), "Verification token should not be null");
+        assertNotNull(user.getEmailVerificationTokenExpiresAt(), "Verification Token Expiry should not be null");
+        assertTrue(user.getEmailVerificationTokenExpiresAt().isAfter(LocalDateTime.now()),
                 "Verification Token Expiry should be in the future");
 
         // Assert - Event Publish
@@ -118,13 +118,13 @@ public class UserServiceTest {
         EmailVerificationEvent event = eventCaptor.getValue();
         assertEquals(user.getDisplayName(), event.getUserRegistrationVerificationData().getDisplayName());
         assertEquals(user.getEmail(), event.getUserRegistrationVerificationData().getEmail());
-        assertEquals(user.getVerificationToken(), event.getUserRegistrationVerificationData().getToken());
+        assertEquals(user.getEmailVerificationToken(), event.getUserRegistrationVerificationData().getToken());
 
         // Verify Repository Interactions
         verify(userRepository).existsByEmail(request.getEmail());
         verify(userRepository).existsByDisplayName(request.getDisplayName());
         verify(passwordEncoder).encode(request.getPassword());
-        verify(verificationTokenService).generateVerificationToken(any(User.class));
+        verify(verificationTokenService).generateEmailVerificationToken(any(User.class));
         verify(applicationEventPublisher).publishEvent(eventCaptor.capture());
     }
 
@@ -243,6 +243,7 @@ public class UserServiceTest {
         verify(authenticationManager).authenticate(
                 new UsernamePasswordAuthenticationToken("wrongEmail@example.com", "password123"));
     }
+    // ========================= Password Reset Tests =======================
 
     // ========================= Current User Tests =========================
 

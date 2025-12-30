@@ -10,7 +10,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.SlotlyV2.dto.ApiResponse;
+import com.example.SlotlyV2.dto.PasswordResetConfirmRequest;
 import com.example.SlotlyV2.dto.LoginRequest;
+import com.example.SlotlyV2.dto.PasswordResetRequest;
 import com.example.SlotlyV2.dto.RegisterRequest;
 import com.example.SlotlyV2.dto.UserResponse;
 import com.example.SlotlyV2.model.User;
@@ -76,4 +78,29 @@ public class UserController {
 
         return ResponseEntity.ok(response);
     }
+
+    @PostMapping("/reset-password/request")
+    public ResponseEntity<ApiResponse<Void>> resetPassword(PasswordResetRequest request) {
+        userService.resetPasswordRequest(request);
+
+        ApiResponse<Void> response = new ApiResponse<Void>("An email has been sent to your inbox", null);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/reset-password/confirm")
+    public ResponseEntity<ApiResponse<Void>> verifyPassword(@RequestParam String token,
+            PasswordResetConfirmRequest request) {
+        userService.resetPassword(token, request);
+
+        ApiResponse<Void> response = new ApiResponse<Void>("Password changed successfully. Please login", null);
+
+        return ResponseEntity.ok(response);
+    }
+
+    // So the user first sends a request with only his email to reset-password
+    // We send the user an email with password Token
+    // then we send him to /reset-password?token=<token> and he can send a post
+    // request there with his password and its confirmation
+    // the user password is changed successfully
 }
