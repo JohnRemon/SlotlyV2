@@ -28,7 +28,7 @@ public class AvailabilityRulesDTO {
     public AvailabilityRulesDTO(AvailabilityRules rules) {
         this.slotDurationMinutes = rules.getSlotDurationMinutes();
         this.maxSlotsPerUser = rules.getMaxSlotsPerUser();
-        this.allowsCancellations = rules.getAllowCancellations();
+        this.allowsCancellations = rules.getAllowsCancellations();
         this.isPublic = rules.getIsPublic();
     }
 }

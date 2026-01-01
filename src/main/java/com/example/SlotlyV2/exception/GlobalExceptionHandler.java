@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import com.example.SlotlyV2.dto.ApiResponse;
 
 import jakarta.persistence.OptimisticLockException;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 
 @RestControllerAdvice
@@ -116,8 +117,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public ApiResponse<Void> handleGenericException(Exception ex) {
-        log.error("Unhandled Exception", ex);
+    public ApiResponse<Void> handleGenericException(Exception ex, HttpServletRequest request) {
+        log.error("Unhandled exception at {} for user {}:  {}",
+                request.getRequestURI(),
+                ex.getMessage(),
+                ex);
         return new ApiResponse<>("This is an error from our side, please try again later", null);
     }
 

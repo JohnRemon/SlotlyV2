@@ -1,17 +1,17 @@
 package com.example.SlotlyV2.controller;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.SlotlyV2.dto.ApiResponse;
-import com.example.SlotlyV2.dto.PasswordResetConfirmRequest;
 import com.example.SlotlyV2.dto.LoginRequest;
+import com.example.SlotlyV2.dto.PasswordResetConfirmRequest;
 import com.example.SlotlyV2.dto.PasswordResetRequest;
 import com.example.SlotlyV2.dto.RegisterRequest;
 import com.example.SlotlyV2.dto.UserResponse;
@@ -31,70 +31,47 @@ public class UserController {
     private final VerificationTokenService verificationTokenService;
 
     @PostMapping("/register")
-    public ResponseEntity<ApiResponse<UserResponse>> registerUser(@Valid @RequestBody RegisterRequest request) {
+    @ResponseStatus(HttpStatus.CREATED)
+    public ApiResponse<UserResponse> registerUser(@Valid @RequestBody RegisterRequest request) {
         User user = userService.registerUser(request);
-
-        ApiResponse<UserResponse> response = new ApiResponse<>(
-                "User registered successfully. Please check your email to verify your account.",
+        return new ApiResponse<>("User registered successfully. Please check your email to verify your account.",
                 new UserResponse(user));
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<UserResponse>> loginUser(@Valid @RequestBody LoginRequest request) {
+    public ApiResponse<UserResponse> loginUser(@Valid @RequestBody LoginRequest request) {
         User user = userService.loginUser(request);
-
-        ApiResponse<UserResponse> response = new ApiResponse<>("Logged in successfully", new UserResponse(user));
-
-        return ResponseEntity.ok(response);
+        return new ApiResponse<>("Logged in successfully", new UserResponse(user));
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<ApiResponse<Void>> logoutUser(HttpServletRequest request) {
+    public ApiResponse<Void> logoutUser(HttpServletRequest request) {
         userService.logout(request);
-
-        ApiResponse<Void> response = new ApiResponse<Void>("Logged out successfully", null);
-
-        return ResponseEntity.ok(response);
+        return new ApiResponse<>("Logged out successfully", null);
     }
 
-    @GetMapping("/profile")
-    public ResponseEntity<ApiResponse<UserResponse>> userProfile() {
+    @GetMapping("/me")
+    public ApiResponse<UserResponse> userProfile() {
         User user = userService.getCurrentUser();
-
-        ApiResponse<UserResponse> response = new ApiResponse<>("User fetched successfully", new UserResponse(user));
-
-        return ResponseEntity.ok(response);
+        return new ApiResponse<>("User fetched successfully", new UserResponse(user));
     }
 
     @PostMapping("/verify-email")
-    public ResponseEntity<ApiResponse<Void>> verifyEmail(@RequestParam String token) {
+    public ApiResponse<Void> verifyEmail(@RequestParam String token) {
         verificationTokenService.verifyVerificationToken(token);
-
-        ApiResponse<Void> response = new ApiResponse<>(
-                "Account verified successfully. Please login into your account",
-                null);
-
-        return ResponseEntity.ok(response);
+        return new ApiResponse<>("Account verified successfully. Please login into your account", null);
     }
 
     @PostMapping("/reset-password/request")
-    public ResponseEntity<ApiResponse<Void>> resetPassword(@RequestBody @Valid PasswordResetRequest request) {
+    public ApiResponse<Void> resetPassword(@RequestBody @Valid PasswordResetRequest request) {
         userService.resetPasswordRequest(request);
-
-        ApiResponse<Void> response = new ApiResponse<Void>("An email has been sent to your inbox", null);
-
-        return ResponseEntity.ok(response);
+        return new ApiResponse<>("An email has been sent to your inbox", null);
     }
 
     @PostMapping("/reset-password/confirm")
-    public ResponseEntity<ApiResponse<Void>> verifyPassword(@RequestParam String token,
+    public ApiResponse<Void> verifyPassword(@RequestParam String token,
             @RequestBody @Valid PasswordResetConfirmRequest request) {
         userService.resetPassword(token, request);
-
-        ApiResponse<Void> response = new ApiResponse<Void>("Password changed successfully. Please login", null);
-
-        return ResponseEntity.ok(response);
+        return new ApiResponse<>("Password changed successfully. Please login", null);
     }
 }

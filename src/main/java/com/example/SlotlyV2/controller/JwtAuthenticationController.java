@@ -1,6 +1,5 @@
 package com.example.SlotlyV2.controller;
 
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,22 +23,14 @@ public class JwtAuthenticationController {
     private final JwtAuthenticationService jwtAuthenticationService;
 
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<JwtAuthenticationResponse>> login(@Valid @RequestBody JwtLoginRequest request) {
+    public ApiResponse<JwtAuthenticationResponse> login(@Valid @RequestBody JwtLoginRequest request) {
         JwtAuthenticationResponse authenticationResponse = jwtAuthenticationService.login(request);
-
-        ApiResponse<JwtAuthenticationResponse> response = new ApiResponse<>("User logged in successfully using JWT",
-                authenticationResponse);
-
-        return ResponseEntity.ok(response);
+        return new ApiResponse<>("User logged in successfully using JWT", authenticationResponse);
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<ApiResponse<RefreshTokenResponse>> refresh(@Valid @RequestBody RefreshTokenRequest request) {
+    public ApiResponse<RefreshTokenResponse> refresh(@Valid @RequestBody RefreshTokenRequest request) {
         RefreshTokenResponse refreshTokenResponse = jwtAuthenticationService.refresh(request);
-
-        ApiResponse<RefreshTokenResponse> response = new ApiResponse<>("Token refreshed successfully",
-                refreshTokenResponse);
-
-        return ResponseEntity.ok(response);
+        return new ApiResponse<>("Token refreshed successfully", refreshTokenResponse);
     }
 }

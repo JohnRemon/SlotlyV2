@@ -44,7 +44,7 @@ public class EventService {
         AvailabilityRules rules = new AvailabilityRules();
         rules.setSlotDurationMinutes(request.getRules().getSlotDurationMinutes());
         rules.setMaxSlotsPerUser(request.getRules().getMaxSlotsPerUser());
-        rules.setAllowCancellations(request.getRules().getAllowsCancellations());
+        rules.setAllowsCancellations(request.getRules().getAllowsCancellations());
         rules.setIsPublic(request.getRules().getIsPublic());
 
         event.setRules(rules);

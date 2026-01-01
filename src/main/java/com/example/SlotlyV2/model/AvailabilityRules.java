@@ -15,7 +15,7 @@ import lombok.Setter;
 public class AvailabilityRules {
     private Integer slotDurationMinutes = 30;
     private Integer maxSlotsPerUser = 1;
-    private Boolean allowCancellations = true;
+    private Boolean allowsCancellations = true;
     private Boolean isPublic = true;
     @Min(1)
     private Integer maxCapacity;

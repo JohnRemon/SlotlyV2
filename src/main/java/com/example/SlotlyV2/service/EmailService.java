@@ -45,7 +45,7 @@ public class EmailService {
             fields.put("endTime", data.getEndTime());
             fields.put("date", data.getStartTime());
             fields.put("timeZone", data.getTimeZone());
-            fields.put("calendarLink", appBaseUrl + "/api/slots/" + data.getSlotId() + "/calendar");
+            fields.put("calendarLink", appBaseUrl + "/api/v1/calendar/" + data.getSlotId());
 
             String htmlContent = renderTemplate("email/booking-confirmation", fields);
 

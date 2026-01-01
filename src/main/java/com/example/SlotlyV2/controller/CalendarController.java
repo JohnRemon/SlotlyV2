@@ -15,12 +15,12 @@ import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1")
+@RequestMapping("/api/v1/calendar")
 public class CalendarController {
     private final CalendarService calendarService;
     private final SlotService slotService;
 
-    @GetMapping("/slots/{slotId}/calendar")
+    @GetMapping("/{slotId}")
     public ResponseEntity<String> downloadCalendar(@PathVariable Long slotId) {
         Slot slot = slotService.getSlotById(slotId);
 
