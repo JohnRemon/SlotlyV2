@@ -18,6 +18,7 @@ import com.example.SlotlyV2.dto.UserResponse;
 import com.example.SlotlyV2.model.User;
 import com.example.SlotlyV2.service.UserService;
 import com.example.SlotlyV2.service.VerificationTokenService;
+import com.example.SlotlyV2.util.RateLimitHelper;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -29,17 +30,24 @@ import lombok.RequiredArgsConstructor;
 public class UserController {
     private final UserService userService;
     private final VerificationTokenService verificationTokenService;
+    private final RateLimitHelper rateLimitHelper;
 
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
-    public ApiResponse<UserResponse> registerUser(@Valid @RequestBody RegisterRequest request) {
+    public ApiResponse<UserResponse> registerUser(@Valid @RequestBody RegisterRequest request,
+            HttpServletRequest httpServletRequest) {
+        rateLimitHelper.checkRegisterRateLimit(httpServletRequest);
+
         User user = userService.registerUser(request);
         return new ApiResponse<>("User registered successfully. Please check your email to verify your account.",
                 new UserResponse(user));
     }
 
     @PostMapping("/login")
-    public ApiResponse<UserResponse> loginUser(@Valid @RequestBody LoginRequest request) {
+    public ApiResponse<UserResponse> loginUser(@Valid @RequestBody LoginRequest request,
+            HttpServletRequest httpServletRequest) {
+        rateLimitHelper.checkLoginRateLimit(httpServletRequest);
+
         User user = userService.loginUser(request);
         return new ApiResponse<>("Logged in successfully", new UserResponse(user));
     }
@@ -64,6 +72,8 @@ public class UserController {
 
     @PostMapping("/reset-password/request")
     public ApiResponse<Void> resetPassword(@RequestBody @Valid PasswordResetRequest request) {
+        rateLimitHelper.checkPasswordResetRateLimit(request.getEmail());
+
         userService.resetPasswordRequest(request);
         return new ApiResponse<>("An email has been sent to your inbox", null);
     }

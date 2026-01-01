@@ -38,7 +38,7 @@ public class SlotService {
         LocalDateTime end = event.getEventEnd();
         List<Slot> slots = new ArrayList<>();
 
-        // TODO Improve the slot generation algorithm
+        // TODO: Improve the slot generation algorithm
         while (start.plusMinutes(event.getRules().getSlotDurationMinutes()).isBefore(end)) {
             Slot slot = new Slot();
             slot.setEvent(event);

@@ -13,6 +13,7 @@ import com.example.SlotlyV2.dto.ApiResponse;
 
 import jakarta.persistence.OptimisticLockException;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 
 @RestControllerAdvice
@@ -112,6 +113,15 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(InvalidSlotException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiResponse<Void> handleInvalidSlot(InvalidSlotException ex) {
+        return new ApiResponse<>(ex.getMessage(), null);
+    }
+
+    @ExceptionHandler(RateLimitExceededException.class)
+    @ResponseStatus(HttpStatus.TOO_MANY_REQUESTS)
+    public ApiResponse<Void> handleRateLimitExceeded(RateLimitExceededException ex, HttpServletResponse response) {
+        response.setHeader("Retry-After", String.valueOf(ex.getRetryAfterSeconds()));
+        response.setHeader("X-Rate-Limit-Exceeded", "true");
+        log.warn("Rate limit exceeded: {}", ex.getMessage());
         return new ApiResponse<>(ex.getMessage(), null);
     }
 

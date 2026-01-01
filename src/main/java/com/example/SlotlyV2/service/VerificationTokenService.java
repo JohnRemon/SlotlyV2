@@ -23,7 +23,7 @@ public class VerificationTokenService {
     public User generateEmailVerificationToken(User user) {
         String token = UUID.randomUUID().toString();
 
-        // TODO hash tokens
+        // TODO: Hash Tokens Before Saving
         user.setEmailVerificationToken(token);
         user.setEmailVerificationTokenExpiresAt(LocalDateTime.now().plusHours(24));
         return userRepository.save(user);

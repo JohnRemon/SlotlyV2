@@ -16,6 +16,7 @@ import com.example.SlotlyV2.model.Slot;
 import com.example.SlotlyV2.model.User;
 import com.example.SlotlyV2.service.SlotService;
 import com.example.SlotlyV2.service.UserService;
+import com.example.SlotlyV2.util.RateLimitHelper;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,7 @@ import lombok.RequiredArgsConstructor;
 public class SlotController {
     private final SlotService slotService;
     private final UserService userService;
+    private final RateLimitHelper rateLimitHelper;
 
     @GetMapping("events/{eventId}/slots")
     public ApiResponse<List<SlotResponse>> getSlots(@PathVariable Long eventId) {
@@ -40,6 +42,8 @@ public class SlotController {
 
     @PostMapping("{shareableId}")
     public ApiResponse<SlotResponse> bookSlot(@RequestBody @Valid SlotRequest request) {
+        rateLimitHelper.checkBookingRateLimit(request.getAttendeeEmail());
+
         Slot bookedSlot = slotService.bookSlot(request);
         return new ApiResponse<>("Slot booked successfully", new SlotResponse(bookedSlot));
     }
