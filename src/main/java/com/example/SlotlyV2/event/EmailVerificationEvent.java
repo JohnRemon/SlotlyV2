@@ -1,10 +1,10 @@
 package com.example.SlotlyV2.event;
 
-import com.example.SlotlyV2.dto.UserRegistrationVerificationData;
+import com.example.SlotlyV2.dto.UserVerificationDTO;
 
 import lombok.Data;
 
 @Data
 public class EmailVerificationEvent {
-    private final UserRegistrationVerificationData userRegistrationVerificationData;
+    private final UserVerificationDTO userVerificationDTO;
 }

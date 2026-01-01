@@ -4,9 +4,9 @@ import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
-import com.example.SlotlyV2.dto.BookingEmailData;
-import com.example.SlotlyV2.dto.PasswordResetData;
-import com.example.SlotlyV2.dto.UserRegistrationVerificationData;
+import com.example.SlotlyV2.dto.BookingEmailDTO;
+import com.example.SlotlyV2.dto.PasswordResetDTO;
+import com.example.SlotlyV2.dto.UserVerificationDTO;
 import com.example.SlotlyV2.event.EmailVerificationEvent;
 import com.example.SlotlyV2.event.PasswordResetEvent;
 import com.example.SlotlyV2.event.SlotBookedEvent;
@@ -24,7 +24,7 @@ public class EmailEventListener {
     @EventListener
     @Async("emailTaskExecutor")
     public void handleSlotBooked(SlotBookedEvent event) {
-        BookingEmailData data = event.getBookingData();
+        BookingEmailDTO data = event.getBookingEmailDTO();
 
         log.debug("Received SlotBookedEvent for slot: {}", data.getSlotId());
 
@@ -40,7 +40,7 @@ public class EmailEventListener {
     @EventListener
     @Async("emailTaskExecutor")
     public void handleEmailVerification(EmailVerificationEvent event) {
-        UserRegistrationVerificationData data = event.getUserRegistrationVerificationData();
+        UserVerificationDTO data = event.getUserVerificationDTO();
 
         log.debug("Received EmailVerificationEvent for email: {}", data.getEmail());
 
@@ -54,7 +54,7 @@ public class EmailEventListener {
     @EventListener
     @Async("emailTaskExecutor")
     public void handleResetPassword(PasswordResetEvent event) {
-        PasswordResetData data = event.getPasswordResetData();
+        PasswordResetDTO data = event.getPasswordResetDTO();
 
         log.debug("Received PasswordResetEvent for email: {}", data.getEmail());
 

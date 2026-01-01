@@ -7,7 +7,7 @@ import lombok.Data;
 
 @Data
 @AllArgsConstructor
-public class BookingEmailData {
+public class BookingEmailDTO {
     private String toEmail;
     private String hostEmail;
     private String attendeeName;

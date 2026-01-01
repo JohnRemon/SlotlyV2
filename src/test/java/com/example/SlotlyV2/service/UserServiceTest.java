@@ -120,9 +120,9 @@ public class UserServiceTest {
         verify(applicationEventPublisher).publishEvent(eventCaptor.capture());
 
         EmailVerificationEvent event = eventCaptor.getValue();
-        assertEquals(user.getDisplayName(), event.getUserRegistrationVerificationData().getDisplayName());
-        assertEquals(user.getEmail(), event.getUserRegistrationVerificationData().getEmail());
-        assertEquals(user.getEmailVerificationToken(), event.getUserRegistrationVerificationData().getToken());
+        assertEquals(user.getDisplayName(), event.getUserVerificationDTO().getDisplayName());
+        assertEquals(user.getEmail(), event.getUserVerificationDTO().getEmail());
+        assertEquals(user.getEmailVerificationToken(), event.getUserVerificationDTO().getToken());
 
         // Verify Repository Interactions
         verify(userRepository).existsByEmail(request.getEmail());

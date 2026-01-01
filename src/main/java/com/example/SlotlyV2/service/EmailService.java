@@ -10,9 +10,9 @@ import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import com.example.SlotlyV2.config.EmailConfig;
-import com.example.SlotlyV2.dto.BookingEmailData;
-import com.example.SlotlyV2.dto.PasswordResetData;
-import com.example.SlotlyV2.dto.UserRegistrationVerificationData;
+import com.example.SlotlyV2.dto.BookingEmailDTO;
+import com.example.SlotlyV2.dto.PasswordResetDTO;
+import com.example.SlotlyV2.dto.UserVerificationDTO;
 import com.resend.Resend;
 import com.resend.core.exception.ResendException;
 import com.resend.services.emails.model.CreateEmailOptions;
@@ -32,7 +32,7 @@ public class EmailService {
     private String appBaseUrl;
 
     @Async("emailTaskExecutor")
-    public void sendBookingConfirmation(BookingEmailData data) {
+    public void sendBookingConfirmation(BookingEmailDTO data) {
         try {
             log.info("Sending booking confirmation to: {}", data.getToEmail());
 
@@ -61,7 +61,7 @@ public class EmailService {
     }
 
     @Async("emailTaskExecutor")
-    public void sendHostNotification(BookingEmailData data) {
+    public void sendHostNotification(BookingEmailDTO data) {
         log.info("Sending booking notification to: {}", data.getHostEmail());
 
         try {
@@ -90,7 +90,7 @@ public class EmailService {
 
     }
 
-    public void sendUserRegistrationVerification(UserRegistrationVerificationData data) {
+    public void sendUserRegistrationVerification(UserVerificationDTO data) {
         log.info("Sending regsitration verification to: {}", data.getEmail());
 
         try {
@@ -111,7 +111,7 @@ public class EmailService {
         }
     }
 
-    public void sendPasswordRequest(PasswordResetData data) {
+    public void sendPasswordRequest(PasswordResetDTO data) {
         log.info("Sending Password Reset Email to: {}", data.getEmail());
 
         try {

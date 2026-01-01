@@ -7,7 +7,7 @@ import java.util.List;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
-import com.example.SlotlyV2.dto.BookingEmailData;
+import com.example.SlotlyV2.dto.BookingEmailDTO;
 import com.example.SlotlyV2.dto.SlotRequest;
 import com.example.SlotlyV2.event.SlotBookedEvent;
 import com.example.SlotlyV2.exception.EventNotFoundException;
@@ -22,19 +22,16 @@ import com.example.SlotlyV2.repository.EventRepository;
 import com.example.SlotlyV2.repository.SlotRepository;
 
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
+@RequiredArgsConstructor
+@Slf4j
 public class SlotService {
     private final SlotRepository slotRepository;
     private final EventRepository eventRepository;
     private final ApplicationEventPublisher eventPublisher;
-
-    public SlotService(SlotRepository slotRepository, EventRepository eventRepository,
-            ApplicationEventPublisher eventPublisher) {
-        this.slotRepository = slotRepository;
-        this.eventRepository = eventRepository;
-        this.eventPublisher = eventPublisher;
-    }
 
     public void generateSlots(Event event) {
         LocalDateTime start = event.getEventStart();
@@ -97,7 +94,7 @@ public class SlotService {
 
         // Prepare Booking data for emails
         String hostDisplayName = getHostDisplayName(savedSlot.getEvent().getHost());
-        BookingEmailData bookingData = new BookingEmailData(
+        BookingEmailDTO bookingData = new BookingEmailDTO(
                 savedSlot.getBookedByEmail(),
                 savedSlot.getEvent().getHost().getEmail(),
                 savedSlot.getBookedByName(),

@@ -80,7 +80,7 @@ public class UserController {
     }
 
     @PostMapping("/reset-password/request")
-    public ResponseEntity<ApiResponse<Void>> resetPassword(@RequestBody PasswordResetRequest request) {
+    public ResponseEntity<ApiResponse<Void>> resetPassword(@RequestBody @Valid PasswordResetRequest request) {
         userService.resetPasswordRequest(request);
 
         ApiResponse<Void> response = new ApiResponse<Void>("An email has been sent to your inbox", null);
@@ -90,7 +90,7 @@ public class UserController {
 
     @PostMapping("/reset-password/confirm")
     public ResponseEntity<ApiResponse<Void>> verifyPassword(@RequestParam String token,
-            @RequestBody PasswordResetConfirmRequest request) {
+            @RequestBody @Valid PasswordResetConfirmRequest request) {
         userService.resetPassword(token, request);
 
         ApiResponse<Void> response = new ApiResponse<Void>("Password changed successfully. Please login", null);

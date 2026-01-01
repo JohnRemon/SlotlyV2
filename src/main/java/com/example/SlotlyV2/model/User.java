@@ -18,7 +18,6 @@ import jakarta.persistence.Table;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -46,8 +45,6 @@ public class User implements UserDetails {
     @Column(unique = true, nullable = false)
     private String displayName;
 
-    @NotBlank(message = "Password is required")
-    @Size(min = 8)
     @Column(nullable = false)
     @JsonIgnore
     private String password;
@@ -58,7 +55,7 @@ public class User implements UserDetails {
     @Column(name = "last_name")
     private String lastName;
 
-    @Column(name = "timeZone")
+    @Column(name = "time_zone")
     private String timeZone;
 
     @Column(name = "is_verified")

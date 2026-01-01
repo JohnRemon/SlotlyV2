@@ -11,10 +11,10 @@ import org.springframework.stereotype.Service;
 
 import com.example.SlotlyV2.dto.LoginRequest;
 import com.example.SlotlyV2.dto.PasswordResetConfirmRequest;
-import com.example.SlotlyV2.dto.PasswordResetData;
+import com.example.SlotlyV2.dto.PasswordResetDTO;
 import com.example.SlotlyV2.dto.PasswordResetRequest;
 import com.example.SlotlyV2.dto.RegisterRequest;
-import com.example.SlotlyV2.dto.UserRegistrationVerificationData;
+import com.example.SlotlyV2.dto.UserVerificationDTO;
 import com.example.SlotlyV2.event.EmailVerificationEvent;
 import com.example.SlotlyV2.event.PasswordResetEvent;
 import com.example.SlotlyV2.exception.InvalidCredentialsException;
@@ -27,10 +27,12 @@ import com.example.SlotlyV2.repository.UserRepository;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
-@AllArgsConstructor
+@RequiredArgsConstructor
+@Slf4j
 public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -63,7 +65,7 @@ public class UserService {
         user = verificationTokenService.generateEmailVerificationToken(user);
 
         // generate the needed verification data
-        UserRegistrationVerificationData data = new UserRegistrationVerificationData(
+        UserVerificationDTO data = new UserVerificationDTO(
                 user.getDisplayName(),
                 user.getEmail(),
                 user.getEmailVerificationToken());
@@ -102,7 +104,7 @@ public class UserService {
         user = verificationTokenService.generatePasswordVerificationToken(user);
 
         // generate needed password reset data
-        PasswordResetData data = new PasswordResetData(
+        PasswordResetDTO data = new PasswordResetDTO(
                 user.getDisplayName(),
                 user.getEmail(),
                 user.getPasswordVerificationToken());

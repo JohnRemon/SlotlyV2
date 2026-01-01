@@ -18,9 +18,11 @@ import com.example.SlotlyV2.repository.UserRepository;
 import com.example.SlotlyV2.security.JwtTokenProvider;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class JwtAuthenticationService {
 
     private final AuthenticationManager authenticationManager;
