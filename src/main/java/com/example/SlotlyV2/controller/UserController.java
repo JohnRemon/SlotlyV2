@@ -24,7 +24,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/api/v1/users")
 @RequiredArgsConstructor
 public class UserController {
     private final UserService userService;
@@ -97,10 +97,4 @@ public class UserController {
 
         return ResponseEntity.ok(response);
     }
-
-    // So the user first sends a request with only his email to reset-password
-    // We send the user an email with password Token
-    // then we send him to /reset-password?token=<token> and he can send a post
-    // request there with his password and its confirmation
-    // the user password is changed successfully
 }

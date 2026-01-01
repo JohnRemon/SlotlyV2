@@ -20,7 +20,7 @@ public class AvailabilityRulesDTO {
     private Integer maxSlotsPerUser = 1;
 
     @NotNull
-    private Boolean allowCancellations = true;
+    private Boolean allowsCancellations = true;
 
     @NotNull
     private Boolean isPublic = true;
@@ -28,7 +28,7 @@ public class AvailabilityRulesDTO {
     public AvailabilityRulesDTO(AvailabilityRules rules) {
         this.slotDurationMinutes = rules.getSlotDurationMinutes();
         this.maxSlotsPerUser = rules.getMaxSlotsPerUser();
-        this.allowCancellations = rules.getAllowCancellations();
+        this.allowsCancellations = rules.getAllowCancellations();
         this.isPublic = rules.getIsPublic();
     }
 }

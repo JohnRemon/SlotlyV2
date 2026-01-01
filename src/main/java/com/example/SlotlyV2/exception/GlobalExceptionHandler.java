@@ -61,7 +61,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(SlotNotFoundException.class)
     public ResponseEntity<ApiResponse<Void>> handleSlotNotFound(SlotNotFoundException ex) {
         return ResponseEntity
-                .badRequest()
+                .status(HttpStatus.NOT_FOUND)
                 .body(new ApiResponse<>(ex.getMessage(), null));
     }
 

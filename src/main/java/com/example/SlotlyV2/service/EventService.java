@@ -1,7 +1,5 @@
 package com.example.SlotlyV2.service;
 
-import java.util.List;
-
 import org.springframework.stereotype.Service;
 
 import com.example.SlotlyV2.dto.EventRequest;
@@ -46,7 +44,7 @@ public class EventService {
         AvailabilityRules rules = new AvailabilityRules();
         rules.setSlotDurationMinutes(request.getRules().getSlotDurationMinutes());
         rules.setMaxSlotsPerUser(request.getRules().getMaxSlotsPerUser());
-        rules.setAllowCancellations(request.getRules().getAllowCancellations());
+        rules.setAllowCancellations(request.getRules().getAllowsCancellations());
         rules.setIsPublic(request.getRules().getIsPublic());
 
         event.setRules(rules);
@@ -56,10 +54,6 @@ public class EventService {
         slotService.generateSlots(savedEvent);
 
         return savedEvent;
-    }
-
-    public List<Event> getEvents() {
-        return eventRepository.findAll();
     }
 
     public Event getEventById(Long id) {

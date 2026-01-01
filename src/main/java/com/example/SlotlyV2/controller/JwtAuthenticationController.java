@@ -17,7 +17,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/api/auth/jwt")
+@RequestMapping("/api/v1/auth/jwt")
 @RequiredArgsConstructor
 public class JwtAuthenticationController {
 

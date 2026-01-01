@@ -21,7 +21,7 @@ import com.example.SlotlyV2.service.EventService;
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("api/events")
+@RequestMapping("api/v1/events")
 public class EventController {
     private final EventService eventService;
 

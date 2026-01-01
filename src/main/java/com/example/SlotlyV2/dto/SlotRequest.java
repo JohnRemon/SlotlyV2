@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 @Data
@@ -24,5 +25,6 @@ public class SlotRequest {
     @NotBlank(message = "Attendee email is required")
     private String attendeeEmail;
 
+    @Size(max = 500, message = "Notes cannot exceed 500 characters")
     private String notes;
 }

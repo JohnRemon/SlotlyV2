@@ -21,7 +21,7 @@ import com.example.SlotlyV2.service.UserService;
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/v1/")
 public class SlotController {
     private final SlotService slotService;
     private final UserService userService;
