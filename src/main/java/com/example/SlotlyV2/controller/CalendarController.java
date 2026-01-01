@@ -32,7 +32,7 @@ public class CalendarController {
 
         return ResponseEntity.ok()
                 .header("Content-Type", "text/calendar; charset=utf-8")
-                .header("Content-Disposition", "attachment; filename:event.ics")
+                .header("Content-Disposition", "attachment; filename=event.ics")
                 .body(ics);
     }
 }

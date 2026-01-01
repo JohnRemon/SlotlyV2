@@ -4,7 +4,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.coyote.BadRequestException;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
@@ -12,6 +11,7 @@ import com.example.SlotlyV2.dto.BookingEmailData;
 import com.example.SlotlyV2.dto.SlotRequest;
 import com.example.SlotlyV2.event.SlotBookedEvent;
 import com.example.SlotlyV2.exception.EventNotFoundException;
+import com.example.SlotlyV2.exception.InvalidSlotException;
 import com.example.SlotlyV2.exception.MaxCapacityExceededException;
 import com.example.SlotlyV2.exception.SlotAlreadyBookedException;
 import com.example.SlotlyV2.exception.SlotNotFoundException;
@@ -62,14 +62,14 @@ public class SlotService {
     }
 
     @Transactional
-    public Slot bookSlot(SlotRequest request) throws BadRequestException {
+    public Slot bookSlot(SlotRequest request) {
         // Find the slot
         Slot slot = slotRepository.findByEventIdAndStartTime(request.getEventId(), request.getStartTime())
                 .orElseThrow(() -> new SlotNotFoundException("Slot Not Found"));
 
         // Check that the slot belongs to the event
         if (!slot.getEvent().getId().equals(request.getEventId())) {
-            throw new BadRequestException("Slot does not belong to this event");
+            throw new InvalidSlotException("Slot does not belong to this event");
         }
 
         // Check that slot is available

@@ -2,7 +2,6 @@ package com.example.SlotlyV2.controller;
 
 import java.util.List;
 
-import org.apache.coyote.BadRequestException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -46,8 +45,7 @@ public class SlotController {
     }
 
     @PostMapping("{shareableId}")
-    public ResponseEntity<ApiResponse<SlotResponse>> bookSlot(@RequestBody @Valid SlotRequest request)
-            throws BadRequestException {
+    public ResponseEntity<ApiResponse<SlotResponse>> bookSlot(@RequestBody @Valid SlotRequest request) {
         Slot bookedSlot = slotService.bookSlot(request);
 
         ApiResponse<SlotResponse> response = new ApiResponse<>("Slot booked successfully",

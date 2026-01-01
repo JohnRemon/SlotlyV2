@@ -13,18 +13,14 @@ import com.example.SlotlyV2.repository.EventRepository;
 import com.example.SlotlyV2.model.*;
 
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 
 @Service
+@RequiredArgsConstructor
 public class EventService {
     private final EventRepository eventRepository;
     private final SlotService slotService;
     private final UserService userService;
-
-    public EventService(EventRepository eventRepository, SlotService slotService, UserService userService) {
-        this.eventRepository = eventRepository;
-        this.slotService = slotService;
-        this.userService = userService;
-    }
 
     @Transactional
     public Event createEvent(EventRequest request) {
