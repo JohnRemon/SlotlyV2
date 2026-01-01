@@ -33,6 +33,7 @@ public class SlotService {
     private final EventRepository eventRepository;
     private final ApplicationEventPublisher eventPublisher;
 
+    @Transactional(rollbackOn = Exception.class)
     public void generateSlots(Event event) {
         LocalDateTime start = event.getEventStart();
         LocalDateTime end = event.getEventEnd();
@@ -58,7 +59,7 @@ public class SlotService {
         return slotRepository.findByEventId(eventId);
     }
 
-    @Transactional
+    @Transactional(rollbackOn = Exception.class)
     public Slot bookSlot(SlotRequest request) {
         // Find the slot
         Slot slot = slotRepository.findByEventIdAndStartTime(request.getEventId(), request.getStartTime())

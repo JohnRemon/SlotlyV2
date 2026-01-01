@@ -22,7 +22,7 @@ public class EventService {
     private final SlotService slotService;
     private final UserService userService;
 
-    @Transactional
+    @Transactional(rollbackOn = Exception.class)
     public Event createEvent(EventRequest request) {
         // Get current user
         User host = userService.getCurrentUser();

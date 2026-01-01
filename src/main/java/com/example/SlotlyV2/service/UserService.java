@@ -27,6 +27,7 @@ import com.example.SlotlyV2.repository.UserRepository;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -40,6 +41,7 @@ public class UserService {
     private final ApplicationEventPublisher eventPublisher;
     private final VerificationTokenService verificationTokenService;
 
+    @Transactional(rollbackOn = Exception.class)
     public User registerUser(RegisterRequest request) {
         // Check if email already exsists
         if (userRepository.existsByEmail(request.getEmail())) {
@@ -113,6 +115,7 @@ public class UserService {
         eventPublisher.publishEvent(new PasswordResetEvent(data));
     }
 
+    @Transactional(rollbackOn = Exception.class)
     public void resetPassword(String token, PasswordResetConfirmRequest request) {
         User user = verificationTokenService.verifyPasswordVerificationToken(token);
 
