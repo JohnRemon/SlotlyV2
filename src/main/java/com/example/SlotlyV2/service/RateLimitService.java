@@ -11,10 +11,8 @@ import com.example.SlotlyV2.config.RateLimitProperties;
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.RequiredArgsConstructor;
 
 @Service
-@RequiredArgsConstructor
 public class RateLimitService {
     private final RateLimitProperties rateLimitProperties;
     private final Cache<String, Bucket> cache;
