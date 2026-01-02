@@ -17,6 +17,7 @@ import com.example.SlotlyV2.dto.RegisterRequest;
 import com.example.SlotlyV2.dto.UserVerificationDTO;
 import com.example.SlotlyV2.event.EmailVerificationEvent;
 import com.example.SlotlyV2.event.PasswordResetEvent;
+import com.example.SlotlyV2.exception.AccountNotVerifiedException;
 import com.example.SlotlyV2.exception.InvalidCredentialsException;
 import com.example.SlotlyV2.exception.PasswordMismatchException;
 import com.example.SlotlyV2.exception.UnauthorizedAccessException;
@@ -85,9 +86,14 @@ public class UserService {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
 
+            User user = (User) authentication.getPrincipal();
+            if (!user.getIsVerified()) {
+                throw new AccountNotVerifiedException("Please verify your account first");
+            }
+
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
-            return (User) authentication.getPrincipal();
+            return user;
         } catch (BadCredentialsException e) {
             throw new InvalidCredentialsException("Invalid Credentials");
         }

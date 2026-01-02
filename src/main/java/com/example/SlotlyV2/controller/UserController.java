@@ -80,8 +80,9 @@ public class UserController {
 
     @PostMapping("/reset-password/confirm")
     public ApiResponse<Void> verifyPassword(@RequestParam String token,
-            @RequestBody @Valid PasswordResetConfirmRequest request) {
+            @RequestBody @Valid PasswordResetConfirmRequest request, HttpServletRequest httpServletRequest) {
         userService.resetPassword(token, request);
+        userService.logout(httpServletRequest);
         return new ApiResponse<>("Password changed successfully. Please login", null);
     }
 }

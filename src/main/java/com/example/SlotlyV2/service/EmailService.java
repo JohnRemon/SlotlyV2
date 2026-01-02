@@ -119,7 +119,8 @@ public class EmailService {
         try {
             Map<String, Object> fields = new HashMap<>();
             fields.put("displayName", data.getDisplayName());
-            fields.put("passwordResetLink", appBaseUrl + "/api/v1/users/reset-password?token=" + data.getToken());
+            fields.put("passwordResetLink",
+                    appBaseUrl + "/api/v1/users/reset-password/confirm?token=" + data.getToken());
 
             String htmlContent = renderTemplate("email/reset-password", fields);
 

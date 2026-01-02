@@ -43,7 +43,7 @@ public class SecurityConfig {
                                 "/api/v1/users/login",
                                 "/api/v1/{shareableId}",
                                 "/api/v1/auth/jwt/**",
-                                "/api/v1/slots/*/calendar",
+                                "/api/v1/calendar/**",
                                 "/api/v1/users/verify-email/**")
                         .permitAll()
                         .anyRequest().authenticated())
