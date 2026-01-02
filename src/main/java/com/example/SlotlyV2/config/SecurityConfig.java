@@ -39,12 +39,12 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                "/api/users/register",
-                                "/api/users/login",
-                                "/api/{shareableId}",
-                                "/api/auth/jwt/**",
-                                "/api/slots/*/calendar",
-                                "/api/users/verify-email/**")
+                                "/api/v1/users/register",
+                                "/api/v1/users/login",
+                                "/api/v1/{shareableId}",
+                                "/api/v1/auth/jwt/**",
+                                "/api/v1/slots/*/calendar",
+                                "/api/v1/users/verify-email/**")
                         .permitAll()
                         .anyRequest().authenticated())
                 .formLogin(form -> form.disable())
