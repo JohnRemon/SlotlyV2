@@ -90,13 +90,14 @@ public class EmailService {
 
     }
 
+    @Async("emailTaskExecutor")
     public void sendUserRegistrationVerification(UserVerificationDTO data) {
         log.info("Sending regsitration verification to: {}", data.getEmail());
 
         try {
             Map<String, Object> fields = new HashMap<>();
             fields.put("displayName", data.getDisplayName());
-            fields.put("verificationLink", appBaseUrl + "/api/users/verify-email?token=" + data.getToken());
+            fields.put("verificationLink", appBaseUrl + "/api/v1/users/verify-email?token=" + data.getToken());
 
             String htmlContent = renderTemplate("email/email-verification", fields);
 
@@ -105,19 +106,29 @@ public class EmailService {
                     "Please verify your account",
                     htmlContent);
 
-            log.info("Verification email sent successfully to {}", data.getEmail());
+            log.info("Verification email sent successfully to: {}", data.getEmail());
         } catch (Exception e) {
             log.error("Failed to send verification email for user: {}", data.getEmail());
         }
     }
 
+    @Async("emailTaskExecutor")
     public void sendPasswordRequest(PasswordResetDTO data) {
         log.info("Sending Password Reset Email to: {}", data.getEmail());
 
         try {
             Map<String, Object> fields = new HashMap<>();
             fields.put("displayName", data.getDisplayName());
-            fields.put("passwordResetLink", appBaseUrl + "/api/users/reset-password?token=" + data.getToken());
+            fields.put("passwordResetLink", appBaseUrl + "/api/v1/users/reset-password?token=" + data.getToken());
+
+            String htmlContent = renderTemplate("email/reset-password", fields);
+
+            sendEmail(
+                    data.getEmail(),
+                    "Reset your password",
+                    htmlContent);
+
+            log.info("Password reset email sent successfully to: {}", data.getEmail());
         } catch (Exception e) {
             log.error("Failed to send password reset email for user: {}", data.getEmail());
         }
