@@ -1,5 +1,6 @@
 package com.example.SlotlyV2.service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -31,8 +32,13 @@ public class EventService {
         User host = userService.getCurrentUser();
 
         // Verify Start and End Dates
-        if (request.getEventEnd().isBefore(request.getEventStart())) {
+        if (request.getEventEnd().isBefore(request.getEventStart())
+                || request.getEventEnd().isEqual(request.getEventStart())) {
             throw new InvalidEventException("Event end must be after start");
+        }
+
+        if (request.getEventStart().isBefore(LocalDateTime.now())) {
+            throw new InvalidEventException("Event must start in the future");
         }
 
         // Creat the Event

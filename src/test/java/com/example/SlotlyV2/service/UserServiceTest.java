@@ -122,6 +122,7 @@ public class UserServiceTest {
         // Assert - Event Publish
         ArgumentCaptor<EmailVerificationEvent> eventCaptor = ArgumentCaptor.forClass(EmailVerificationEvent.class);
         verify(applicationEventPublisher).publishEvent(eventCaptor.capture());
+
         EmailVerificationEvent event = eventCaptor.getValue();
         assertEquals(user.getDisplayName(), event.getUserVerificationDTO().getDisplayName());
         assertEquals(user.getEmail(), event.getUserVerificationDTO().getEmail());
