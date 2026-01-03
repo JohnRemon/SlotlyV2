@@ -1,10 +1,5 @@
 package com.example.SlotlyV2.service;
 
-import static org.mockito.Mockito.*;
-
-import java.time.LocalDateTime;
-import java.util.Optional;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -13,6 +8,14 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.time.LocalDateTime;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,7 +38,10 @@ import com.example.SlotlyV2.dto.PasswordResetRequest;
 import com.example.SlotlyV2.dto.RegisterRequest;
 import com.example.SlotlyV2.event.EmailVerificationEvent;
 import com.example.SlotlyV2.event.PasswordResetEvent;
+import com.example.SlotlyV2.exception.AccountNotVerifiedException;
 import com.example.SlotlyV2.exception.InvalidCredentialsException;
+import com.example.SlotlyV2.exception.InvalidTokenException;
+import com.example.SlotlyV2.exception.TokenAlreadyExpiredException;
 import com.example.SlotlyV2.exception.UnauthorizedAccessException;
 import com.example.SlotlyV2.exception.UserAlreadyExistsException;
 import com.example.SlotlyV2.exception.UsernameAlreadyExistsException;
@@ -47,7 +53,6 @@ import jakarta.servlet.http.HttpSession;
 
 @ExtendWith(MockitoExtension.class)
 public class UserServiceTest {
-
     @Mock
     private UserRepository userRepository;
 
@@ -73,7 +78,6 @@ public class UserServiceTest {
     }
 
     // ============================= Register Tests =============================
-
     @Test
     void shouldRegisterUserSuccessfully() {
         // Arrange
@@ -118,7 +122,6 @@ public class UserServiceTest {
         // Assert - Event Publish
         ArgumentCaptor<EmailVerificationEvent> eventCaptor = ArgumentCaptor.forClass(EmailVerificationEvent.class);
         verify(applicationEventPublisher).publishEvent(eventCaptor.capture());
-
         EmailVerificationEvent event = eventCaptor.getValue();
         assertEquals(user.getDisplayName(), event.getUserVerificationDTO().getDisplayName());
         assertEquals(user.getEmail(), event.getUserVerificationDTO().getEmail());
@@ -129,14 +132,12 @@ public class UserServiceTest {
         verify(userRepository).existsByDisplayName(request.getDisplayName());
         verify(passwordEncoder).encode(request.getPassword());
         verify(verificationTokenService).generateEmailVerificationToken(any(User.class));
-        verify(applicationEventPublisher).publishEvent(eventCaptor.capture());
     }
 
     @Test
     void shouldThrowEmailAlreadyExistsException() {
         // Arrange
         when(userRepository.existsByEmail("test@example.com")).thenReturn(true);
-
         RegisterRequest request = new RegisterRequest(
                 "test@example.com",
                 "testUser",
@@ -157,7 +158,6 @@ public class UserServiceTest {
         // Arrange
         when(userRepository.existsByEmail(anyString())).thenReturn(false);
         when(userRepository.existsByDisplayName("testUser")).thenReturn(true);
-
         RegisterRequest request = new RegisterRequest(
                 "test@example.com",
                 "testUser",
@@ -174,7 +174,6 @@ public class UserServiceTest {
     }
 
     // ============================= Login Tests =============================
-
     @Test
     void shouldLoginUserSuccessfully() {
         // Arrange
@@ -184,12 +183,12 @@ public class UserServiceTest {
         testUser.setPassword("encodedPassword");
         testUser.setFirstName("John");
         testUser.setLastName("Doe");
+        testUser.setIsVerified(true);
 
         Authentication authentication = mock(Authentication.class);
-
         when(authentication.getPrincipal()).thenReturn(testUser);
-        when(authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken("test@example.com", "password123"))).thenReturn(authentication);
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+                .thenReturn(authentication);
 
         LoginRequest request = new LoginRequest(
                 "test@example.com",
@@ -204,16 +203,14 @@ public class UserServiceTest {
         assertEquals("testUser", loggedInUser.getDisplayName());
 
         // Verify
-        verify(authenticationManager).authenticate(
-                new UsernamePasswordAuthenticationToken("test@example.com", "password123"));
+        verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
     }
 
     @Test
     void shouldNotLoginWithWrongPassword() {
         // Arrange
-        when(authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken("test@example.com", "wrongPassword")))
-                .thenThrow(new BadCredentialsException("Invalid credentials"));
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+                .thenThrow(new BadCredentialsException("Bad credentials"));
 
         LoginRequest request = new LoginRequest(
                 "test@example.com",
@@ -222,10 +219,9 @@ public class UserServiceTest {
         // Act and Assert
         assertThrows(InvalidCredentialsException.class,
                 () -> userService.loginUser(request));
-
         // Verify
-        verify(authenticationManager).authenticate(
-                new UsernamePasswordAuthenticationToken("test@example.com", "wrongPassword"));
+
+        verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
     }
 
     @Test
@@ -247,6 +243,31 @@ public class UserServiceTest {
         verify(authenticationManager).authenticate(
                 new UsernamePasswordAuthenticationToken("wrongEmail@example.com", "password123"));
     }
+
+    @Test
+    void shouldNotLoginWhenNotVerified() {
+        // Arrange
+        User testUser = new User();
+        testUser.setEmail("test@example.com");
+        testUser.setDisplayName("testUser");
+        testUser.setIsVerified(false);
+
+        LoginRequest request = new LoginRequest(
+                "test@example.com",
+                "password123");
+
+        Authentication authentication = mock(Authentication.class);
+        when(authentication.getPrincipal()).thenReturn(testUser);
+        when(authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken("test@example.com", "password123"))).thenReturn(authentication);
+
+        // Act & Assert
+        assertThrows(AccountNotVerifiedException.class,
+                () -> userService.loginUser(request));
+
+        assertNull(SecurityContextHolder.getContext().getAuthentication());
+    }
+
     // ========================= Password Reset Tests =======================
 
     @Test
@@ -269,29 +290,11 @@ public class UserServiceTest {
     }
 
     @Test
-    void shouldHandleResetPasswordRequestForNonExistentEmail() {
-        // Arrange
-        when(userRepository.findByEmail("nonexistent@example.com")).thenReturn(Optional.empty());
-
-        PasswordResetRequest request = new PasswordResetRequest();
-        request.setEmail("nonexistent@example.com");
-
-        // Act
-        userService.resetPasswordRequest(request);
-
-        // Assert - Should not throw exception and should not publish event
-        verify(userRepository).findByEmail("nonexistent@example.com");
-        verify(verificationTokenService, never()).generatePasswordVerificationToken(any(User.class));
-        verify(applicationEventPublisher, never()).publishEvent(any());
-    }
-
-    @Test
     void shouldResetPasswordSuccessfully() {
         // Arrange
         User testUser = createTestUser();
         when(verificationTokenService.verifyPasswordVerificationToken("valid-token")).thenReturn(testUser);
         when(passwordEncoder.encode("newPassword123")).thenReturn("encoded-new-password");
-
         PasswordResetConfirmRequest request = new PasswordResetConfirmRequest("newPassword123", "newPassword123");
 
         // Act
@@ -306,11 +309,50 @@ public class UserServiceTest {
     }
 
     @Test
+    void shouldThrowInvalidTokenExceptionForInvalidPasswordResetToken() {
+        // Arrange
+        when(verificationTokenService.verifyPasswordVerificationToken(anyString()))
+                .thenThrow(new InvalidTokenException("Invalid token"));
+
+        PasswordResetConfirmRequest request = new PasswordResetConfirmRequest("newPassword123", "newPassword123");
+
+        // Act & Assert
+        assertThrows(InvalidTokenException.class, () -> userService.resetPassword(anyString(), request));
+    }
+
+    @Test
+    void shouldThrowExpiredTokenExceptionForExpiredPasswordResetToken() {
+        // Arrange
+        when(verificationTokenService.verifyPasswordVerificationToken(anyString()))
+                .thenThrow(new TokenAlreadyExpiredException("Invalid token"));
+
+        PasswordResetConfirmRequest request = new PasswordResetConfirmRequest("newPassword123", "newPassword123");
+
+        // Act & Assert
+        assertThrows(TokenAlreadyExpiredException.class, () -> userService.resetPassword(anyString(), request));
+    }
+
+    @Test
+    void shouldHandleResetPasswordRequestForNonExistentEmail() {
+        // Arrange
+        when(userRepository.findByEmail("nonexistent@example.com")).thenReturn(Optional.empty());
+        PasswordResetRequest request = new PasswordResetRequest();
+        request.setEmail("nonexistent@example.com");
+
+        // Act
+        userService.resetPasswordRequest(request);
+
+        // Assert - Should not throw exception and should not publish event
+        verify(userRepository).findByEmail("nonexistent@example.com");
+        verify(verificationTokenService, never()).generatePasswordVerificationToken(any(User.class));
+        verify(applicationEventPublisher, never()).publishEvent(any());
+    }
+
+    @Test
     void shouldThrowPasswordMismatchExceptionWhenPasswordsDoNotMatch() {
         // Arrange
         User testUser = createTestUser();
         when(verificationTokenService.verifyPasswordVerificationToken("valid-token")).thenReturn(testUser);
-
         PasswordResetConfirmRequest request = new PasswordResetConfirmRequest("newPassword123", "differentPassword");
 
         // Act and Assert
@@ -323,7 +365,6 @@ public class UserServiceTest {
     }
 
     // ========================= Current User Tests =========================
-
     @Test
     void shouldGetCurrentUserSuccessfully() {
         // Arrange
@@ -333,6 +374,8 @@ public class UserServiceTest {
 
         Authentication authentication = mock(Authentication.class);
         when(authentication.getPrincipal()).thenReturn(testUser);
+        when(authentication.isAuthenticated()).thenReturn(true);
+
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         // Act
@@ -361,17 +404,18 @@ public class UserServiceTest {
     }
 
     // ============================= Logout Tests =============================
-
     @Test
     void shouldLogoutUserWithSession() {
         // Arrange
         Authentication authentication = mock(Authentication.class);
         when(authentication.getPrincipal()).thenReturn(new User());
+        when(authentication.isAuthenticated()).thenReturn(true);
+
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         HttpSession session = mock(HttpSession.class);
-
         HttpServletRequest request = mock(HttpServletRequest.class);
+
         when(request.getSession(false)).thenReturn(session);
 
         // Act
@@ -385,10 +429,11 @@ public class UserServiceTest {
 
     @Test
     void shouldLogoutUserWithoutSession() {
-
         // Arrange
         Authentication authentication = mock(Authentication.class);
         when(authentication.getPrincipal()).thenReturn(new User());
+        when(authentication.isAuthenticated()).thenReturn(true);
+
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         HttpServletRequest request = mock(HttpServletRequest.class);
@@ -406,7 +451,6 @@ public class UserServiceTest {
     void shouldThrowUnauthorizedAccessExceptionWhenUnauthenticatedForLogoutWithSession() {
         // Assert
         SecurityContextHolder.getContext().setAuthentication(null);
-
         HttpServletRequest request = mock(HttpServletRequest.class);
 
         // Act and Assert

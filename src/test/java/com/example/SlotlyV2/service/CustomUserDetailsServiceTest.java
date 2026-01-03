@@ -15,7 +15,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
-import com.example.SlotlyV2.exception.AccountNotVerifiedException;
 import com.example.SlotlyV2.model.User;
 import com.example.SlotlyV2.repository.UserRepository;
 
@@ -27,18 +26,6 @@ public class CustomUserDetailsServiceTest {
 
     @InjectMocks
     private CustomUserDetailsService customUserDetailsService;
-
-    @Test
-    void shouldNotLoadUsernameIfNotVerified() {
-        // Arrange
-        User testUser = createTestUser();
-        testUser.setIsVerified(false);
-        when(userRepository.findByEmail(testUser.getEmail())).thenReturn(Optional.of(testUser));
-
-        // Act & Assert
-        assertThrows(AccountNotVerifiedException.class,
-                () -> customUserDetailsService.loadUserByUsername(testUser.getEmail()));
-    }
 
     @Test
     void shouldLoadUsernameSuccessfully() {
