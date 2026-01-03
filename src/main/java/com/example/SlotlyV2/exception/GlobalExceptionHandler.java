@@ -44,6 +44,12 @@ public class GlobalExceptionHandler {
         return new ApiResponse<>(ex.getMessage(), null);
     }
 
+    @ExceptionHandler(UnauthorizedAccessException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public ApiResponse<Void> handleUnauthorizedAccess(UnauthorizedAccessException ex) {
+        return new ApiResponse<>(ex.getMessage(), null);
+    }
+
     @ExceptionHandler(EventNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ApiResponse<Void> handleEventNotFound(EventNotFoundException ex) {

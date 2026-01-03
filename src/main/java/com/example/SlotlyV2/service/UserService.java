@@ -81,12 +81,12 @@ public class UserService {
     }
 
     public User loginUser(LoginRequest request) {
-        // Spring handles authentication and session creation
         try {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
 
             User user = (User) authentication.getPrincipal();
+
             if (!user.getIsVerified()) {
                 throw new AccountNotVerifiedException("Please verify your account first");
             }
@@ -139,10 +139,15 @@ public class UserService {
     public User getCurrentUser() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
-        if (auth == null || auth.getPrincipal() == null) {
+        if (auth == null || !auth.isAuthenticated() || auth.getPrincipal() == null) {
             throw new UnauthorizedAccessException("User not authenticated");
         }
-        return (User) auth.getPrincipal();
+
+        if (auth.getPrincipal() instanceof User) {
+            return (User) auth.getPrincipal();
+        }
+
+        throw new UnauthorizedAccessException("User not authenticated");
     }
 
     public void logout(HttpServletRequest request) {
