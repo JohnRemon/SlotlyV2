@@ -55,10 +55,6 @@ public class SlotService {
         slotRepository.saveAll(slots);
     }
 
-    public List<Slot> getSlots(Long eventId) {
-        return slotRepository.findByEventId(eventId);
-    }
-
     @Transactional(rollbackOn = Exception.class)
     public Slot bookSlot(SlotRequest request) {
         // Find the slot
@@ -122,6 +118,10 @@ public class SlotService {
             displayName += " " + host.getLastName();
         }
         return displayName.trim();
+    }
+
+    public List<Slot> getSlots(Long eventId) {
+        return slotRepository.findByEventId(eventId);
     }
 
     public List<Slot> getBookedSlots(User user) {
