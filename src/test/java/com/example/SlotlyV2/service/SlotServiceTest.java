@@ -59,6 +59,169 @@ public class SlotServiceTest {
         reset(slotRepository, eventRepository, eventPublisher);
     }
 
+    @SuppressWarnings("unchecked")
+    @Test
+    void shouldGenerateSlotsWithinEventTimeBoundsAndPersistThem() {
+        // Arrange
+        AvailabilityRules rules = new AvailabilityRules();
+        rules.setSlotDurationMinutes(30);
+
+        Event event = new Event();
+        event.setId(1L);
+        event.setRules(rules);
+
+        LocalDateTime eventStart = LocalDateTime.of(2025, 1, 1, 10, 0);
+        LocalDateTime eventEnd = LocalDateTime.of(2025, 1, 1, 12, 0);
+
+        event.setEventStart(eventStart);
+        event.setEventEnd(eventEnd);
+
+        when(slotRepository.saveAll(any(List.class))).thenAnswer(invocation -> {
+            List<Slot> slots = invocation.getArgument(0);
+
+            assertNotNull(slots);
+            assertFalse(slots.isEmpty());
+
+            slots.forEach(slot -> {
+                assertEquals(event, slot.getEvent());
+                assertFalse(slot.getStartTime().isBefore(eventStart));
+                assertFalse(slot.getEndTime().isAfter(eventEnd));
+                assertEquals(null, slot.getBookedByEmail());
+                assertEquals(null, slot.getBookedByName());
+            });
+
+            return slots;
+        });
+
+        // Act
+        slotService.generateSlots(event);
+
+        // Assert
+        verify(slotRepository).saveAll(any(List.class));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void shouldGenerateSlotWhenEndTimeIsExactlyEqualToSlotEnd() {
+        // Arrange
+        AvailabilityRules rules = new AvailabilityRules();
+        rules.setSlotDurationMinutes(60);
+
+        Event event = new Event();
+        event.setId(1L);
+        event.setRules(rules);
+
+        LocalDateTime start = LocalDateTime.of(2025, 1, 1, 9, 0);
+        LocalDateTime end = LocalDateTime.of(2025, 1, 1, 10, 0);
+
+        event.setEventStart(start);
+        event.setEventEnd(end);
+
+        when(slotRepository.saveAll(any(List.class))).thenAnswer(invocation -> {
+            List<Slot> slots = invocation.getArgument(0);
+
+            assertEquals(1, slots.size());
+
+            Slot slot = slots.get(0);
+            assertEquals(start, slot.getStartTime());
+            assertEquals(end, slot.getEndTime());
+            assertEquals(event, slot.getEvent());
+
+            return slots;
+        });
+
+        // Act
+        slotService.generateSlots(event);
+
+        // Assert
+        verify(slotRepository).saveAll(any(List.class));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void shouldGenerateNoSlotsWhenSlotDurationExceedsEventDuration() {
+        // Arrange
+        AvailabilityRules rules = new AvailabilityRules();
+        rules.setSlotDurationMinutes(90);
+
+        Event event = new Event();
+        event.setId(1L);
+        event.setRules(rules);
+
+        event.setEventStart(LocalDateTime.of(2025, 1, 1, 10, 0));
+        event.setEventEnd(LocalDateTime.of(2025, 1, 1, 11, 0));
+
+        when(slotRepository.saveAll(any(List.class))).thenAnswer(invocation -> {
+            List<Slot> slots = invocation.getArgument(0);
+
+            assertNotNull(slots);
+            assertEquals(0, slots.size());
+
+            return slots;
+        });
+
+        // Act
+        slotService.generateSlots(event);
+
+        // Assert
+        verify(slotRepository).saveAll(any(List.class));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void shouldNotGenerateOverlappingSlots() {
+        // Arrange
+        AvailabilityRules rules = new AvailabilityRules();
+        rules.setSlotDurationMinutes(30);
+
+        Event event = new Event();
+        event.setId(1L);
+        event.setRules(rules);
+
+        event.setEventStart(LocalDateTime.of(2025, 1, 1, 10, 0));
+        event.setEventEnd(LocalDateTime.of(2025, 1, 1, 12, 0));
+
+        when(slotRepository.saveAll(any(List.class))).thenAnswer(invocation -> {
+            List<Slot> slots = invocation.getArgument(0);
+
+            for (int i = 0; i < slots.size() - 1; i++) {
+                Slot current = slots.get(i);
+                Slot next = slots.get(i + 1);
+
+                assertFalse(current.getEndTime().isAfter(next.getStartTime()));
+            }
+
+            return slots;
+        });
+
+        // Act
+        slotService.generateSlots(event);
+
+        // Assert
+        verify(slotRepository).saveAll(any(List.class));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void shouldCallSaveAllOnceWhenGeneratingSlots() {
+        // Arrange
+        AvailabilityRules rules = new AvailabilityRules();
+        rules.setSlotDurationMinutes(30);
+
+        Event event = new Event();
+        event.setId(1L);
+        event.setRules(rules);
+
+        event.setEventStart(LocalDateTime.of(2025, 1, 1, 10, 0));
+        event.setEventEnd(LocalDateTime.of(2025, 1, 1, 11, 0));
+
+        // Act
+        slotService.generateSlots(event);
+
+        // Assert
+        verify(slotRepository).saveAll(any(List.class));
+    }
+
     @Test
     void shouldBookSlotSuccessfully() {
         // Arrange

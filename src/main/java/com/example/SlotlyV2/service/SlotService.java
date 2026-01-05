@@ -40,7 +40,8 @@ public class SlotService {
         List<Slot> slots = new ArrayList<>();
 
         // TODO: Improve the slot generation algorithm
-        while (start.plusMinutes(event.getRules().getSlotDurationMinutes()).isBefore(end)) {
+        while (start.plusMinutes(event.getRules().getSlotDurationMinutes()).isBefore(end)
+                || start.plusMinutes(event.getRules().getSlotDurationMinutes()).isEqual(end)) {
             Slot slot = new Slot();
             slot.setEvent(event);
             slot.setStartTime(start);
