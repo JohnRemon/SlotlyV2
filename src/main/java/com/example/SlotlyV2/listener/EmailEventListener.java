@@ -6,10 +6,12 @@ import org.springframework.stereotype.Component;
 
 import com.example.SlotlyV2.dto.BookingEmailDTO;
 import com.example.SlotlyV2.dto.PasswordResetDTO;
+import com.example.SlotlyV2.dto.SlotCancelledEmailDTO;
 import com.example.SlotlyV2.dto.UserVerificationDTO;
 import com.example.SlotlyV2.event.EmailVerificationEvent;
 import com.example.SlotlyV2.event.PasswordResetEvent;
 import com.example.SlotlyV2.event.SlotBookedEvent;
+import com.example.SlotlyV2.event.SlotCancelledEvent;
 import com.example.SlotlyV2.service.EmailService;
 
 import lombok.RequiredArgsConstructor;
@@ -34,6 +36,22 @@ public class EmailEventListener {
             log.info("Emails sent successfully for slot: {}", data.getSlotId());
         } catch (Exception e) {
             log.error("Failed to send emails for slot {}: {}", data.getSlotId(), e.getMessage(), e);
+        }
+    }
+
+    @EventListener
+    @Async("emailTaskExecutor")
+    public void handleSlotCancelled(SlotCancelledEvent event) {
+        SlotCancelledEmailDTO data = event.getSlotCancelledEmailDTO();
+
+        log.debug("Received SlotCancelledEvent for slot: {}", data.getSlotId());
+
+        try {
+            emailService.sendCancellationConfirmation(data);
+            emailService.sendHostCancellationNotification(data);
+            log.info("Cancellation emails sent successfully for slot: {}", data.getSlotId());
+        } catch (Exception e) {
+            log.error("Failed to send cancellation emails for slot {}: {}", data.getSlotId(), e.getMessage(), e);
         }
     }
 

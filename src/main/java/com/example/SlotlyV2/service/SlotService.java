@@ -8,8 +8,11 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import com.example.SlotlyV2.dto.BookingEmailDTO;
+import com.example.SlotlyV2.dto.CancelBookingRequest;
+import com.example.SlotlyV2.dto.SlotCancelledEmailDTO;
 import com.example.SlotlyV2.dto.SlotRequest;
 import com.example.SlotlyV2.event.SlotBookedEvent;
+import com.example.SlotlyV2.event.SlotCancelledEvent;
 import com.example.SlotlyV2.exception.EventNotFoundException;
 import com.example.SlotlyV2.exception.InvalidSlotException;
 import com.example.SlotlyV2.exception.MaxCapacityExceededException;
@@ -106,6 +109,47 @@ public class SlotService {
 
         // Publish the Booking Event
         eventPublisher.publishEvent(new SlotBookedEvent(bookingData));
+
+        return savedSlot;
+    }
+
+    public Slot cancelBooking(CancelBookingRequest request) {
+        // Find the slot
+        Slot slot = slotRepository.findByEventIdAndStartTime(request.getEventId(), request.getStartTime())
+                .orElseThrow(() -> new SlotNotFoundException("Slot Not Found"));
+
+        // Check that the slot belongs to the event
+        if (!slot.getEvent().getId().equals(request.getEventId())) {
+            throw new InvalidSlotException("Slot does not belong to this event");
+        }
+
+        // Check that the slot is booked
+        if (slot.isAvailable()) {
+            throw new InvalidSlotException("This slot is not booked");
+        }
+
+        // Cancel the booking
+        slot.setBookedByEmail(null);
+        slot.setBookedByName(null);
+
+        // Save the Slot
+        Slot savedSlot = slotRepository.save(slot);
+
+        // Prepare Cancellation data
+        String hostDisplayName = getHostDisplayName(savedSlot.getEvent().getHost());
+
+        SlotCancelledEmailDTO cancellationData = new SlotCancelledEmailDTO(
+                savedSlot.getId(),
+                savedSlot.getStartTime().toString(),
+                savedSlot.getEndTime().toString(),
+                slot.getBookedByName(),
+                slot.getBookedByEmail(),
+                savedSlot.getEvent().getEventName(),
+                hostDisplayName,
+                savedSlot.getEvent().getHost().getEmail());
+
+        // Publish the Cancellation Event
+        eventPublisher.publishEvent(new SlotCancelledEvent(cancellationData));
 
         return savedSlot;
     }
