@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.SlotlyV2.dto.ApiResponse;
+import com.example.SlotlyV2.dto.CancelBookingRequest;
 import com.example.SlotlyV2.dto.SlotRequest;
 import com.example.SlotlyV2.dto.SlotResponse;
 import com.example.SlotlyV2.model.Slot;
@@ -46,6 +47,12 @@ public class SlotController {
 
         Slot bookedSlot = slotService.bookSlot(request);
         return new ApiResponse<>("Slot booked successfully", new SlotResponse(bookedSlot));
+    }
+
+    @PostMapping("slots/cancel")
+    public ApiResponse<SlotResponse> cancelBooking(@Valid @RequestBody CancelBookingRequest request) {
+        Slot cancelledSlot = slotService.cancelBooking(request);
+        return new ApiResponse<>("Slot booking cancelled successfully", new SlotResponse(cancelledSlot));
     }
 
     @GetMapping("{shareableId}")
