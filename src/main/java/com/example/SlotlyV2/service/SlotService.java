@@ -1,6 +1,8 @@
 package com.example.SlotlyV2.service;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,6 +20,7 @@ import com.example.SlotlyV2.exception.InvalidSlotException;
 import com.example.SlotlyV2.exception.MaxCapacityExceededException;
 import com.example.SlotlyV2.exception.SlotAlreadyBookedException;
 import com.example.SlotlyV2.exception.SlotNotFoundException;
+import com.example.SlotlyV2.exception.UnauthorizedAccessException;
 import com.example.SlotlyV2.model.Event;
 import com.example.SlotlyV2.model.Slot;
 import com.example.SlotlyV2.model.User;
@@ -42,9 +45,15 @@ public class SlotService {
         LocalDateTime end = event.getEventEnd();
         List<Slot> slots = new ArrayList<>();
 
+        if (event.getRules().getSlotDurationMinutes() <= 0) {
+            throw new InvalidSlotException("Slot duration must be greater than zero");
+        }
+
         // TODO: Improve the slot generation algorithm
         while (start.plusMinutes(event.getRules().getSlotDurationMinutes()).isBefore(end)
-                || start.plusMinutes(event.getRules().getSlotDurationMinutes()).isEqual(end)) {
+                || start.plusMinutes(event.getRules().getSlotDurationMinutes()).isEqual(end))
+
+        {
             Slot slot = new Slot();
             slot.setEvent(event);
             slot.setStartTime(start);
@@ -65,14 +74,15 @@ public class SlotService {
         Slot slot = slotRepository.findByEventIdAndStartTime(request.getEventId(), request.getStartTime())
                 .orElseThrow(() -> new SlotNotFoundException("Slot Not Found"));
 
-        // Check that the slot belongs to the event
-        if (!slot.getEvent().getId().equals(request.getEventId())) {
-            throw new InvalidSlotException("Slot does not belong to this event");
-        }
-
         // Check that slot is available
         if (!slot.isAvailable()) {
             throw new SlotAlreadyBookedException("This slot is already booked. Please choose another slot");
+        }
+
+        // Check that slot is not in the past
+        ZoneId zone = ZoneId.of(slot.getEvent().getTimeZone());
+        if (slot.getStartTime().atZone(zone).isBefore(ZonedDateTime.now(zone))) {
+            throw new InvalidSlotException("Cannot book a past slot");
         }
 
         // Check event capacity
@@ -113,20 +123,31 @@ public class SlotService {
         return savedSlot;
     }
 
+    @Transactional(rollbackOn = Exception.class)
     public Slot cancelBooking(CancelBookingRequest request) {
         // Find the slot
         Slot slot = slotRepository.findByEventIdAndStartTime(request.getEventId(), request.getStartTime())
                 .orElseThrow(() -> new SlotNotFoundException("Slot Not Found"));
 
-        // Check that the slot belongs to the event
-        if (!slot.getEvent().getId().equals(request.getEventId())) {
-            throw new InvalidSlotException("Slot does not belong to this event");
+        if (!slot.getEvent().getRules().getAllowsCancellations()) {
+            throw new InvalidSlotException("Cancellations are not allowed for this event");
         }
 
-        // Check that the slot is booked
+        ZoneId zone = ZoneId.of(slot.getEvent().getTimeZone());
+        if (slot.getStartTime().atZone(zone).isBefore(ZonedDateTime.now(zone))) {
+            throw new InvalidSlotException("Cannot cancel a past slot");
+        }
+
         if (slot.isAvailable()) {
             throw new InvalidSlotException("This slot is not booked");
         }
+
+        if (!slot.getBookedByEmail().equals(request.getAttendeeEmail())) {
+            throw new UnauthorizedAccessException("This email is not associated with the booked slot");
+        }
+
+        String attendeeName = slot.getBookedByName();
+        String attendeeEmail = slot.getBookedByEmail();
 
         // Cancel the booking
         slot.setBookedByEmail(null);
@@ -142,8 +163,8 @@ public class SlotService {
                 savedSlot.getId(),
                 savedSlot.getStartTime().toString(),
                 savedSlot.getEndTime().toString(),
-                slot.getBookedByName(),
-                slot.getBookedByEmail(),
+                attendeeName,
+                attendeeEmail,
                 savedSlot.getEvent().getEventName(),
                 hostDisplayName,
                 savedSlot.getEvent().getHost().getEmail());
@@ -174,8 +195,13 @@ public class SlotService {
     }
 
     public List<Slot> getAvailableSlotsByShareableId(String shareableId) {
+
         Event event = eventRepository.findByShareableId(shareableId)
                 .orElseThrow(() -> new EventNotFoundException("Event Not Found"));
+
+        if (!event.getRules().getIsPublic()) {
+            throw new UnauthorizedAccessException("Event is private");
+        }
 
         return slotRepository.findByEventAndBookedByEmailIsNullAndBookedByNameIsNull(event);
     }

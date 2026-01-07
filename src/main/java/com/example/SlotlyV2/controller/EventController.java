@@ -23,7 +23,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("api/v1/events")
+@RequestMapping("/api/v1/events")
 @RequiredArgsConstructor
 public class EventController {
     private final EventService eventService;
@@ -52,5 +52,11 @@ public class EventController {
     public ApiResponse<Void> deleteEventById(@PathVariable Long id) {
         eventService.deleteEventById(id);
         return new ApiResponse<>("Event deleted successfully", null);
+    }
+
+    @GetMapping("/share/{shareableId}")
+    public ApiResponse<EventResponse> getEventByShareableId(@PathVariable String shareableId) {
+        Event event = eventService.getEventByShareableId(shareableId);
+        return new ApiResponse<>("Event fetched successfully", new EventResponse(event));
     }
 }

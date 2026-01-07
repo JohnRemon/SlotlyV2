@@ -1,6 +1,7 @@
 package com.example.SlotlyV2.service;
 
-import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.List;
 
 import org.springframework.context.ApplicationEventPublisher;
@@ -37,12 +38,14 @@ public class EventService {
         User host = userService.getCurrentUser();
 
         // Verify Start and End Dates
-        if (request.getEventEnd().isBefore(request.getEventStart())
-                || request.getEventEnd().isEqual(request.getEventStart())) {
+        if (!request.getEventEnd().isAfter(request.getEventStart())) {
             throw new InvalidEventException("Event end must be after start");
         }
 
-        if (request.getEventStart().isBefore(LocalDateTime.now())) {
+        ZoneId zone = ZoneId.of(request.getTimeZone());
+        ZonedDateTime now = ZonedDateTime.now(zone);
+
+        if (request.getEventStart().atZone(zone).isBefore(now)) {
             throw new InvalidEventException("Event must start in the future");
         }
 
@@ -71,18 +74,25 @@ public class EventService {
     }
 
     public List<EventResponse> getEvents(User host) {
-        List<Event> events = eventRepository.findByHost(host);
 
-        return events.stream()
-                .map(event -> new EventResponse(event))
+        return eventRepository.findByHost(host)
+                .stream()
+                .map(EventResponse::new)
                 .toList();
     }
 
     public Event getEventById(Long id) {
-        return eventRepository.findById(id)
+        Event event = eventRepository.findById(id)
                 .orElseThrow(() -> new EventNotFoundException("Event Not Found with Id " + id));
+
+        if (!event.getHost().getId().equals(userService.getCurrentUser().getId())) {
+            throw new UnauthorizedAccessException("You are not authorized to access other user's event");
+        }
+
+        return event;
     }
 
+    @Transactional(rollbackOn = Exception.class)
     public void deleteEventById(Long id) {
         Event event = eventRepository.findById(id)
                 .orElseThrow(() -> new EventNotFoundException("Event Not Found"));
@@ -91,8 +101,6 @@ public class EventService {
             throw new UnauthorizedAccessException("You are not authorized to delete other user's event");
         }
 
-        eventRepository.deleteById(id);
-
         EventCancelledEmailDTO data = new EventCancelledEmailDTO(
                 event.getId(),
                 event.getEventName(),
@@ -100,12 +108,19 @@ public class EventService {
                         .map(slot -> slot.getBookedByEmail())
                         .toList());
 
+        eventRepository.delete(event);
         eventPublisher.publishEvent(new EventCancelledEvent(data));
     }
 
     public Event getEventByShareableId(String shareableId) {
-        return eventRepository.findByShareableId(shareableId)
+        Event event = eventRepository.findByShareableId(shareableId)
                 .orElseThrow(() -> new EventNotFoundException("Event Not Found"));
+
+        if (!event.getRules().getIsPublic()) {
+            throw new UnauthorizedAccessException("You are not authorized to access this event");
+        }
+
+        return event;
     }
 
 }

@@ -3,6 +3,8 @@ package com.example.SlotlyV2.listener;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 import com.example.SlotlyV2.dto.BookingEmailDTO;
 import com.example.SlotlyV2.dto.EventCancelledEmailDTO;
@@ -25,7 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 public class EmailEventListener {
     private final EmailService emailService;
 
-    @EventListener
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Async("emailTaskExecutor")
     public void handleSlotBooked(SlotBookedEvent event) {
         BookingEmailDTO data = event.getBookingEmailDTO();
@@ -41,7 +43,7 @@ public class EmailEventListener {
         }
     }
 
-    @EventListener
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Async("emailTaskExecutor")
     public void handleSlotCancelled(SlotCancelledEvent event) {
         SlotCancelledEmailDTO data = event.getSlotCancelledEmailDTO();
@@ -57,7 +59,7 @@ public class EmailEventListener {
         }
     }
 
-    @EventListener
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Async("emailTaskExecutor")
     public void handleEventCancelled(EventCancelledEvent event) {
         EventCancelledEmailDTO data = event.getEventCancelledEmailDTO();

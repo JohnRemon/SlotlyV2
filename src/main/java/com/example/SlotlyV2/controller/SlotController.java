@@ -11,24 +11,21 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.SlotlyV2.dto.ApiResponse;
 import com.example.SlotlyV2.dto.CancelBookingRequest;
-import com.example.SlotlyV2.dto.SlotRequest;
 import com.example.SlotlyV2.dto.SlotResponse;
 import com.example.SlotlyV2.model.Slot;
 import com.example.SlotlyV2.model.User;
 import com.example.SlotlyV2.service.SlotService;
 import com.example.SlotlyV2.service.UserService;
-import com.example.SlotlyV2.util.RateLimitHelper;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("api/v1/")
+@RequestMapping("/api/v1")
 @RequiredArgsConstructor
 public class SlotController {
     private final SlotService slotService;
     private final UserService userService;
-    private final RateLimitHelper rateLimitHelper;
 
     @GetMapping("events/{eventId}/slots")
     public ApiResponse<List<SlotResponse>> getSlots(@PathVariable Long eventId) {
@@ -41,30 +38,22 @@ public class SlotController {
         return new ApiResponse<>("Slots fetched successfully", slotResponses);
     }
 
-    @PostMapping("{shareableId}")
-    public ApiResponse<SlotResponse> bookSlot(@RequestBody @Valid SlotRequest request) {
-        rateLimitHelper.checkBookingRateLimit(request.getAttendeeEmail());
-
-        Slot bookedSlot = slotService.bookSlot(request);
-        return new ApiResponse<>("Slot booked successfully", new SlotResponse(bookedSlot));
-    }
-
     @PostMapping("slots/cancel")
     public ApiResponse<SlotResponse> cancelBooking(@Valid @RequestBody CancelBookingRequest request) {
         Slot cancelledSlot = slotService.cancelBooking(request);
         return new ApiResponse<>("Slot booking cancelled successfully", new SlotResponse(cancelledSlot));
     }
 
-    @GetMapping("{shareableId}")
+    @GetMapping("share/{shareableId}/slots")
     public ApiResponse<List<SlotResponse>> getAvailableSlotsByShareableId(
             @PathVariable String shareableId) {
         List<Slot> availableSlots = slotService.getAvailableSlotsByShareableId(shareableId);
 
-        List<SlotResponse> availableSlotsRespones = availableSlots.stream()
+        List<SlotResponse> availableSlotsResponse = availableSlots.stream()
                 .map(availableSlot -> new SlotResponse(availableSlot))
                 .toList();
 
-        return new ApiResponse<>("Slots fetched successfully", availableSlotsRespones);
+        return new ApiResponse<>("Slots fetched successfully", availableSlotsResponse);
     }
 
     @GetMapping("users/me/bookings")

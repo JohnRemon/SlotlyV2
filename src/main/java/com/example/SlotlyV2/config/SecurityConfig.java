@@ -45,13 +45,13 @@ public class SecurityConfig {
                                 "/api/v1/auth/jwt/**",
                                 "/api/v1/calendar/**",
                                 "/api/v1/users/verify-email/**",
-                                "/actuator/**")
+                                "/actuator/health")
                         .permitAll()
                         .anyRequest().authenticated())
                 .formLogin(form -> form.disable())
                 .httpBasic(basic -> basic.disable())
                 .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .securityContext(SecurityContext -> SecurityContext
                         .requireExplicitSave(false))
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

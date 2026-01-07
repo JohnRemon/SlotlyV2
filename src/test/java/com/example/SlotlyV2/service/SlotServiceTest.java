@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -13,6 +14,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,6 +28,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 
+import com.example.SlotlyV2.dto.CancelBookingRequest;
 import com.example.SlotlyV2.dto.SlotRequest;
 import com.example.SlotlyV2.event.SlotBookedEvent;
 import com.example.SlotlyV2.exception.EventNotFoundException;
@@ -32,6 +36,7 @@ import com.example.SlotlyV2.exception.InvalidSlotException;
 import com.example.SlotlyV2.exception.MaxCapacityExceededException;
 import com.example.SlotlyV2.exception.SlotAlreadyBookedException;
 import com.example.SlotlyV2.exception.SlotNotFoundException;
+import com.example.SlotlyV2.exception.UnauthorizedAccessException;
 import com.example.SlotlyV2.model.AvailabilityRules;
 import com.example.SlotlyV2.model.Event;
 import com.example.SlotlyV2.model.Slot;
@@ -53,6 +58,8 @@ public class SlotServiceTest {
 
     @InjectMocks
     private SlotService slotService;
+
+    private static final ZoneId EVENT_ZONE = ZoneId.of("Europe/Berlin");
 
     @BeforeEach
     void setUp() {
@@ -238,8 +245,9 @@ public class SlotServiceTest {
         event.setId(1L);
         event.setRules(rules);
         event.setHost(host);
+        event.setTimeZone("Europe/Berlin");
 
-        LocalDateTime startTime = LocalDateTime.now().plusHours(1);
+        LocalDateTime startTime = ZonedDateTime.now(EVENT_ZONE).plusHours(1).toLocalDateTime();
 
         Slot slot = new Slot();
         slot.setId(1L);
@@ -288,7 +296,7 @@ public class SlotServiceTest {
         // Arrange
         SlotRequest request = new SlotRequest();
         request.setEventId(1L);
-        request.setStartTime(LocalDateTime.now().plusHours(1));
+        request.setStartTime(ZonedDateTime.now(EVENT_ZONE).plusHours(1).toLocalDateTime());
         when(slotRepository.findByEventIdAndStartTime(anyLong(), any(LocalDateTime.class)))
                 .thenReturn(Optional.empty());
 
@@ -296,31 +304,6 @@ public class SlotServiceTest {
         assertThrows(SlotNotFoundException.class, () -> slotService.bookSlot(request));
 
         verify(slotRepository).findByEventIdAndStartTime(anyLong(), any(LocalDateTime.class));
-    }
-
-    @Test
-    void shouldThrowInvalidSlotExceptionWhenSlotDoesNotBelongToEvent() {
-        // Arrange
-        Event event = new Event();
-        event.setId(1L);
-
-        Slot slot = new Slot();
-        LocalDateTime startTime = LocalDateTime.now().plusHours(1);
-        slot.setId(1L);
-        slot.setEvent(event);
-        slot.setStartTime(startTime);
-
-        SlotRequest request = new SlotRequest();
-        request.setEventId(2L);
-        request.setStartTime(startTime);
-
-        when(slotRepository.findByEventIdAndStartTime(request.getEventId(), request.getStartTime()))
-                .thenReturn(Optional.of(slot));
-
-        // Act & Assert
-        assertThrows(InvalidSlotException.class, () -> slotService.bookSlot(request));
-
-        verify(slotRepository).findByEventIdAndStartTime(request.getEventId(), request.getStartTime());
     }
 
     @Test
@@ -332,8 +315,9 @@ public class SlotServiceTest {
         Event event = new Event();
         event.setId(1L);
         event.setRules(rules);
+        event.setTimeZone("Europe/Berlin");
 
-        LocalDateTime startTime = LocalDateTime.now().plusHours(1);
+        LocalDateTime startTime = ZonedDateTime.now(EVENT_ZONE).plusHours(1).toLocalDateTime();
 
         Slot slot = new Slot();
         slot.setId(1L);
@@ -356,6 +340,27 @@ public class SlotServiceTest {
     }
 
     @Test
+    void shouldThrowInvalidSlotExceptionWhenBookingPastSlot() {
+        // Arrange
+        Event event = new Event();
+        event.setTimeZone("Europe/Berlin");
+
+        Slot slot = new Slot();
+        slot.setEvent(event);
+        slot.setStartTime(ZonedDateTime.now(EVENT_ZONE).minusHours(1).toLocalDateTime());
+
+        SlotRequest request = new SlotRequest();
+        request.setEventId(1L);
+        request.setStartTime(slot.getStartTime());
+
+        when(slotRepository.findByEventIdAndStartTime(request.getEventId(), request.getStartTime()))
+                .thenReturn(Optional.of(slot));
+
+        // Act & Assert
+        assertThrows(InvalidSlotException.class, () -> slotService.bookSlot(request));
+    }
+
+    @Test
     void shouldThrowMaxCapacityExceededException() {
         // Arrange
         AvailabilityRules rules = new AvailabilityRules();
@@ -364,8 +369,9 @@ public class SlotServiceTest {
         Event event = new Event();
         event.setId(1L);
         event.setRules(rules);
+        event.setTimeZone("Europe/Berlin");
 
-        LocalDateTime startTime = LocalDateTime.now().plusHours(1);
+        LocalDateTime startTime = ZonedDateTime.now(EVENT_ZONE).plusHours(1).toLocalDateTime();
 
         Slot slot = new Slot();
         slot.setId(1L);
@@ -454,13 +460,127 @@ public class SlotServiceTest {
     }
 
     @Test
+    void shouldCancelSlotSuccessfully() {
+        // Arrange
+        Slot slot = createTestSlot();
+        slot.setBookedByEmail("test@example.com");
+        slot.setBookedByName("Test User");
+
+        CancelBookingRequest request = new CancelBookingRequest();
+        request.setEventId(slot.getEvent().getId());
+        request.setAttendeeEmail(slot.getBookedByEmail());
+        request.setStartTime(slot.getStartTime());
+
+        when(slotRepository.findByEventIdAndStartTime(request.getEventId(), request.getStartTime()))
+                .thenReturn(Optional.of(slot));
+        when(slotRepository.save(any(Slot.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // Act
+        Slot cancelledSlot = slotService.cancelBooking(request);
+
+        // Assert
+        assertNotNull(cancelledSlot);
+        assertEquals(null, cancelledSlot.getBookedByEmail());
+        assertEquals(null, cancelledSlot.getBookedByName());
+        assertTrue(cancelledSlot.isAvailable());
+        verify(slotRepository).findByEventIdAndStartTime(request.getEventId(), request.getStartTime());
+        verify(slotRepository).save(any(Slot.class));
+    }
+
+    @Test
+    void shouldThrowInvalidSlotExceptionWhenCancellingPastSlot() {
+        // Arrange
+        Slot slot = createTestSlot();
+        slot.setStartTime(ZonedDateTime.now(EVENT_ZONE).minusHours(1).toLocalDateTime());
+
+        CancelBookingRequest request = new CancelBookingRequest();
+        request.setEventId(slot.getEvent().getId());
+        request.setAttendeeEmail(slot.getBookedByEmail());
+        request.setStartTime(slot.getStartTime());
+
+        when(slotRepository.findByEventIdAndStartTime(request.getEventId(), request.getStartTime()))
+                .thenReturn(Optional.of(slot));
+
+        // Act & Assert
+        assertThrows(InvalidSlotException.class, () -> slotService.cancelBooking(request));
+    }
+
+    @Test
+    void shouldThrowInvalidSlotExceptionWhenCancellingUnbookedSlot() {
+        // Arrange
+        Slot slot = createTestSlot();
+        slot.setBookedByEmail(null);
+        slot.setBookedByName(null);
+
+        CancelBookingRequest request = new CancelBookingRequest();
+        request.setEventId(slot.getEvent().getId());
+        request.setAttendeeEmail("test@example.com");
+        request.setStartTime(slot.getStartTime());
+
+        when(slotRepository.findByEventIdAndStartTime(request.getEventId(), request.getStartTime()))
+                .thenReturn(Optional.of(slot));
+
+        // Act & Assert
+        assertThrows(InvalidSlotException.class, () -> slotService.cancelBooking(request));
+    }
+
+    @Test
+    void shouldThrowUnauthorizedAccessExceptionWhenCancellingWithWrongEmail() {
+        // Arrange
+        Slot slot = createTestSlot();
+        slot.setBookedByEmail("user@example.com");
+
+        CancelBookingRequest request = new CancelBookingRequest();
+        request.setEventId(slot.getEvent().getId());
+        request.setAttendeeEmail("other@example.com");
+        request.setStartTime(slot.getStartTime());
+
+        when(slotRepository.findByEventIdAndStartTime(request.getEventId(), request.getStartTime()))
+                .thenReturn(Optional.of(slot));
+
+        // Act & Assert
+        assertThrows(UnauthorizedAccessException.class, () -> slotService.cancelBooking(request));
+    }
+
+    @Test
+    void shouldThrowInvalidSlotExceptionWhenCancellationsNotAllowed() {
+        // Arrange
+        AvailabilityRules rules = new AvailabilityRules();
+        rules.setAllowsCancellations(false);
+
+        Event event = new Event();
+        event.setId(1L);
+        event.setRules(rules);
+
+        Slot slot = createTestSlot();
+        slot.setEvent(event);
+        slot.setBookedByEmail("test@example.com");
+        slot.setBookedByName("Test User");
+
+        CancelBookingRequest request = new CancelBookingRequest();
+        request.setEventId(slot.getEvent().getId());
+        request.setAttendeeEmail(slot.getBookedByEmail());
+        request.setStartTime(slot.getStartTime());
+
+        when(slotRepository.findByEventIdAndStartTime(request.getEventId(), request.getStartTime()))
+                .thenReturn(Optional.of(slot));
+
+        // Act & Assert
+        assertThrows(InvalidSlotException.class, () -> slotService.cancelBooking(request));
+    }
+
+    @Test
     void shouldGetAvailableSlotsByShareableIdSuccessfully() {
         // Arrange
+        AvailabilityRules rules = new AvailabilityRules();
+        rules.setIsPublic(true);
+
         Event event = new Event();
         event.setId(1L);
         event.setShareableId("event1");
+        event.setRules(rules);
 
-        LocalDateTime startTime = LocalDateTime.now().plusHours(1);
+        LocalDateTime startTime = ZonedDateTime.now(EVENT_ZONE).plusHours(1).toLocalDateTime();
         Slot slot = new Slot();
         slot.setId(1L);
         slot.setEvent(event);
@@ -484,6 +604,24 @@ public class SlotServiceTest {
 
         verify(eventRepository).findByShareableId(event.getShareableId());
         verify(slotRepository).findByEventAndBookedByEmailIsNullAndBookedByNameIsNull(event);
+    }
+
+    @Test
+    void shouldThrowUnauthorizedAccessExceptionWhenEventIsPrivate() {
+        // Arrange
+        AvailabilityRules rules = new AvailabilityRules();
+        rules.setIsPublic(false);
+
+        Event event = new Event();
+        event.setId(1L);
+        event.setShareableId("event1");
+        event.setRules(rules);
+
+        when(eventRepository.findByShareableId(event.getShareableId())).thenReturn(Optional.of(event));
+
+        // Act & Assert
+        assertThrows(UnauthorizedAccessException.class,
+                () -> slotService.getAvailableSlotsByShareableId(event.getShareableId()));
     }
 
     @Test
@@ -540,12 +678,13 @@ public class SlotServiceTest {
         event.setEventName("Event 1");
         event.setHost(mockUser);
         event.setRules(rules);
+        event.setTimeZone("Europe/Berlin");
 
         Slot slot = new Slot();
         slot.setId(1L);
         slot.setEvent(event);
-        slot.setStartTime(LocalDateTime.now().plusHours(1));
-        slot.setEndTime(LocalDateTime.now().plusHours(2));
+        slot.setStartTime(ZonedDateTime.now(EVENT_ZONE).plusHours(1).toLocalDateTime());
+        slot.setEndTime(ZonedDateTime.now(EVENT_ZONE).plusHours(2).toLocalDateTime());
 
         return slot;
     }

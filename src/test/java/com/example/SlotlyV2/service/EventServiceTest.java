@@ -4,23 +4,21 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Arrays;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -44,30 +42,47 @@ public class EventServiceTest {
 
     @Mock
     private EventRepository eventRepository;
-
     @Mock
     private SlotService slotService;
-
     @Mock
     private UserService userService;
-
     @Mock
     private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private EventService eventService;
 
-    @Test
-    void shouldCreateEventSuccessfully() {
-        // Arrange
+    private static AvailabilityRulesDTO publicRulesDto() {
         AvailabilityRulesDTO rules = new AvailabilityRulesDTO();
         rules.setSlotDurationMinutes(60);
         rules.setMaxSlotsPerUser(2);
         rules.setAllowsCancellations(true);
         rules.setIsPublic(true);
+        return rules;
+    }
 
-        LocalDateTime startTime = LocalDateTime.now().plusHours(12);
-        LocalDateTime endTime = LocalDateTime.now().plusHours(14);
+    private static AvailabilityRules rules(boolean isPublic) {
+        AvailabilityRules rules = new AvailabilityRules();
+        rules.setSlotDurationMinutes(60);
+        rules.setMaxSlotsPerUser(2);
+        rules.setAllowsCancellations(true);
+        rules.setIsPublic(isPublic);
+        return rules;
+    }
+
+    private static User user(long id) {
+        User u = new User();
+        u.setId(id);
+        return u;
+    }
+
+    @Test
+    void shouldCreateEventSuccessfully() {
+        AvailabilityRulesDTO rules = publicRulesDto();
+
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime startTime = now.plusHours(12);
+        LocalDateTime endTime = now.plusHours(14);
 
         EventRequest request = new EventRequest();
         request.setEventName("Test Event");
@@ -76,24 +91,20 @@ public class EventServiceTest {
         request.setTimeZone("Europe/Berlin");
         request.setRules(rules);
 
-        User mockUser = new User();
-        mockUser.setId(1L);
+        User host = user(1L);
 
-        when(userService.getCurrentUser()).thenReturn(mockUser);
-        when(eventRepository.save(any(Event.class))).thenAnswer(
-                invocation -> {
-                    Event eventArgument = invocation.getArgument(0);
-                    eventArgument.setId(1L);
-                    return eventArgument;
-                });
+        when(userService.getCurrentUser()).thenReturn(host);
+        when(eventRepository.save(any(Event.class))).thenAnswer(invocation -> {
+            Event e = invocation.getArgument(0);
+            e.setId(1L);
+            return e;
+        });
 
-        // Act
         Event event = eventService.createEvent(request);
 
-        // Assert - Basic Fields
         assertNotNull(event);
         assertEquals(1L, event.getId());
-        assertEquals(mockUser, event.getHost());
+        assertEquals(host, event.getHost());
         assertEquals("Test Event", event.getEventName());
         assertEquals(startTime, event.getEventStart());
         assertEquals(endTime, event.getEventEnd());
@@ -105,23 +116,19 @@ public class EventServiceTest {
         assertEquals(true, event.getRules().getAllowsCancellations());
         assertEquals(true, event.getRules().getIsPublic());
 
-        // Verify
         verify(userService).getCurrentUser();
         verify(eventRepository).save(any(Event.class));
         verify(slotService).generateSlots(event);
+        verify(eventPublisher, never()).publishEvent(any());
     }
 
     @Test
     void shouldThrowInvalidEventExceptionWhenEventNotInFuture() {
-        // Arrange
-        AvailabilityRulesDTO rules = new AvailabilityRulesDTO();
-        rules.setSlotDurationMinutes(60);
-        rules.setMaxSlotsPerUser(2);
-        rules.setAllowsCancellations(true);
-        rules.setIsPublic(true);
+        AvailabilityRulesDTO rules = publicRulesDto();
 
-        LocalDateTime startTime = LocalDateTime.now().minusHours(12);
-        LocalDateTime endTime = LocalDateTime.now().plusHours(14);
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime startTime = now.minusHours(1);
+        LocalDateTime endTime = now.plusHours(1);
 
         EventRequest request = new EventRequest();
         request.setEventName("Test Event");
@@ -130,306 +137,213 @@ public class EventServiceTest {
         request.setTimeZone("Europe/Berlin");
         request.setRules(rules);
 
-        User mockUser = new User();
-        mockUser.setId(1L);
+        when(userService.getCurrentUser()).thenReturn(user(1L));
 
-        when(userService.getCurrentUser()).thenReturn(mockUser);
-
-        // Act & Assert
         assertThrows(InvalidEventException.class, () -> eventService.createEvent(request));
 
-        // Verify
-        verify(userService).getCurrentUser();
-        verify(eventRepository, never()).save(any(Event.class));
-        verify(slotService, never()).generateSlots(any(Event.class));
+        verify(eventRepository, never()).save(any());
+        verify(slotService, never()).generateSlots(any());
+        verify(eventPublisher, never()).publishEvent(any());
     }
 
     @Test
-    void shouldThrowInvalidEventExceptionWhenEndBeforeStart() {
-        // Arrange
-        AvailabilityRulesDTO rules = new AvailabilityRulesDTO();
-        rules.setSlotDurationMinutes(60);
-        rules.setMaxSlotsPerUser(2);
-        rules.setAllowsCancellations(true);
-        rules.setIsPublic(true);
+    void shouldThrowInvalidEventExceptionWhenEndBeforeOrEqualStart() {
+        AvailabilityRulesDTO rules = publicRulesDto();
 
         LocalDateTime startTime = LocalDateTime.now().plusHours(12);
-        LocalDateTime endTime = startTime.minusHours(1);
 
-        EventRequest request = new EventRequest();
-        request.setEventName("Test Event");
-        request.setEventStart(startTime);
-        request.setEventEnd(endTime);
-        request.setTimeZone("Europe/Berlin");
-        request.setRules(rules);
+        EventRequest req1 = new EventRequest();
+        req1.setEventStart(startTime);
+        req1.setEventEnd(startTime.minusHours(1));
+        req1.setTimeZone("Europe/Berlin");
+        req1.setRules(rules);
 
-        User mockUser = new User();
-        mockUser.setId(1L);
+        EventRequest req2 = new EventRequest();
+        req2.setEventStart(startTime);
+        req2.setEventEnd(startTime);
+        req2.setTimeZone("Europe/Berlin");
+        req2.setRules(rules);
 
-        when(userService.getCurrentUser()).thenReturn(mockUser);
+        when(userService.getCurrentUser()).thenReturn(user(1L));
 
-        // Act & Assert
-        assertThrows(InvalidEventException.class, () -> eventService.createEvent(request));
+        assertThrows(InvalidEventException.class, () -> eventService.createEvent(req1));
+        assertThrows(InvalidEventException.class, () -> eventService.createEvent(req2));
 
-        // Verify
-        verify(userService).getCurrentUser();
-        verify(eventRepository, never()).save(any(Event.class));
-        verify(slotService, never()).generateSlots(any(Event.class));
-    }
-
-    @Test
-    void shouldThrowInvalidEventExceptionWhenEventEndEqualsStart() {
-        // Arrange
-        AvailabilityRulesDTO rules = new AvailabilityRulesDTO();
-        rules.setSlotDurationMinutes(60);
-        rules.setMaxSlotsPerUser(2);
-        rules.setAllowsCancellations(true);
-        rules.setIsPublic(true);
-
-        LocalDateTime startTime = LocalDateTime.now().plusHours(12);
-        LocalDateTime endTime = startTime; // End equals start
-
-        EventRequest request = new EventRequest();
-        request.setEventName("Test Event");
-        request.setEventStart(startTime);
-        request.setEventEnd(endTime);
-        request.setTimeZone("Europe/Berlin");
-        request.setRules(rules);
-
-        User mockUser = new User();
-        mockUser.setId(1L);
-
-        when(userService.getCurrentUser()).thenReturn(mockUser);
-
-        // Act & Assert
-        assertThrows(InvalidEventException.class, () -> eventService.createEvent(request));
-
-        // Verify
-        verify(userService).getCurrentUser();
-        verify(eventRepository, never()).save(any(Event.class));
-        verify(slotService, never()).generateSlots(any(Event.class));
+        verify(eventRepository, never()).save(any());
+        verify(slotService, never()).generateSlots(any());
+        verify(eventPublisher, never()).publishEvent(any());
     }
 
     @Test
     void shouldGetCurrentUserEventsSuccessfully() {
-        // Arrange
-        User mockUser = new User();
-        mockUser.setId(1L);
-
-        AvailabilityRules rules = new AvailabilityRules();
-        rules.setSlotDurationMinutes(60);
-        rules.setMaxSlotsPerUser(2);
-        rules.setAllowsCancellations(true);
-        rules.setIsPublic(true);
-
-        List<Event> mockEvents = new ArrayList<>();
+        User host = user(1L);
 
         Event event1 = new Event();
         event1.setId(1L);
         event1.setEventName("Event 1");
-        event1.setHost(mockUser);
-        event1.setRules(rules);
-        mockEvents.add(event1);
+        event1.setHost(host);
+        event1.setRules(rules(true));
 
         Event event2 = new Event();
         event2.setId(2L);
         event2.setEventName("Event 2");
-        event2.setHost(mockUser);
-        event2.setRules(rules);
-        mockEvents.add(event2);
+        event2.setHost(host);
+        event2.setRules(rules(true));
 
-        when(eventRepository.findByHost(mockUser)).thenReturn(mockEvents);
+        when(eventRepository.findByHost(host)).thenReturn(new ArrayList<>(List.of(event1, event2)));
 
-        // Act
-        List<EventResponse> events = eventService.getEvents(mockUser);
+        List<EventResponse> events = eventService.getEvents(host);
 
-        // Assert
         assertNotNull(events);
         assertEquals(2, events.size());
         assertEquals("Event 1", events.get(0).getEventName());
         assertEquals("Event 2", events.get(1).getEventName());
 
-        // Verify
-        verify(eventRepository).findByHost(mockUser);
+        verify(eventRepository).findByHost(host);
     }
 
     @Test
-    void shouldGetEventByIdSuccessfully() {
-        // Arrange
-        User mockUser = new User();
-        mockUser.setId(1L);
-
-        AvailabilityRules rules = new AvailabilityRules();
-        rules.setSlotDurationMinutes(60);
-        rules.setMaxSlotsPerUser(2);
-        rules.setAllowsCancellations(true);
-        rules.setIsPublic(true);
+    void shouldGetEventByIdSuccessfullyForOwner() {
+        User host = user(1L);
 
         Event event = new Event();
         event.setId(1L);
-        event.setEventName("Event 1");
-        event.setHost(mockUser);
-        event.setRules(rules);
+        event.setHost(host);
 
         when(eventRepository.findById(1L)).thenReturn(Optional.of(event));
+        when(userService.getCurrentUser()).thenReturn(host);
 
-        // Act
         Event fetchedEvent = eventService.getEventById(1L);
 
-        // Assert
         assertNotNull(fetchedEvent);
-        assertEquals(event.getId(), fetchedEvent.getId());
-        assertEquals(event.getEventName(), fetchedEvent.getEventName());
-        assertEquals(event.getHost(), mockUser);
+        assertEquals(1L, fetchedEvent.getId());
 
-        // Verify
+        verify(eventRepository).findById(1L);
+        verify(userService).getCurrentUser();
+    }
+
+    @Test
+    void shouldThrowUnauthorizedAccessExceptionWhenAccessingOtherUsersEvent() {
+        User host = user(1L);
+        User other = user(2L);
+
+        Event event = new Event();
+        event.setId(1L);
+        event.setHost(host);
+
+        when(eventRepository.findById(1L)).thenReturn(Optional.of(event));
+        when(userService.getCurrentUser()).thenReturn(other);
+
+        assertThrows(UnauthorizedAccessException.class, () -> eventService.getEventById(1L));
+
+        verify(eventRepository).findById(1L);
+        verify(userService).getCurrentUser();
+    }
+
+    @Test
+    void shouldThrowEventNotFoundExceptionWhenEventNotFound() {
+        when(eventRepository.findById(1L)).thenReturn(Optional.empty());
+
+        assertThrows(EventNotFoundException.class, () -> eventService.getEventById(1L));
+
         verify(eventRepository).findById(1L);
     }
 
     @Test
-    void shouldThrowExceptionWhenEventNotFound() {
-        // Arrange
-        when(eventRepository.findById(anyLong())).thenReturn(Optional.empty());
-
-        // Act & Assert
-        assertThrows(EventNotFoundException.class, () -> eventService.getEventById(anyLong()));
-
-        verify(eventRepository).findById(anyLong());
-    }
-
-    @Test
-    void shouldDeleteEventandCascadeDeleteAllSlotsSuccessfully() {
-        // Arrange
-        User mockUser = new User();
-        mockUser.setId(1L);
-
-        AvailabilityRules rules = new AvailabilityRules();
-        rules.setSlotDurationMinutes(60);
-        rules.setMaxSlotsPerUser(2);
-        rules.setAllowsCancellations(true);
-        rules.setIsPublic(true);
+    void shouldDeleteEventAndPublishCancellationEvent() {
+        User host = user(1L);
 
         Event event = new Event();
         event.setId(1L);
         event.setEventName("Event 1");
-        event.setHost(mockUser);
-        event.setRules(rules);
+        event.setHost(host);
 
-        Slot slot1 = new Slot();
-        slot1.setId(1L);
-        slot1.setEvent(event);
-        slot1.setStartTime(LocalDateTime.now());
-        slot1.setEndTime(LocalDateTime.now().plusHours(1));
-
-        Slot slot2 = new Slot();
-        slot2.setId(2L);
-        slot2.setEvent(event);
-        slot2.setStartTime(LocalDateTime.now().plusHours(1));
-        slot2.setEndTime(LocalDateTime.now().plusHours(2));
-
-        event.setSlots(Arrays.asList(slot1, slot2));
+        Slot slot1 = mock(Slot.class);
+        Slot slot2 = mock(Slot.class);
+        when(slot1.getBookedByEmail()).thenReturn("a@test.com");
+        when(slot2.getBookedByEmail()).thenReturn("b@test.com");
+        event.setSlots(List.of(slot1, slot2));
 
         when(eventRepository.findById(1L)).thenReturn(Optional.of(event));
-        when(userService.getCurrentUser()).thenReturn(mockUser);
-        doNothing().when(eventRepository).deleteById(1L);
+        when(userService.getCurrentUser()).thenReturn(host);
 
-        // Act
         eventService.deleteEventById(1L);
 
-        // Assert
-        verify(eventRepository).findById(1L);
-        verify(userService).getCurrentUser();
-        verify(eventRepository).deleteById(1L);
-        verifyNoMoreInteractions(eventRepository, slotService, userService);
+        InOrder order = inOrder(eventRepository, eventPublisher);
+        order.verify(eventRepository).delete(event);
 
-        // Assert - Event publish
-        ArgumentCaptor<EventCancelledEvent> eventCaptor = ArgumentCaptor.forClass(EventCancelledEvent.class);
-        verify(eventPublisher).publishEvent(eventCaptor.capture());
+        ArgumentCaptor<EventCancelledEvent> captor = ArgumentCaptor.forClass(EventCancelledEvent.class);
+        order.verify(eventPublisher).publishEvent(captor.capture());
 
-        EventCancelledEvent publishedEvent = eventCaptor.getValue();
-        assertNotNull(publishedEvent);
-        assertEquals(1L, publishedEvent.getEventCancelledEmailDTO().getEventId());
-        assertEquals("Event 1", publishedEvent.getEventCancelledEmailDTO().getEventName());
-        assertEquals(2, publishedEvent.getEventCancelledEmailDTO().getAttendeeEmails().size());
+        EventCancelledEvent published = captor.getValue();
+        assertNotNull(published);
+        assertEquals(1L, published.getEventCancelledEmailDTO().getEventId());
+        assertEquals("Event 1", published.getEventCancelledEmailDTO().getEventName());
+        assertEquals(2, published.getEventCancelledEmailDTO().getAttendeeEmails().size());
     }
 
     @Test
     void shouldThrowUnauthorizedAccessExceptionWhenDeletingOtherUsersEvent() {
-        // Arrange
-        User eventHost = new User();
-        eventHost.setId(1L);
-
-        User currentUser = new User();
-        currentUser.setId(2L);
+        User host = user(1L);
+        User other = user(2L);
 
         Event event = new Event();
         event.setId(1L);
-        event.setEventName("Event 1");
-        event.setHost(eventHost);
+        event.setHost(host);
 
         when(eventRepository.findById(1L)).thenReturn(Optional.of(event));
-        when(userService.getCurrentUser()).thenReturn(currentUser);
+        when(userService.getCurrentUser()).thenReturn(other);
 
-        // Act & Assert
-        assertThrows(UnauthorizedAccessException.class,
-                () -> eventService.deleteEventById(1L));
+        assertThrows(UnauthorizedAccessException.class, () -> eventService.deleteEventById(1L));
 
-        verify(eventRepository).findById(1L);
-        verify(userService).getCurrentUser();
-        verify(eventRepository, never()).deleteById(anyLong());
+        verify(eventRepository, never()).delete(any(Event.class));
+        verify(eventPublisher, never()).publishEvent(any());
     }
 
     @Test
     void shouldThrowEventNotFoundExceptionWhenDeletingNonExistentEvent() {
-        // Arrange
-        when(eventRepository.findById(anyLong())).thenReturn(Optional.empty());
+        when(eventRepository.findById(1L)).thenReturn(Optional.empty());
 
-        // Act & Assert
-        assertThrows(EventNotFoundException.class,
-                () -> eventService.deleteEventById(anyLong()));
+        assertThrows(EventNotFoundException.class, () -> eventService.deleteEventById(1L));
 
-        verify(eventRepository).findById(anyLong());
-        verify(eventRepository, never()).deleteById(anyLong());
+        verify(eventRepository).findById(1L);
+        verify(eventRepository, never()).delete(any(Event.class));
+        verify(eventPublisher, never()).publishEvent(any());
     }
 
     @Test
-    void shouldGetEventByShareableIdSuccessfully() {
-        // Arrange
-        User mockUser = new User();
-        mockUser.setId(1L);
-
-        AvailabilityRules rules = new AvailabilityRules();
-        rules.setSlotDurationMinutes(60);
-        rules.setMaxSlotsPerUser(2);
-        rules.setAllowsCancellations(true);
-        rules.setIsPublic(true);
-
+    void shouldGetEventByShareableIdSuccessfullyWhenPublic() {
         Event event = new Event();
         event.setId(1L);
-        event.setEventName("Event 1");
-        event.setHost(mockUser);
-        event.setRules(rules);
+        event.setRules(rules(true));
 
-        when(eventRepository.findByShareableId(anyString())).thenReturn(Optional.of(event));
+        when(eventRepository.findByShareableId("abc")).thenReturn(Optional.of(event));
 
-        // Act
-        Event fetchedEvent = eventService.getEventByShareableId(anyString());
+        Event fetched = eventService.getEventByShareableId("abc");
 
-        // Assert - Basic Fields
-        assertNotNull(fetchedEvent);
-        assertEquals(1L, fetchedEvent.getId());
-        assertEquals(mockUser, fetchedEvent.getHost());
-        assertEquals("Event 1", fetchedEvent.getEventName());
+        assertNotNull(fetched);
+        assertEquals(1L, fetched.getId());
+        verify(eventRepository).findByShareableId("abc");
     }
 
     @Test
-    void shouldThrowExceptionWhenEventNotFoundByShareableId() {
-        // Arrange
-        when(eventRepository.findByShareableId(anyString())).thenReturn(Optional.empty());
+    void shouldThrowEventNotFoundExceptionWhenEventNotFoundByShareableId() {
+        when(eventRepository.findByShareableId("missing")).thenReturn(Optional.empty());
 
-        // Act & Assert
-        assertThrows(EventNotFoundException.class, () -> eventService.getEventByShareableId(anyString()));
+        assertThrows(EventNotFoundException.class, () -> eventService.getEventByShareableId("missing"));
 
-        verify(eventRepository).findByShareableId(anyString());
+        verify(eventRepository).findByShareableId("missing");
+    }
+
+    @Test
+    void shouldThrowUnauthorizedAccessExceptionWhenAccessingPrivateEventByShareableId() {
+        Event event = new Event();
+        event.setRules(rules(false));
+
+        when(eventRepository.findByShareableId("private")).thenReturn(Optional.of(event));
+
+        assertThrows(UnauthorizedAccessException.class, () -> eventService.getEventByShareableId("private"));
+
+        verify(eventRepository).findByShareableId("private");
     }
 }
