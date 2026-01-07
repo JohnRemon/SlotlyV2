@@ -20,13 +20,16 @@ import java.util.Arrays;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import com.example.SlotlyV2.dto.AvailabilityRulesDTO;
 import com.example.SlotlyV2.dto.EventRequest;
 import com.example.SlotlyV2.dto.EventResponse;
+import com.example.SlotlyV2.event.EventCancelledEvent;
 import com.example.SlotlyV2.exception.EventNotFoundException;
 import com.example.SlotlyV2.exception.InvalidEventException;
 import com.example.SlotlyV2.exception.UnauthorizedAccessException;
@@ -47,6 +50,9 @@ public class EventServiceTest {
 
     @Mock
     private UserService userService;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private EventService eventService;
@@ -335,6 +341,16 @@ public class EventServiceTest {
         verify(userService).getCurrentUser();
         verify(eventRepository).deleteById(1L);
         verifyNoMoreInteractions(eventRepository, slotService, userService);
+
+        // Assert - Event publish
+        ArgumentCaptor<EventCancelledEvent> eventCaptor = ArgumentCaptor.forClass(EventCancelledEvent.class);
+        verify(eventPublisher).publishEvent(eventCaptor.capture());
+
+        EventCancelledEvent publishedEvent = eventCaptor.getValue();
+        assertNotNull(publishedEvent);
+        assertEquals(1L, publishedEvent.getEventCancelledEmailDTO().getEventId());
+        assertEquals("Event 1", publishedEvent.getEventCancelledEmailDTO().getEventName());
+        assertEquals(2, publishedEvent.getEventCancelledEmailDTO().getAttendeeEmails().size());
     }
 
     @Test

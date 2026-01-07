@@ -11,6 +11,7 @@ import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import com.example.SlotlyV2.config.EmailConfig;
 import com.example.SlotlyV2.dto.BookingEmailDTO;
+import com.example.SlotlyV2.dto.EventCancelledEmailDTO;
 import com.example.SlotlyV2.dto.PasswordResetDTO;
 import com.example.SlotlyV2.dto.SlotCancelledEmailDTO;
 import com.example.SlotlyV2.dto.UserVerificationDTO;
@@ -189,6 +190,29 @@ public class EmailService {
         }
     }
 
+    public void sendEventCancellationNotifications(EventCancelledEmailDTO data) {
+        for (String attendeeEmail : data.getAttendeeEmails()) {
+            try {
+                log.info("Sending event cancellation notification to: {}", attendeeEmail);
+
+                Map<String, Object> fields = new HashMap<>();
+                fields.put("eventName", data.getEventName());
+
+                String htmlContent = renderTemplate("email/event-cancellation-notification", fields);
+
+                sendEmail(
+                        attendeeEmail,
+                        "Event Cancelled: " + data.getEventName(),
+                        htmlContent);
+
+                log.info("Event cancellation notification sent successfully to: {}", attendeeEmail);
+            } catch (Exception e) {
+                log.error("Failed to send event cancellation notification for event {} to {}: {}",
+                        data.getEventId(), attendeeEmail, e.getMessage(), e);
+            }
+        }
+    }
+
     public void sendEmail(String to, String subject, String htmlContent) throws ResendException {
         CreateEmailOptions params = CreateEmailOptions.builder()
                 .from(emailConfig.getFromName() + " <" + emailConfig.getFromEmail() + ">")
@@ -205,5 +229,4 @@ public class EmailService {
         context.setVariables(fields);
         return templateEngine.process(templateName, context);
     }
-
 }

@@ -3,16 +3,20 @@ package com.example.SlotlyV2.service;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
+import com.example.SlotlyV2.dto.EventCancelledEmailDTO;
 import com.example.SlotlyV2.dto.EventRequest;
 import com.example.SlotlyV2.dto.EventResponse;
+import com.example.SlotlyV2.event.EventCancelledEvent;
 import com.example.SlotlyV2.exception.EventNotFoundException;
 import com.example.SlotlyV2.exception.InvalidEventException;
 import com.example.SlotlyV2.exception.UnauthorizedAccessException;
+import com.example.SlotlyV2.model.AvailabilityRules;
 import com.example.SlotlyV2.model.Event;
+import com.example.SlotlyV2.model.User;
 import com.example.SlotlyV2.repository.EventRepository;
-import com.example.SlotlyV2.model.*;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +29,7 @@ public class EventService {
     private final EventRepository eventRepository;
     private final SlotService slotService;
     private final UserService userService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional(rollbackOn = Exception.class)
     public Event createEvent(EventRequest request) {
@@ -87,6 +92,15 @@ public class EventService {
         }
 
         eventRepository.deleteById(id);
+
+        EventCancelledEmailDTO data = new EventCancelledEmailDTO(
+                event.getId(),
+                event.getEventName(),
+                event.getSlots().stream()
+                        .map(slot -> slot.getBookedByEmail())
+                        .toList());
+
+        eventPublisher.publishEvent(new EventCancelledEvent(data));
     }
 
     public Event getEventByShareableId(String shareableId) {

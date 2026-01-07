@@ -5,10 +5,12 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import com.example.SlotlyV2.dto.BookingEmailDTO;
+import com.example.SlotlyV2.dto.EventCancelledEmailDTO;
 import com.example.SlotlyV2.dto.PasswordResetDTO;
 import com.example.SlotlyV2.dto.SlotCancelledEmailDTO;
 import com.example.SlotlyV2.dto.UserVerificationDTO;
 import com.example.SlotlyV2.event.EmailVerificationEvent;
+import com.example.SlotlyV2.event.EventCancelledEvent;
 import com.example.SlotlyV2.event.PasswordResetEvent;
 import com.example.SlotlyV2.event.SlotBookedEvent;
 import com.example.SlotlyV2.event.SlotCancelledEvent;
@@ -52,6 +54,22 @@ public class EmailEventListener {
             log.info("Cancellation emails sent successfully for slot: {}", data.getSlotId());
         } catch (Exception e) {
             log.error("Failed to send cancellation emails for slot {}: {}", data.getSlotId(), e.getMessage(), e);
+        }
+    }
+
+    @EventListener
+    @Async("emailTaskExecutor")
+    public void handleEventCancelled(EventCancelledEvent event) {
+        EventCancelledEmailDTO data = event.getEventCancelledEmailDTO();
+
+        log.debug("Received EventCancelledEvent for event: {}", data.getEventId());
+
+        try {
+            emailService.sendEventCancellationNotifications(data);
+            log.info("Event cancellation emails sent successfully for event: {}", data.getEventId());
+        } catch (Exception e) {
+            log.error("Failed to send event cancellation emails for event {}: {}", data.getEventId(), e.getMessage(),
+                    e);
         }
     }
 
