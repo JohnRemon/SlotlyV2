@@ -107,6 +107,23 @@ public class SlotServiceTest {
         verify(slotRepository).saveAll(any(List.class));
     }
 
+    @Test
+    void shouldThrowInvalidSlotExceptionWhenSlotDurationIsZeroOrNegative() {
+        // Arrange
+        AvailabilityRules rules = new AvailabilityRules();
+        rules.setSlotDurationMinutes(0);
+
+        Event event = new Event();
+        event.setId(1L);
+        event.setRules(rules);
+
+        event.setEventStart(LocalDateTime.of(2025, 1, 1, 10, 0));
+        event.setEventEnd(LocalDateTime.of(2025, 1, 1, 11, 0));
+
+        // Act & Assert
+        assertThrows(InvalidSlotException.class, () -> slotService.generateSlots(event));
+    }
+
     @SuppressWarnings("unchecked")
     @Test
     void shouldGenerateSlotWhenEndTimeIsExactlyEqualToSlotEnd() {
@@ -485,6 +502,20 @@ public class SlotServiceTest {
         assertTrue(cancelledSlot.isAvailable());
         verify(slotRepository).findByEventIdAndStartTime(request.getEventId(), request.getStartTime());
         verify(slotRepository).save(any(Slot.class));
+    }
+
+    @Test
+    void shouldThrowSlotNotFoundExceptionWhenCancellingNonExistentSlot() {
+        // Arrange
+        CancelBookingRequest request = new CancelBookingRequest();
+        request.setEventId(1L);
+        request.setStartTime(ZonedDateTime.now(EVENT_ZONE).plusHours(1).toLocalDateTime());
+
+        when(slotRepository.findByEventIdAndStartTime(request.getEventId(), request.getStartTime()))
+                .thenReturn(Optional.empty());
+
+        // Act & Assert
+        assertThrows(SlotNotFoundException.class, () -> slotService.cancelBooking(request));
     }
 
     @Test
