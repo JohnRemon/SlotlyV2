@@ -1,0 +1,164 @@
+package com.example.SlotlyV2.feature.user;
+
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
+import com.example.SlotlyV2.common.exception.auth.AccountNotVerifiedException;
+import com.example.SlotlyV2.common.exception.auth.InvalidCredentialsException;
+import com.example.SlotlyV2.common.exception.auth.PasswordMismatchException;
+import com.example.SlotlyV2.common.exception.auth.UnauthorizedAccessException;
+import com.example.SlotlyV2.common.exception.user.UserAlreadyExistsException;
+import com.example.SlotlyV2.common.exception.user.UsernameAlreadyExistsException;
+import com.example.SlotlyV2.feature.auth.VerificationTokenService;
+import com.example.SlotlyV2.feature.email.event.EmailVerificationEvent;
+import com.example.SlotlyV2.feature.email.event.PasswordResetEvent;
+import com.example.SlotlyV2.feature.user.dto.LoginRequest;
+import com.example.SlotlyV2.feature.user.dto.PasswordResetConfirmRequest;
+import com.example.SlotlyV2.feature.user.dto.PasswordResetDTO;
+import com.example.SlotlyV2.feature.user.dto.PasswordResetRequest;
+import com.example.SlotlyV2.feature.user.dto.RegisterRequest;
+import com.example.SlotlyV2.feature.user.dto.UserVerificationDTO;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+@Service
+@RequiredArgsConstructor
+@Slf4j
+public class UserService {
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final AuthenticationManager authenticationManager;
+    private final ApplicationEventPublisher eventPublisher;
+    private final VerificationTokenService verificationTokenService;
+
+    @Transactional(rollbackOn = Exception.class)
+    public User registerUser(RegisterRequest request) {
+        // Check if email already exsists
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new UserAlreadyExistsException("User Already Exists. Please Login");
+        }
+
+        // Check if username already exists
+        if (userRepository.existsByDisplayName(request.getDisplayName())) {
+            throw new UsernameAlreadyExistsException("Username Already Exists. Please Choose Another One");
+        }
+
+        // Create the user
+        User user = new User();
+        user.setEmail(request.getEmail());
+        user.setDisplayName(request.getDisplayName());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setFirstName(request.getFirstName());
+        user.setLastName(request.getLastName());
+        user.setTimeZone(request.getTimeZone());
+        user.setIsVerified(false);
+
+        // generate verification token
+        user = verificationTokenService.generateEmailVerificationToken(user);
+
+        // generate the needed verification data
+        UserVerificationDTO data = new UserVerificationDTO(
+                user.getDisplayName(),
+                user.getEmail(),
+                user.getEmailVerificationToken());
+
+        // Publish Verification Email Event
+        eventPublisher.publishEvent(new EmailVerificationEvent(data));
+
+        // Save and Return the user
+        return user;
+    }
+
+    public User loginUser(LoginRequest request) {
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
+
+            User user = (User) authentication.getPrincipal();
+
+            if (!user.getIsVerified()) {
+                throw new AccountNotVerifiedException("Please verify your account first");
+            }
+
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+
+            return user;
+        } catch (BadCredentialsException e) {
+            throw new InvalidCredentialsException("Invalid Credentials");
+        }
+    }
+
+    public void resetPasswordRequest(PasswordResetRequest request) {
+        // Find user by email (throw null if not found)
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElse(null);
+
+        // return successfully
+        if (user == null)
+            return;
+
+        // generate password token and expiry date
+        user = verificationTokenService.generatePasswordVerificationToken(user);
+
+        // generate needed password reset data
+        PasswordResetDTO data = new PasswordResetDTO(
+                user.getDisplayName(),
+                user.getEmail(),
+                user.getPasswordVerificationToken());
+
+        // publish password reset event
+        eventPublisher.publishEvent(new PasswordResetEvent(data));
+    }
+
+    @Transactional(rollbackOn = Exception.class)
+    public void resetPassword(String token, PasswordResetConfirmRequest request) {
+        User user = verificationTokenService.verifyPasswordVerificationToken(token);
+
+        if (!request.getPassword().equals(request.getConfirmPassword())) {
+            throw new PasswordMismatchException("Passwords don't match");
+        }
+
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setPasswordVerificationToken(null);
+        user.setPasswordVerificationTokenExpiresAt(null);
+
+        userRepository.save(user);
+    }
+
+    public User getCurrentUser() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+        if (auth == null || !auth.isAuthenticated() || auth.getPrincipal() == null) {
+            throw new UnauthorizedAccessException("User not authenticated");
+        }
+
+        if (auth.getPrincipal() instanceof User) {
+            return (User) auth.getPrincipal();
+        }
+
+        throw new UnauthorizedAccessException("User not authenticated");
+    }
+
+    public void logout(HttpServletRequest request) {
+        if (getCurrentUser() == null) {
+            throw new UnauthorizedAccessException("User not authenticated");
+        }
+
+        SecurityContextHolder.clearContext();
+
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+            session.invalidate();
+        }
+    }
+}

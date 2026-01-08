@@ -6,17 +6,17 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
-import com.example.SlotlyV2.dto.BookingEmailDTO;
-import com.example.SlotlyV2.dto.EventCancelledEmailDTO;
-import com.example.SlotlyV2.dto.PasswordResetDTO;
-import com.example.SlotlyV2.dto.SlotCancelledEmailDTO;
-import com.example.SlotlyV2.dto.UserVerificationDTO;
-import com.example.SlotlyV2.event.EmailVerificationEvent;
-import com.example.SlotlyV2.event.EventCancelledEvent;
-import com.example.SlotlyV2.event.PasswordResetEvent;
-import com.example.SlotlyV2.event.SlotBookedEvent;
-import com.example.SlotlyV2.event.SlotCancelledEvent;
-import com.example.SlotlyV2.service.EmailService;
+import com.example.SlotlyV2.feature.email.EmailService;
+import com.example.SlotlyV2.feature.email.dto.BookingEmailDTO;
+import com.example.SlotlyV2.feature.email.dto.EventCancelledEmailDTO;
+import com.example.SlotlyV2.feature.email.event.EmailVerificationEvent;
+import com.example.SlotlyV2.feature.email.event.EventCancelledEvent;
+import com.example.SlotlyV2.feature.email.event.PasswordResetEvent;
+import com.example.SlotlyV2.feature.email.event.SlotBookedEvent;
+import com.example.SlotlyV2.feature.email.event.SlotCancelledEvent;
+import com.example.SlotlyV2.feature.slot.dto.SlotCancelledEmailDTO;
+import com.example.SlotlyV2.feature.user.dto.PasswordResetDTO;
+import com.example.SlotlyV2.feature.user.dto.UserVerificationDTO;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

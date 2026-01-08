@@ -9,7 +9,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockHttpServletRequest;
 
-import com.example.SlotlyV2.config.RateLimitProperties;
+import com.example.SlotlyV2.common.config.RateLimitProperties;
+import com.example.SlotlyV2.common.rate_limiting.RateLimitService;
 
 @ExtendWith(MockitoExtension.class)
 public class RateLimiterServiceTest {

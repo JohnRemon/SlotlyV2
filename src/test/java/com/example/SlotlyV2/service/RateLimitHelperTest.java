@@ -13,8 +13,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockHttpServletRequest;
 
-import com.example.SlotlyV2.exception.RateLimitExceededException;
-import com.example.SlotlyV2.util.RateLimitHelper;
+import com.example.SlotlyV2.common.exception.auth.RateLimitExceededException;
+import com.example.SlotlyV2.common.rate_limiting.RateLimitService;
+import com.example.SlotlyV2.common.util.RateLimitHelper;
 
 import io.github.bucket4j.Bucket;
 

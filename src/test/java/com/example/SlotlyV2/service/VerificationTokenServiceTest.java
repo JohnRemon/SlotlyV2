@@ -20,11 +20,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.example.SlotlyV2.exception.AccountAlreadyVerifiedException;
-import com.example.SlotlyV2.exception.InvalidTokenException;
-import com.example.SlotlyV2.exception.TokenAlreadyExpiredException;
-import com.example.SlotlyV2.model.User;
-import com.example.SlotlyV2.repository.UserRepository;
+import com.example.SlotlyV2.common.exception.auth.AccountAlreadyVerifiedException;
+import com.example.SlotlyV2.common.exception.auth.InvalidTokenException;
+import com.example.SlotlyV2.common.exception.auth.TokenAlreadyExpiredException;
+import com.example.SlotlyV2.feature.auth.VerificationTokenService;
+import com.example.SlotlyV2.feature.user.User;
+import com.example.SlotlyV2.feature.user.UserRepository;
 
 @ExtendWith(MockitoExtension.class)
 public class VerificationTokenServiceTest {

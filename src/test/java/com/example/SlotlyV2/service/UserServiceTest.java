@@ -32,21 +32,23 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import com.example.SlotlyV2.dto.LoginRequest;
-import com.example.SlotlyV2.dto.PasswordResetConfirmRequest;
-import com.example.SlotlyV2.dto.PasswordResetRequest;
-import com.example.SlotlyV2.dto.RegisterRequest;
-import com.example.SlotlyV2.event.EmailVerificationEvent;
-import com.example.SlotlyV2.event.PasswordResetEvent;
-import com.example.SlotlyV2.exception.AccountNotVerifiedException;
-import com.example.SlotlyV2.exception.InvalidCredentialsException;
-import com.example.SlotlyV2.exception.InvalidTokenException;
-import com.example.SlotlyV2.exception.TokenAlreadyExpiredException;
-import com.example.SlotlyV2.exception.UnauthorizedAccessException;
-import com.example.SlotlyV2.exception.UserAlreadyExistsException;
-import com.example.SlotlyV2.exception.UsernameAlreadyExistsException;
-import com.example.SlotlyV2.model.User;
-import com.example.SlotlyV2.repository.UserRepository;
+import com.example.SlotlyV2.common.exception.auth.AccountNotVerifiedException;
+import com.example.SlotlyV2.common.exception.auth.InvalidCredentialsException;
+import com.example.SlotlyV2.common.exception.auth.InvalidTokenException;
+import com.example.SlotlyV2.common.exception.auth.TokenAlreadyExpiredException;
+import com.example.SlotlyV2.common.exception.auth.UnauthorizedAccessException;
+import com.example.SlotlyV2.common.exception.user.UserAlreadyExistsException;
+import com.example.SlotlyV2.common.exception.user.UsernameAlreadyExistsException;
+import com.example.SlotlyV2.feature.auth.VerificationTokenService;
+import com.example.SlotlyV2.feature.email.event.EmailVerificationEvent;
+import com.example.SlotlyV2.feature.email.event.PasswordResetEvent;
+import com.example.SlotlyV2.feature.user.User;
+import com.example.SlotlyV2.feature.user.UserRepository;
+import com.example.SlotlyV2.feature.user.UserService;
+import com.example.SlotlyV2.feature.user.dto.LoginRequest;
+import com.example.SlotlyV2.feature.user.dto.PasswordResetConfirmRequest;
+import com.example.SlotlyV2.feature.user.dto.PasswordResetRequest;
+import com.example.SlotlyV2.feature.user.dto.RegisterRequest;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
@@ -357,7 +359,7 @@ public class UserServiceTest {
         PasswordResetConfirmRequest request = new PasswordResetConfirmRequest("newPassword123", "differentPassword");
 
         // Act and Assert
-        assertThrows(com.example.SlotlyV2.exception.PasswordMismatchException.class,
+        assertThrows(com.example.SlotlyV2.common.exception.auth.PasswordMismatchException.class,
                 () -> userService.resetPassword("valid-token", request));
 
         verify(verificationTokenService).verifyPasswordVerificationToken("valid-token");

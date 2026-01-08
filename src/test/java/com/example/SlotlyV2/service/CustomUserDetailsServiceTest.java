@@ -15,8 +15,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
-import com.example.SlotlyV2.model.User;
-import com.example.SlotlyV2.repository.UserRepository;
+import com.example.SlotlyV2.feature.auth.CustomUserDetailsService;
+import com.example.SlotlyV2.feature.user.User;
+import com.example.SlotlyV2.feature.user.UserRepository;
 
 @ExtendWith(MockitoExtension.class)
 public class CustomUserDetailsServiceTest {

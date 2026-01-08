@@ -28,21 +28,22 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 
-import com.example.SlotlyV2.dto.CancelBookingRequest;
-import com.example.SlotlyV2.dto.SlotRequest;
-import com.example.SlotlyV2.event.SlotBookedEvent;
-import com.example.SlotlyV2.exception.EventNotFoundException;
-import com.example.SlotlyV2.exception.InvalidSlotException;
-import com.example.SlotlyV2.exception.MaxCapacityExceededException;
-import com.example.SlotlyV2.exception.SlotAlreadyBookedException;
-import com.example.SlotlyV2.exception.SlotNotFoundException;
-import com.example.SlotlyV2.exception.UnauthorizedAccessException;
-import com.example.SlotlyV2.model.AvailabilityRules;
-import com.example.SlotlyV2.model.Event;
-import com.example.SlotlyV2.model.Slot;
-import com.example.SlotlyV2.model.User;
-import com.example.SlotlyV2.repository.EventRepository;
-import com.example.SlotlyV2.repository.SlotRepository;
+import com.example.SlotlyV2.common.exception.auth.UnauthorizedAccessException;
+import com.example.SlotlyV2.common.exception.event.EventNotFoundException;
+import com.example.SlotlyV2.common.exception.event.MaxCapacityExceededException;
+import com.example.SlotlyV2.common.exception.slot.InvalidSlotException;
+import com.example.SlotlyV2.common.exception.slot.SlotAlreadyBookedException;
+import com.example.SlotlyV2.common.exception.slot.SlotNotFoundException;
+import com.example.SlotlyV2.feature.availability.AvailabilityRules;
+import com.example.SlotlyV2.feature.email.event.SlotBookedEvent;
+import com.example.SlotlyV2.feature.event.Event;
+import com.example.SlotlyV2.feature.event.EventRepository;
+import com.example.SlotlyV2.feature.slot.Slot;
+import com.example.SlotlyV2.feature.slot.SlotRepository;
+import com.example.SlotlyV2.feature.slot.SlotService;
+import com.example.SlotlyV2.feature.slot.dto.CancelBookingRequest;
+import com.example.SlotlyV2.feature.slot.dto.SlotRequest;
+import com.example.SlotlyV2.feature.user.User;
 
 @ExtendWith(MockitoExtension.class)
 public class SlotServiceTest {

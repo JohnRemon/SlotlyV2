@@ -9,10 +9,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.example.SlotlyV2.model.AvailabilityRules;
-import com.example.SlotlyV2.model.Event;
-import com.example.SlotlyV2.model.Slot;
-import com.example.SlotlyV2.model.User;
+import com.example.SlotlyV2.feature.availability.AvailabilityRules;
+import com.example.SlotlyV2.feature.calendar.CalendarService;
+import com.example.SlotlyV2.feature.event.Event;
+import com.example.SlotlyV2.feature.slot.Slot;
+import com.example.SlotlyV2.feature.user.User;
 
 @ExtendWith(MockitoExtension.class)
 public class CalendarServiceTest {

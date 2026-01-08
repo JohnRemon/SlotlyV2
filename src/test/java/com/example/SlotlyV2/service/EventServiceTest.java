@@ -24,18 +24,21 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 
-import com.example.SlotlyV2.dto.AvailabilityRulesDTO;
-import com.example.SlotlyV2.dto.EventRequest;
-import com.example.SlotlyV2.dto.EventResponse;
-import com.example.SlotlyV2.event.EventCancelledEvent;
-import com.example.SlotlyV2.exception.EventNotFoundException;
-import com.example.SlotlyV2.exception.InvalidEventException;
-import com.example.SlotlyV2.exception.UnauthorizedAccessException;
-import com.example.SlotlyV2.model.AvailabilityRules;
-import com.example.SlotlyV2.model.Event;
-import com.example.SlotlyV2.model.Slot;
-import com.example.SlotlyV2.model.User;
-import com.example.SlotlyV2.repository.EventRepository;
+import com.example.SlotlyV2.common.exception.auth.UnauthorizedAccessException;
+import com.example.SlotlyV2.common.exception.event.EventNotFoundException;
+import com.example.SlotlyV2.common.exception.event.InvalidEventException;
+import com.example.SlotlyV2.feature.availability.AvailabilityRules;
+import com.example.SlotlyV2.feature.availability.AvailabilityRulesDTO;
+import com.example.SlotlyV2.feature.email.event.EventCancelledEvent;
+import com.example.SlotlyV2.feature.event.Event;
+import com.example.SlotlyV2.feature.event.EventRepository;
+import com.example.SlotlyV2.feature.event.EventService;
+import com.example.SlotlyV2.feature.event.dto.EventRequest;
+import com.example.SlotlyV2.feature.event.dto.EventResponse;
+import com.example.SlotlyV2.feature.slot.Slot;
+import com.example.SlotlyV2.feature.slot.SlotService;
+import com.example.SlotlyV2.feature.user.User;
+import com.example.SlotlyV2.feature.user.UserService;
 
 @ExtendWith(MockitoExtension.class)
 public class EventServiceTest {
