@@ -1,7 +1,8 @@
 package com.example.SlotlyV2.feature.event;
 
-import java.util.List;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -9,10 +10,12 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.SlotlyV2.common.dto.ApiResponse;
+import com.example.SlotlyV2.common.dto.PagedResponse;
 import com.example.SlotlyV2.feature.event.dto.EventRequest;
 import com.example.SlotlyV2.feature.event.dto.EventResponse;
 import com.example.SlotlyV2.feature.user.UserService;
@@ -35,9 +38,18 @@ public class EventController {
     }
 
     @GetMapping
-    public ApiResponse<List<EventResponse>> getEvents() {
-        List<EventResponse> events = eventService.getEvents(userService.getCurrentUser());
-        return new ApiResponse<>("Events fetched successfully", events);
+    public ApiResponse<PagedResponse<EventResponse>> getEvents(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir) {
+
+        Sort sort = Sort.by(Sort.Direction.fromString(sortDir), sortBy);
+        PageRequest pageable = PageRequest.of(page, size, sort);
+
+        Page<EventResponse> events = eventService.getEvents(userService.getCurrentUser(), pageable);
+        return new ApiResponse<>("Events fetched successfully",
+                PagedResponse.of(events));
     }
 
     @GetMapping("/{id}")

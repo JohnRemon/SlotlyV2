@@ -37,105 +37,48 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(UserAlreadyExistsException.class)
+    @ExceptionHandler({
+            UserAlreadyExistsException.class,
+            UsernameAlreadyExistsException.class,
+            OptimisticLockException.class
+    })
     @ResponseStatus(HttpStatus.CONFLICT)
-    public ApiResponse<Void> handleUserAlreadyExists(UserAlreadyExistsException ex) {
+    public ApiResponse<Void> handleConflictExceptions(RuntimeException ex) {
         return new ApiResponse<>(ex.getMessage(), null);
     }
 
-    @ExceptionHandler(UsernameAlreadyExistsException.class)
-    @ResponseStatus(HttpStatus.CONFLICT)
-    public ApiResponse<Void> handleUsernameAlreadyExists(UsernameAlreadyExistsException ex) {
-        return new ApiResponse<>(ex.getMessage(), null);
-    }
-
-    @ExceptionHandler(UserNotFoundException.class)
+    @ExceptionHandler({
+            UserNotFoundException.class,
+            EventNotFoundException.class,
+            SlotNotFoundException.class
+    })
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ApiResponse<Void> handleUserNotFound(UserNotFoundException ex) {
+    public ApiResponse<Void> handleNotFoundExceptions(RuntimeException ex) {
         return new ApiResponse<>(ex.getMessage(), null);
     }
 
-    @ExceptionHandler(InvalidCredentialsException.class)
+    @ExceptionHandler({
+            InvalidCredentialsException.class,
+            UnauthorizedAccessException.class
+    })
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    public ApiResponse<Void> handleInvalidCredentials(InvalidCredentialsException ex) {
+    public ApiResponse<Void> handleUnauthorizeExceptions(RuntimeException ex) {
         return new ApiResponse<>(ex.getMessage(), null);
     }
 
-    @ExceptionHandler(UnauthorizedAccessException.class)
-    @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    public ApiResponse<Void> handleUnauthorizedAccess(UnauthorizedAccessException ex) {
-        return new ApiResponse<>(ex.getMessage(), null);
-    }
-
-    @ExceptionHandler(EventNotFoundException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ApiResponse<Void> handleEventNotFound(EventNotFoundException ex) {
-        return new ApiResponse<>(ex.getMessage(), null);
-    }
-
-    @ExceptionHandler(InvalidEventException.class)
+    @ExceptionHandler({
+            InvalidEventException.class,
+            SlotNotBookedException.class,
+            MaxCapacityExceededException.class,
+            AccountAlreadyVerifiedException.class,
+            AccountNotVerifiedException.class,
+            InvalidTokenException.class,
+            TokenAlreadyExpiredException.class,
+            PasswordMismatchException.class,
+            InvalidSlotException.class
+    })
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiResponse<Void> handleInvalidEvent(InvalidEventException ex) {
-        return new ApiResponse<>(ex.getMessage(), null);
-    }
-
-    @ExceptionHandler(SlotNotFoundException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ApiResponse<Void> handleSlotNotFound(SlotNotFoundException ex) {
-        return new ApiResponse<>(ex.getMessage(), null);
-    }
-
-    @ExceptionHandler(SlotNotBookedException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiResponse<Void> handleSlotNotBooked(SlotNotBookedException ex) {
-        return new ApiResponse<>(ex.getMessage(), null);
-    }
-
-    @ExceptionHandler(MaxCapacityExceededException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiResponse<Void> handleMaxCapacityExceeded(MaxCapacityExceededException ex) {
-        return new ApiResponse<>(ex.getMessage(), null);
-    }
-
-    @ExceptionHandler(OptimisticLockException.class)
-    @ResponseStatus(HttpStatus.CONFLICT)
-    public ApiResponse<Void> handleOptimisticLock(OptimisticLockException ex) {
-        return new ApiResponse<>(ex.getMessage(), null);
-    }
-
-    @ExceptionHandler(AccountAlreadyVerifiedException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiResponse<Void> handleAccountAlreadyVerified(AccountAlreadyVerifiedException ex) {
-        return new ApiResponse<>(ex.getMessage(), null);
-    }
-
-    @ExceptionHandler(AccountNotVerifiedException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiResponse<Void> handleAccountNotVerified(AccountNotVerifiedException ex) {
-        return new ApiResponse<>(ex.getMessage(), null);
-    }
-
-    @ExceptionHandler(InvalidTokenException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiResponse<Void> handleInvalidToken(InvalidTokenException ex) {
-        return new ApiResponse<>(ex.getMessage(), null);
-    }
-
-    @ExceptionHandler(TokenAlreadyExpiredException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiResponse<Void> handleTokenAlreadyExpired(TokenAlreadyExpiredException ex) {
-        return new ApiResponse<>(ex.getMessage(), null);
-    }
-
-    @ExceptionHandler(PasswordMismatchException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiResponse<Void> handlePasswordMismatch(PasswordMismatchException ex) {
-        return new ApiResponse<>(ex.getMessage(), null);
-    }
-
-    @ExceptionHandler(InvalidSlotException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiResponse<Void> handleInvalidSlot(InvalidSlotException ex) {
+    public ApiResponse<Void> handleBadRequestExceptions(RuntimeException ex) {
         return new ApiResponse<>(ex.getMessage(), null);
     }
 

@@ -11,6 +11,7 @@ A production-ready, enterprise-grade scheduling and time-slot booking platform b
 ## ✨ Core Features
 
 ### 🎯 Business Functionality
+
 - **👥 User Management** - Registration with email verification, password reset, profile management
 - **📅 Event Creation** - Create events with customizable availability rules and timezone support
 - **⏰ Slot Generation** - Automatic time-slot generation based on configurable duration
@@ -20,6 +21,7 @@ A production-ready, enterprise-grade scheduling and time-slot booking platform b
 - **🔗 Shareable Links** - Generate unique shareable event links with access control
 
 ### 🛡️ Security & Performance
+
 - **🔐 Dual Authentication** - JWT (stateless) + Session-based authentication support
 - **🚦 Rate Limiting** - Comprehensive API protection with Bucket4j token bucket algorithm
 - **⚡ Async Processing** - Non-blocking email notifications with configurable thread pools
@@ -29,6 +31,7 @@ A production-ready, enterprise-grade scheduling and time-slot booking platform b
 ## 🏗️ Architecture Overview
 
 ### 📁 Project Structure
+
 ```
 com.example.SlotlyV2/
 ├── config/              # Security, async, JWT, rate limiting configuration
@@ -56,6 +59,7 @@ graph LR
 ```
 
 **Benefits:**
+
 - **Decoupled Design** - Booking logic independent of email delivery
 - **Async Processing** - Non-blocking main thread execution
 - **Scalable** - Easy to add additional listeners without code changes
@@ -70,7 +74,7 @@ graph TB
     B --> D[Event Information]
     B --> E[Host Details]
     B --> F[Time Slot Data]
-    
+
     style B fill:#e1f5fe
     style C fill:#f3e5f5
     style D fill:#f3e5f5
@@ -79,6 +83,7 @@ graph TB
 ```
 
 **Technical Advantages:**
+
 - **Thread Safety** - Immutable data transfer between threads
 - **Lazy Loading Safe** - No Hibernate session issues in async contexts
 - **Performance** - No additional database queries in async threads
@@ -87,109 +92,118 @@ graph TB
 ## 🛠️ Technology Stack
 
 ### 🚀 Backend Technologies
-| Technology | Version | Purpose |
-|------------|---------|---------|
-| **Java** | 21 | Latest LTS with virtual threads and modern features |
-| **Spring Boot** | 4.0.1 | Cutting-edge framework with production-ready defaults |
-| **Spring Security** | 6.x | Comprehensive security with JWT and session support |
-| **Spring Data JPA** | 3.x | Type-safe repository with Hibernate ORM |
-| **PostgreSQL** | Latest | ACID-compliant production database |
-| **Resend** | 3.0.0 | Transactional email delivery service |
-| **Thymeleaf** | 3.x | Template engine for HTML email generation |
-| **JWT (JJWT)** | 0.12.5 | JSON Web Token implementation |
-| **Bucket4j** | 8.16.0 | Token bucket rate limiting algorithm |
-| **Caffeine** | 3.2.3 | High-performance caching library |
+
+| Technology          | Version | Purpose                                               |
+| ------------------- | ------- | ----------------------------------------------------- |
+| **Java**            | 21      | Latest LTS with virtual threads and modern features   |
+| **Spring Boot**     | 4.0.1   | Cutting-edge framework with production-ready defaults |
+| **Spring Security** | 6.x     | Comprehensive security with JWT and session support   |
+| **Spring Data JPA** | 3.x     | Type-safe repository with Hibernate ORM               |
+| **PostgreSQL**      | Latest  | ACID-compliant production database                    |
+| **Resend**          | 3.0.0   | Transactional email delivery service                  |
+| **Thymeleaf**       | 3.x     | Template engine for HTML email generation             |
+| **JWT (JJWT)**      | 0.12.5  | JSON Web Token implementation                         |
+| **Bucket4j**        | 8.16.0  | Token bucket rate limiting algorithm                  |
+| **Caffeine**        | 3.2.3   | High-performance caching library                      |
 
 ### 🧪 Testing & Quality Assurance
-| Tool | Version | Purpose |
-|------|---------|---------|
-| **JUnit 5** | Latest | Modern testing framework with parameterized tests |
-| **Mockito** | 5.11.0 | Mocking framework for unit testing |
-| **JaCoCo** | 0.8.14 | Test coverage reporting and analysis |
-| **Spring Boot Test** | 4.0.1 | Integration testing with test slices |
+
+| Tool                 | Version | Purpose                                           |
+| -------------------- | ------- | ------------------------------------------------- |
+| **JUnit 5**          | Latest  | Modern testing framework with parameterized tests |
+| **Mockito**          | 5.11.0  | Mocking framework for unit testing                |
+| **JaCoCo**           | 0.8.14  | Test coverage reporting and analysis              |
+| **Spring Boot Test** | 4.0.1   | Integration testing with test slices              |
 
 ### 🔧 Build & Development
-| Tool | Purpose |
-|------|---------|
-| **Maven** | Dependency management and build automation |
-| **Lombok** | Reduce boilerplate code with compile-time annotations |
-| **Spring Boot DevTools** | Automatic restarts and live reload |
+
+| Tool                     | Purpose                                               |
+| ------------------------ | ----------------------------------------------------- |
+| **Maven**                | Dependency management and build automation            |
+| **Lombok**               | Reduce boilerplate code with compile-time annotations |
+| **Spring Boot DevTools** | Automatic restarts and live reload                    |
 
 ## 📊 API Documentation
 
 ### 🔐 Authentication Endpoints
 
-| Method | Endpoint | Authentication | Description |
-|--------|----------|----------------|-------------|
-| `POST` | `/api/v1/users/register` | None | User registration with email verification |
-| `POST` | `/api/v1/users/login` | None | Session-based authentication |
-| `POST` | `/api/v1/auth/jwt/login` | None | JWT authentication (stateless) |
-| `POST` | `/api/v1/auth/jwt/refresh` | JWT | Refresh access token |
-| `POST` | `/api/v1/users/logout` | Session | Invalidate session |
-| `POST` | `/api/v1/auth/jwt/logout` | JWT | Invalidate JWT tokens |
+| Method | Endpoint                   | Authentication | Description                               |
+| ------ | -------------------------- | -------------- | ----------------------------------------- |
+| `POST` | `/api/v1/users/register`   | None           | User registration with email verification |
+| `POST` | `/api/v1/users/login`      | None           | Session-based authentication              |
+| `POST` | `/api/v1/auth/jwt/login`   | None           | JWT authentication (stateless)            |
+| `POST` | `/api/v1/auth/jwt/refresh` | JWT            | Refresh access token                      |
+| `POST` | `/api/v1/users/logout`     | Session        | Invalidate session                        |
+| `POST` | `/api/v1/auth/jwt/logout`  | JWT            | Invalidate JWT tokens                     |
 
 ### 📅 Event Management
 
-| Method | Endpoint | Authentication | Description |
-|--------|----------|----------------|-------------|
-| `POST` | `/api/v1/events` | JWT/Session | Create new event with availability rules |
-| `GET` | `/api/v1/events` | JWT/Session | Get current user's events |
-| `GET` | `/api/v1/events/{id}` | JWT/Session | Get specific event details |
-| `DELETE` | `/api/v1/events/{id}` | JWT/Session | Delete event (host only) |
-| `GET` | `/api/v1/events/{shareableId}` | None | Public event access via shareable link |
+| Method   | Endpoint                       | Authentication | Description                              |
+| -------- | ------------------------------ | -------------- | ---------------------------------------- |
+| `POST`   | `/api/v1/events`               | JWT/Session    | Create new event with availability rules |
+| `GET`    | `/api/v1/events`               | JWT/Session    | Get current user's events                |
+| `GET`    | `/api/v1/events/{id}`          | JWT/Session    | Get specific event details               |
+| `DELETE` | `/api/v1/events/{id}`          | JWT/Session    | Delete event (host only)                 |
+| `GET`    | `/api/v1/events/{shareableId}` | None           | Public event access via shareable link   |
 
 ### 🎫 Slot Booking
 
-| Method | Endpoint | Authentication | Description |
-|--------|----------|----------------|-------------|
-| `GET` | `/api/v1/{shareableId}` | None | Get available slots for event |
-| `POST` | `/api/v1/{shareableId}` | JWT/Session | Book a specific time slot |
-| `GET` | `/api/v1/users/me/bookings` | JWT/Session | Get user's booking history |
-| `GET` | `/api/v1/users/me/bookings/{id}/calendar` | JWT/Session | Download booking as .ics file |
+| Method | Endpoint                                  | Authentication | Description                   |
+| ------ | ----------------------------------------- | -------------- | ----------------------------- |
+| `GET`  | `/api/v1/{shareableId}`                   | None           | Get available slots for event |
+| `POST` | `/api/v1/{shareableId}`                   | JWT/Session    | Book a specific time slot     |
+| `GET`  | `/api/v1/users/me/bookings`               | JWT/Session    | Get user's booking history    |
+| `GET`  | `/api/v1/users/me/bookings/{id}/calendar` | JWT/Session    | Download booking as .ics file |
 
 ### 👤 User Management
 
-| Method | Endpoint | Authentication | Description |
-|--------|----------|----------------|-------------|
-| `POST` | `/api/v1/users/password-reset/request` | None | Request password reset |
-| `POST` | `/api/v1/users/password-reset/confirm` | None | Confirm password reset |
-| `POST` | `/api/v1/users/verify-email` | None | Verify email address |
-| `GET` | `/api/v1/users/me` | JWT/Session | Get current user profile |
+| Method | Endpoint                               | Authentication | Description              |
+| ------ | -------------------------------------- | -------------- | ------------------------ |
+| `POST` | `/api/v1/users/password-reset/request` | None           | Request password reset   |
+| `POST` | `/api/v1/users/password-reset/confirm` | None           | Confirm password reset   |
+| `POST` | `/api/v1/users/verify-email`           | None           | Verify email address     |
+| `GET`  | `/api/v1/users/me`                     | JWT/Session    | Get current user profile |
 
 ### 📅 Calendar Operations
 
-| Method | Endpoint | Authentication | Description |
-|--------|----------|----------------|-------------|
-| `GET` | `/api/v1/calendars/{eventId}` | JWT/Session | Export event calendar |
-| `GET` | `/api/v1/calendars/shareable/{shareableId}` | None | Public calendar export |
+| Method | Endpoint                                    | Authentication | Description            |
+| ------ | ------------------------------------------- | -------------- | ---------------------- |
+| `GET`  | `/api/v1/calendars/{eventId}`               | JWT/Session    | Export event calendar  |
+| `GET`  | `/api/v1/calendars/shareable/{shareableId}` | None           | Public calendar export |
 
 ## 🧪 Testing Excellence
 
 ### 📈 Test Coverage Analysis
 
-| Service | Instruction Coverage | Branch Coverage | Test Count |
-|---------|---------------------|----------------|------------|
-| **UserService** | 95% | 83% | 15 tests |
-| **EventService** | 100% | 92% | 12 tests |
-| **VerificationTokenService** | 100% | 88% | 8 tests |
-| **CustomUserDetailsService** | 100% | 95% | 6 tests |
-| **RateLimitService** | 21% | 15% | 4 tests |
-| **Overall Project** | **32%** | **28%** | **45 tests** |
+| Service                      | Instruction Coverage | Branch Coverage | Test Count   |
+| ---------------------------- | -------------------- | --------------- | ------------ |
+| **UserService**              | 95%                  | 81%             | 19 tests     |
+| **SlotService**              | 100%                 | 96%             | 25 tests     |
+| **EventService**             | 100%                 | 100%            | 13 tests     |
+| **CalendarService**          | 100%                 | 100%            | 5 tests      |
+| **VerificationTokenService** | 100%                 | 100%            | 14 tests     |
+| **CustomUserDetailsService** | 100%                 | 100%            | 2 tests      |
+| **RateLimitService**         | 21%                  | 75%             | 2 tests      |
+| **RateLimitHelper**          | 100%                 | 100%            | 4 tests      |
+| **Overall Project**          | **45%**              | **67%**         | **84 tests** |
 
 ### 🎯 Testing Strategy
 
 #### **Unit Testing**
+
 - **Pure Business Logic** - Test service methods in isolation
 - **Mock Dependencies** - Comprehensive Mockito usage
 - **Edge Cases** - Boundary conditions and error scenarios
 - **AAA Pattern** - Clear Arrange-Act-Assert structure
 
 #### **Integration Testing**
+
 - **Database Operations** - Spring Boot Test with H2
 - **Security Flows** - Authentication and authorization testing
 - **API Contracts** - Request/response validation
 
 #### **Coverage Analysis**
+
 ```bash
 # Generate comprehensive coverage report
 ./mvnw clean test jacoco:report
@@ -219,6 +233,7 @@ open target/site/jacoco/com.example.SlotlyV2/index.html
 ### 🔧 Environment Configuration
 
 #### **Development** (`application.properties`)
+
 ```properties
 # Database Configuration
 spring.jpa.hibernate.ddl-auto=create-drop
@@ -240,6 +255,7 @@ app.base-url=${APP_BASE_URL:http://localhost:8080}
 ```
 
 #### **Production** (`application-prod.properties`)
+
 ```properties
 # Optimized Database Settings
 spring.jpa.hibernate.ddl-auto=update
@@ -258,17 +274,18 @@ management.endpoints.web.exposure.include=health,metrics
 
 ### 🚦 Rate Limiting Configuration
 
-| Endpoint Type | Capacity | Refill Rate | Purpose |
-|---------------|----------|--------------|---------|
-| **Global API** | 100 requests | 1 minute | General API protection |
-| **Login** | 5 attempts | 5 minutes | Brute force prevention |
-| **Registration** | 3 attempts | 1 hour | Spam prevention |
-| **Booking** | 10 attempts | 1 minute | Fair usage policy |
-| **Password Reset** | 3 attempts | 1 hour | Security protection |
+| Endpoint Type      | Capacity     | Refill Rate | Purpose                |
+| ------------------ | ------------ | ----------- | ---------------------- |
+| **Global API**     | 100 requests | 1 minute    | General API protection |
+| **Login**          | 5 attempts   | 5 minutes   | Brute force prevention |
+| **Registration**   | 3 attempts   | 1 hour      | Spam prevention        |
+| **Booking**        | 10 attempts  | 1 minute    | Fair usage policy      |
+| **Password Reset** | 3 attempts   | 1 hour      | Security protection    |
 
 ## 🚀 Quick Start Guide
 
 ### 📋 Prerequisites
+
 - **Java 21** - Latest LTS version
 - **Maven 3.9+** - Build automation tool
 - **PostgreSQL 15+** - Production database
@@ -277,12 +294,14 @@ management.endpoints.web.exposure.include=health,metrics
 ### 🛠️ Setup Instructions
 
 #### **1. Clone Repository**
+
 ```bash
 git clone https://github.com/your-username/SlotlyV2.git
 cd SlotlyV2
 ```
 
 #### **2. Database Setup**
+
 ```bash
 # Create PostgreSQL database
 createdb slotlyv2
@@ -294,6 +313,7 @@ export DATABASE_PASSWORD=your_password
 ```
 
 #### **3. Environment Configuration**
+
 ```bash
 # Create .env file (not tracked by Git)
 cat > .env << EOF
@@ -315,6 +335,7 @@ EOF
 ```
 
 #### **4. Run Application**
+
 ```bash
 # Development mode with hot reload
 ./mvnw spring-boot:run
@@ -325,6 +346,7 @@ java -jar target/SlotlyV2-0.0.1-SNAPSHOT.jar
 ```
 
 #### **5. Verify Installation**
+
 ```bash
 # Health check
 curl http://localhost:8080/actuator/health
@@ -351,6 +373,7 @@ curl -X POST http://localhost:8080/api/v1/users/register \
 ```
 
 ### 🐳 Docker Deployment (Planned)
+
 ```dockerfile
 # Future Dockerfile configuration
 FROM openjdk:21-jdk-slim
@@ -362,6 +385,7 @@ ENTRYPOINT ["java", "-jar", "/app.jar"]
 ### 🌐 Production Deployment
 
 #### **Environment Variables**
+
 ```bash
 # Required for production
 export JWT_SECRET_KEY=your-production-secret
@@ -371,6 +395,7 @@ export DATABASE_URL=your-production-database-url
 ```
 
 #### **Security Best Practices**
+
 - Use HTTPS in production
 - Set appropriate JWT expiration times
 - Enable rate limiting on reverse proxy
@@ -381,38 +406,39 @@ export DATABASE_URL=your-production-database-url
 
 ### 🏆 Code Quality Assessment
 
-| Metric | Current Score | Target Score | Status |
-|--------|---------------|--------------|---------|
-| **Test Coverage** | 32% | 80% | 🟡 In Progress |
-| **Code Style** | ✅ Excellent | ✅ Excellent | ✅ Complete |
-| **Error Handling** | ✅ Comprehensive | ✅ Comprehensive | ✅ Complete |
-| **Security** | ✅ Production Ready | ✅ Production Ready | ✅ Complete |
-| **Documentation** | ✅ Detailed | ✅ Detailed | ✅ Complete |
+| Metric             | Current Score       | Target Score        | Status         |
+| ------------------ | ------------------- | ------------------- | -------------- |
+| **Test Coverage**  | 32%                 | 80%                 | 🟡 In Progress |
+| **Code Style**     | ✅ Excellent        | ✅ Excellent        | ✅ Complete    |
+| **Error Handling** | ✅ Comprehensive    | ✅ Comprehensive    | ✅ Complete    |
+| **Security**       | ✅ Production Ready | ✅ Production Ready | ✅ Complete    |
+| **Documentation**  | ✅ Detailed         | ✅ Detailed         | ✅ Complete    |
 
 ### 📈 Performance Characteristics
 
-| Feature | Implementation | Performance Impact |
-|---------|----------------|-------------------|
-| **Async Email** | Spring Events + Thread Pool | Non-blocking user experience |
-| **Rate Limiting** | Bucket4j + Caffeine Cache | O(1) complexity with caching |
-| **Database** | PostgreSQL + Connection Pooling | Optimized for concurrent access |
-| **JWT** | Stateless token validation | No database overhead for auth |
+| Feature           | Implementation                  | Performance Impact              |
+| ----------------- | ------------------------------- | ------------------------------- |
+| **Async Email**   | Spring Events + Thread Pool     | Non-blocking user experience    |
+| **Rate Limiting** | Bucket4j + Caffeine Cache       | O(1) complexity with caching    |
+| **Database**      | PostgreSQL + Connection Pooling | Optimized for concurrent access |
+| **JWT**           | Stateless token validation      | No database overhead for auth   |
 
 ### 🔒 Security Compliance
 
-| Security Aspect | Implementation | Compliance Level |
-|-----------------|----------------|------------------|
-| **Password Storage** | BCrypt with proper salt | ✅ OWASP Compliant |
-| **API Protection** | JWT + Rate Limiting | ✅ Enterprise Grade |
-| **Input Validation** | Bean Validation + Custom Validators | ✅ Comprehensive |
-| **Error Handling** | Custom exceptions (no stack traces) | ✅ Secure |
-| **CORS** | Configurable for frontend domains | ✅ Flexible |
+| Security Aspect      | Implementation                      | Compliance Level    |
+| -------------------- | ----------------------------------- | ------------------- |
+| **Password Storage** | BCrypt with proper salt             | ✅ OWASP Compliant  |
+| **API Protection**   | JWT + Rate Limiting                 | ✅ Enterprise Grade |
+| **Input Validation** | Bean Validation + Custom Validators | ✅ Comprehensive    |
+| **Error Handling**   | Custom exceptions (no stack traces) | ✅ Secure           |
+| **CORS**             | Configurable for frontend domains   | ✅ Flexible         |
 
 ## 🗺️ Project Roadmap
 
 ### 📅 Current Sprint (Q1 2026)
 
 #### **✅ Completed Features**
+
 - [x] **User Authentication** - JWT + Session-based auth with email verification
 - [x] **Event Management** - Create, read, delete events with availability rules
 - [x] **Slot Booking** - Real-time booking with capacity validation
@@ -422,6 +448,7 @@ export DATABASE_URL=your-production-database-url
 - [x] **Testing** - High coverage for core services
 
 #### **🔄 In Progress**
+
 - [ ] **RateLimitService Enhancement** - Increase coverage from 21% to 85%
 - [ ] **Integration Testing** - End-to-end API testing with TestContainers
 - [ ] **OpenAPI Documentation** - Auto-generated Swagger documentation
@@ -430,6 +457,7 @@ export DATABASE_URL=your-production-database-url
 ### 🎯 Next Phase (Q2 2026)
 
 #### **🚀 Planned Features**
+
 - [ ] **React Frontend** - Modern TypeScript + React 18 user interface
 - [ ] **Google Calendar Integration** - Real bidirectional sync
 - [ ] **Zoom/Google Meet** - Automatic meeting creation for bookings
@@ -438,6 +466,7 @@ export DATABASE_URL=your-production-database-url
 - [ ] **WebSocket Support** - Real-time booking updates
 
 #### **🔧 Infrastructure Improvements**
+
 - [ ] **Docker Containerization** - Multi-stage Docker builds
 - [ ] **CI/CD Pipeline** - GitHub Actions with automated testing
 - [ ] **Database Migrations** - Flyway database versioning
@@ -446,6 +475,7 @@ export DATABASE_URL=your-production-database-url
 ### 🎖️ Long-term Vision
 
 #### **🌟 Enterprise Features**
+
 - [ ] **Multi-tenancy** - Organization-level resource isolation
 - [ ] **Advanced Scheduling** - Recurring events and complex availability rules
 - [ ] **Payment Integration** - Stripe integration for paid bookings
@@ -453,6 +483,7 @@ export DATABASE_URL=your-production-database-url
 - [ ] **API Gateway** - Kong or Spring Cloud Gateway for microservices
 
 #### **🏢 Business Features**
+
 - [ ] **Team Management** - Role-based access within organizations
 - [ ] **Custom Branding** - White-label customization options
 - [ ] **Advanced Reporting** - Business intelligence and insights
@@ -463,17 +494,18 @@ export DATABASE_URL=your-production-database-url
 
 ### 🏛️ Design Philosophy
 
-| Decision | Rationale | Benefits |
-|---------|-----------|----------|
-| **Event-Driven Email** | Decouple booking from email delivery | Scalability, resilience, testability |
-| **DTO Pattern** | Prevent lazy loading issues in async contexts | Thread safety, performance |
-| **Dual Authentication** | Support both SPA and traditional web apps | Flexibility, future-proofing |
-| **Custom Exceptions** | Clean API responses, hide implementation details | Security, maintainability |
-| **Rate Limiting** | Prevent abuse and ensure fair usage | Stability, cost control |
+| Decision                | Rationale                                        | Benefits                             |
+| ----------------------- | ------------------------------------------------ | ------------------------------------ |
+| **Event-Driven Email**  | Decouple booking from email delivery             | Scalability, resilience, testability |
+| **DTO Pattern**         | Prevent lazy loading issues in async contexts    | Thread safety, performance           |
+| **Dual Authentication** | Support both SPA and traditional web apps        | Flexibility, future-proofing         |
+| **Custom Exceptions**   | Clean API responses, hide implementation details | Security, maintainability            |
+| **Rate Limiting**       | Prevent abuse and ensure fair usage              | Stability, cost control              |
 
 ### 🛡️ Security Architecture
 
 #### **Multi-Layered Security**
+
 ```mermaid
 graph TB
     A[Client Request] --> B[Rate Limiting Filter]
@@ -482,7 +514,7 @@ graph TB
     D --> E[Service Business Logic]
     E --> F[Repository Security]
     F --> G[Database]
-    
+
     style B fill:#ffeb3b
     style C fill:#4caf50
     style D fill:#2196f3
@@ -491,6 +523,7 @@ graph TB
 ```
 
 #### **JWT Token Strategy**
+
 - **Access Tokens**: 15-minute expiration for security
 - **Refresh Tokens**: 7-day expiration for convenience
 - **Rotation**: New refresh tokens on each use
@@ -501,6 +534,7 @@ graph TB
 ### 📝 Development Standards
 
 #### **Code Quality**
+
 - Follow Spring Boot conventions and best practices
 - Use constructor injection for dependencies
 - Write comprehensive unit tests for new features
@@ -508,6 +542,7 @@ graph TB
 - Use meaningful commit messages following Conventional Commits
 
 #### **Testing Requirements**
+
 - Unit tests for all business logic
 - Integration tests for API endpoints
 - Mock external dependencies (Resend, database)
@@ -515,6 +550,7 @@ graph TB
 - Use testcontainers for database integration tests
 
 #### **Documentation Standards**
+
 - Update README.md for significant features
 - Document API endpoints with examples
 - Include architectural decision records (ADRs)
@@ -533,6 +569,7 @@ graph TB
 ## 📄 License & Credits
 
 ### 📜 License
+
 This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
 
 ### 🙏 Acknowledgments
@@ -540,7 +577,7 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 Built with ❤️ using cutting-edge technologies:
 
 - **[Spring Boot](https://spring.io/projects/spring-boot)** - Enterprise Java framework
-- **[Spring Security](https://spring.io/projects/spring-security)** - Comprehensive security framework  
+- **[Spring Security](https://spring.io/projects/spring-security)** - Comprehensive security framework
 - **[PostgreSQL](https://www.postgresql.org/)** - World's most advanced open source database
 - **[Resend](https://resend.com/)** - Modern email delivery service
 - **[JWT](https://jwt.io/)** - Industry standard for token-based authentication
@@ -570,10 +607,11 @@ This project represents **enterprise-grade software development** with:
 
 **🗓️ SlotlyV2 - Enterprise Scheduling, Simplified**
 
-*Built with passion for modern software development*
+_Built with passion for modern software development_
 
 [![Star](https://img.shields.io/github/stars/your-username/SlotlyV2.svg?style=social&label=Star)](https://github.com/your-username/SlotlyV2)
 [![Fork](https://img.shields.io/github/forks/your-username/SlotlyV2.svg?style=social&label=Fork)](https://github.com/your-username/SlotlyV2/fork)
 [![Watch](https://img.shields.io/github/watchers/your-username/SlotlyV2.svg?style=social&label=Watch)](https://github.com/your-username/SlotlyV2)
 
 </div>
+

@@ -1,9 +1,8 @@
-package com.example.SlotlyV2.common.util;
+package com.example.SlotlyV2.common.rate_limiting;
 
 import org.springframework.stereotype.Component;
 
 import com.example.SlotlyV2.common.exception.auth.RateLimitExceededException;
-import com.example.SlotlyV2.common.rate_limiting.RateLimitService;
 
 import io.github.bucket4j.Bucket;
 import jakarta.servlet.http.HttpServletRequest;

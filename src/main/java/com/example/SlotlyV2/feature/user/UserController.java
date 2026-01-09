@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.SlotlyV2.common.dto.ApiResponse;
-import com.example.SlotlyV2.common.util.RateLimitHelper;
+import com.example.SlotlyV2.common.rate_limiting.RateLimitHelper;
 import com.example.SlotlyV2.feature.auth.VerificationTokenService;
 import com.example.SlotlyV2.feature.user.dto.LoginRequest;
 import com.example.SlotlyV2.feature.user.dto.PasswordResetConfirmRequest;

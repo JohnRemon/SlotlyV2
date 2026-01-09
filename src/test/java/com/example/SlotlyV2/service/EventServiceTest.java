@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -11,7 +12,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,6 +23,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 import com.example.SlotlyV2.common.exception.auth.UnauthorizedAccessException;
 import com.example.SlotlyV2.common.exception.event.EventNotFoundException;
@@ -183,6 +188,7 @@ public class EventServiceTest {
 
     @Test
     void shouldGetCurrentUserEventsSuccessfully() {
+        // Arrange
         User host = user(1L);
 
         Event event1 = new Event();
@@ -197,16 +203,27 @@ public class EventServiceTest {
         event2.setHost(host);
         event2.setRules(rules(true));
 
-        when(eventRepository.findByHost(host)).thenReturn(new ArrayList<>(List.of(event1, event2)));
+        List<Event> eventsList = List.of(event1, event2);
+        Page<Event> pagedEvents = new PageImpl<>(
+                eventsList,
+                PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "createdAt")),
+                eventsList.size());
 
-        List<EventResponse> events = eventService.getEvents(host);
+        when(eventRepository.findByHost(eq(host), any(Pageable.class))).thenReturn(pagedEvents);
+
+        // Act
+        Page<EventResponse> events = eventService.getEvents(
+                host,
+                PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "createdAt")));
 
         assertNotNull(events);
-        assertEquals(2, events.size());
-        assertEquals("Event 1", events.get(0).getEventName());
-        assertEquals("Event 2", events.get(1).getEventName());
+        assertEquals(2, events.getTotalElements());
+        assertEquals(1, events.getTotalPages());
+        assertEquals(2, events.getContent().size());
+        assertEquals("Event 1", events.getContent().get(0).getEventName());
+        assertEquals("Event 2", events.getContent().get(1).getEventName());
 
-        verify(eventRepository).findByHost(host);
+        verify(eventRepository).findByHost(eq(host), any(Pageable.class));
     }
 
     @Test

@@ -2,9 +2,10 @@ package com.example.SlotlyV2.feature.event;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.List;
 
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.example.SlotlyV2.common.exception.auth.UnauthorizedAccessException;
@@ -73,11 +74,9 @@ public class EventService {
         return savedEvent;
     }
 
-    public List<EventResponse> getEvents(User host) {
-        return eventRepository.findByHost(host)
-                .stream()
-                .map(EventResponse::new)
-                .toList();
+    public Page<EventResponse> getEvents(User host, Pageable pageable) {
+        return eventRepository.findByHost(host, pageable)
+                .map(EventResponse::new);
     }
 
     public Event getEventById(Long id) {
