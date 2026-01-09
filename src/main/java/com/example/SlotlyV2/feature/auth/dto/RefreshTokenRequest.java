@@ -1,9 +1,9 @@
 package com.example.SlotlyV2.feature.auth.dto;
 
 import jakarta.validation.constraints.NotBlank;
-import lombok.Data;
+import lombok.Value;
 
-@Data
+@Value
 public class RefreshTokenRequest {
 
     @NotBlank(message = "Refresh token is required")

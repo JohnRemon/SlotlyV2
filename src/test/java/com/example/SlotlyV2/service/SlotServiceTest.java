@@ -274,11 +274,12 @@ public class SlotServiceTest {
         slot.setBookedByName(null);
         slot.setBookedByEmail(null);
 
-        SlotRequest request = new SlotRequest();
-        request.setEventId(event.getId());
-        request.setStartTime(startTime);
-        request.setAttendeeEmail("attendee@example.com");
-        request.setAttendeeName("Jane Smith");
+        SlotRequest request = SlotRequest.builder()
+                .eventId(event.getId())
+                .startTime(startTime)
+                .attendeeEmail("attendee@example.com")
+                .attendeeName("Jane Smith")
+                .build();
 
         when(slotRepository.findByEventIdAndStartTime(event.getId(), startTime)).thenReturn(Optional.of(slot));
         when(slotRepository.countByEventAndBookedByEmailIsNotNullAndBookedByNameIsNotNull(event)).thenReturn(0);
@@ -312,9 +313,11 @@ public class SlotServiceTest {
     @Test
     void shouldThrowSlotNotFoundExceptionWhenSlotNotFoundByEventIdAndStartTime() {
         // Arrange
-        SlotRequest request = new SlotRequest();
-        request.setEventId(1L);
-        request.setStartTime(ZonedDateTime.now(EVENT_ZONE).plusHours(1).toLocalDateTime());
+        SlotRequest request = SlotRequest.builder()
+                .eventId(1L)
+                .startTime(ZonedDateTime.now(EVENT_ZONE).plusHours(1).toLocalDateTime())
+                .build();
+
         when(slotRepository.findByEventIdAndStartTime(anyLong(), any(LocalDateTime.class)))
                 .thenReturn(Optional.empty());
 
@@ -344,9 +347,10 @@ public class SlotServiceTest {
         slot.setBookedByName("John Doe");
         slot.setBookedByEmail("test@example.com");
 
-        SlotRequest request = new SlotRequest();
-        request.setEventId(1L);
-        request.setStartTime(startTime);
+        SlotRequest request = SlotRequest.builder()
+                .eventId(1L)
+                .startTime(startTime)
+                .build();
 
         when(slotRepository.findByEventIdAndStartTime(request.getEventId(), request.getStartTime()))
                 .thenReturn(Optional.of(slot));
@@ -367,9 +371,10 @@ public class SlotServiceTest {
         slot.setEvent(event);
         slot.setStartTime(ZonedDateTime.now(EVENT_ZONE).minusHours(1).toLocalDateTime());
 
-        SlotRequest request = new SlotRequest();
-        request.setEventId(1L);
-        request.setStartTime(slot.getStartTime());
+        SlotRequest request = SlotRequest.builder()
+                .eventId(1L)
+                .startTime(slot.getStartTime())
+                .build();
 
         when(slotRepository.findByEventIdAndStartTime(request.getEventId(), request.getStartTime()))
                 .thenReturn(Optional.of(slot));
@@ -398,9 +403,10 @@ public class SlotServiceTest {
         slot.setBookedByEmail(null);
         slot.setBookedByName(null);
 
-        SlotRequest request = new SlotRequest();
-        request.setEventId(1L);
-        request.setStartTime(startTime);
+        SlotRequest request = SlotRequest.builder()
+                .eventId(1L)
+                .startTime(startTime)
+                .build();
 
         when(slotRepository.findByEventIdAndStartTime(request.getEventId(), request.getStartTime()))
                 .thenReturn(Optional.of(slot));
@@ -484,10 +490,11 @@ public class SlotServiceTest {
         slot.setBookedByEmail("test@example.com");
         slot.setBookedByName("Test User");
 
-        CancelBookingRequest request = new CancelBookingRequest();
-        request.setEventId(slot.getEvent().getId());
-        request.setAttendeeEmail(slot.getBookedByEmail());
-        request.setStartTime(slot.getStartTime());
+        CancelBookingRequest request = CancelBookingRequest.builder()
+                .eventId(slot.getEvent().getId())
+                .attendeeEmail(slot.getBookedByEmail())
+                .startTime(slot.getStartTime())
+                .build();
 
         when(slotRepository.findByEventIdAndStartTime(request.getEventId(), request.getStartTime()))
                 .thenReturn(Optional.of(slot));
@@ -508,9 +515,10 @@ public class SlotServiceTest {
     @Test
     void shouldThrowSlotNotFoundExceptionWhenCancellingNonExistentSlot() {
         // Arrange
-        CancelBookingRequest request = new CancelBookingRequest();
-        request.setEventId(1L);
-        request.setStartTime(ZonedDateTime.now(EVENT_ZONE).plusHours(1).toLocalDateTime());
+        CancelBookingRequest request = CancelBookingRequest.builder()
+                .eventId(1L)
+                .startTime(ZonedDateTime.now(EVENT_ZONE).plusHours(1).toLocalDateTime())
+                .build();
 
         when(slotRepository.findByEventIdAndStartTime(request.getEventId(), request.getStartTime()))
                 .thenReturn(Optional.empty());
@@ -525,10 +533,11 @@ public class SlotServiceTest {
         Slot slot = createTestSlot();
         slot.setStartTime(ZonedDateTime.now(EVENT_ZONE).minusHours(1).toLocalDateTime());
 
-        CancelBookingRequest request = new CancelBookingRequest();
-        request.setEventId(slot.getEvent().getId());
-        request.setAttendeeEmail(slot.getBookedByEmail());
-        request.setStartTime(slot.getStartTime());
+        CancelBookingRequest request = CancelBookingRequest.builder()
+                .eventId(slot.getEvent().getId())
+                .attendeeEmail(slot.getBookedByEmail())
+                .startTime(slot.getStartTime())
+                .build();
 
         when(slotRepository.findByEventIdAndStartTime(request.getEventId(), request.getStartTime()))
                 .thenReturn(Optional.of(slot));
@@ -544,10 +553,11 @@ public class SlotServiceTest {
         slot.setBookedByEmail(null);
         slot.setBookedByName(null);
 
-        CancelBookingRequest request = new CancelBookingRequest();
-        request.setEventId(slot.getEvent().getId());
-        request.setAttendeeEmail("test@example.com");
-        request.setStartTime(slot.getStartTime());
+        CancelBookingRequest request = CancelBookingRequest.builder()
+                .eventId(slot.getEvent().getId())
+                .attendeeEmail("test@example.com")
+                .startTime(slot.getStartTime())
+                .build();
 
         when(slotRepository.findByEventIdAndStartTime(request.getEventId(), request.getStartTime()))
                 .thenReturn(Optional.of(slot));
@@ -562,10 +572,11 @@ public class SlotServiceTest {
         Slot slot = createTestSlot();
         slot.setBookedByEmail("user@example.com");
 
-        CancelBookingRequest request = new CancelBookingRequest();
-        request.setEventId(slot.getEvent().getId());
-        request.setAttendeeEmail("other@example.com");
-        request.setStartTime(slot.getStartTime());
+        CancelBookingRequest request = CancelBookingRequest.builder()
+                .eventId(slot.getEvent().getId())
+                .attendeeEmail("other@example.com")
+                .startTime(slot.getStartTime())
+                .build();
 
         when(slotRepository.findByEventIdAndStartTime(request.getEventId(), request.getStartTime()))
                 .thenReturn(Optional.of(slot));
@@ -589,10 +600,11 @@ public class SlotServiceTest {
         slot.setBookedByEmail("test@example.com");
         slot.setBookedByName("Test User");
 
-        CancelBookingRequest request = new CancelBookingRequest();
-        request.setEventId(slot.getEvent().getId());
-        request.setAttendeeEmail(slot.getBookedByEmail());
-        request.setStartTime(slot.getStartTime());
+        CancelBookingRequest request = CancelBookingRequest.builder()
+                .eventId(slot.getEvent().getId())
+                .attendeeEmail(slot.getBookedByEmail())
+                .startTime(slot.getStartTime())
+                .build();
 
         when(slotRepository.findByEventIdAndStartTime(request.getEventId(), request.getStartTime()))
                 .thenReturn(Optional.of(slot));

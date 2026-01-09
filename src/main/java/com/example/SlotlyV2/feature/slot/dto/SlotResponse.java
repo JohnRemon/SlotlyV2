@@ -5,9 +5,9 @@ import java.time.LocalDateTime;
 import com.example.SlotlyV2.feature.event.dto.EventResponse;
 import com.example.SlotlyV2.feature.slot.Slot;
 
-import lombok.Data;
+import lombok.Value;
 
-@Data
+@Value
 public class SlotResponse {
     private EventResponse eventResponse;
     private LocalDateTime startTime;

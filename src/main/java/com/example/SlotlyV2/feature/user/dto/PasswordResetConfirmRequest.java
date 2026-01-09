@@ -3,9 +3,9 @@ package com.example.SlotlyV2.feature.user.dto;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
-import lombok.Data;
+import lombok.Value;
 
-@Data
+@Value
 public class PasswordResetConfirmRequest {
     @NotBlank(message = "Password is required")
     @Size(min = 8, message = "Password size must be greater than 8")

@@ -1,10 +1,8 @@
 package com.example.SlotlyV2.feature.slot.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Value;
 
-@Data
-@AllArgsConstructor
+@Value
 public class SlotCancelledEmailDTO {
     private Long slotId;
     private String slotStartTime;

@@ -1,8 +1,8 @@
 package com.example.SlotlyV2.feature.user.dto;
 
-import lombok.Data;
+import lombok.Value;
 
-@Data
+@Value
 public class PasswordResetDTO {
     private final String displayName;
     private final String email;

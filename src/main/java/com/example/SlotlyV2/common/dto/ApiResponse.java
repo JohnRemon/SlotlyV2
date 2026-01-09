@@ -1,10 +1,8 @@
 package com.example.SlotlyV2.common.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Value;
 
-@Data
-@AllArgsConstructor
+@Value
 public class ApiResponse<T> {
     private String message;
     private T data;

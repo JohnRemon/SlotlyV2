@@ -2,11 +2,11 @@ package com.example.SlotlyV2.feature.email.dto;
 
 import java.time.LocalDateTime;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Builder;
+import lombok.Value;
 
-@Data
-@AllArgsConstructor
+@Value
+@Builder
 public class BookingEmailDTO {
     private String toEmail;
     private String hostEmail;

@@ -2,17 +2,17 @@ package com.example.SlotlyV2.feature.user.dto;
 
 import com.example.SlotlyV2.feature.user.User;
 
-import lombok.Data;
+import lombok.Value;
 
-@Data
+@Value
 public class UserResponse {
-    private Long id;
-    private String email;
-    private String displayName;
-    private String firstName;
-    private String lastName;
-    private String timeZone;
-    private Boolean isVerified;
+    private final Long id;
+    private final String email;
+    private final String displayName;
+    private final String firstName;
+    private final String lastName;
+    private final String timeZone;
+    private final Boolean isVerified;
 
     public UserResponse(User user) {
         this.id = user.getId();

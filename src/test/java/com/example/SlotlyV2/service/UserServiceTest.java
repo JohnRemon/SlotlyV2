@@ -280,8 +280,9 @@ public class UserServiceTest {
         when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(testUser));
         when(verificationTokenService.generatePasswordVerificationToken(testUser)).thenReturn(testUser);
 
-        PasswordResetRequest request = new PasswordResetRequest();
-        request.setEmail("test@example.com");
+        PasswordResetRequest request = PasswordResetRequest.builder()
+                .email("test@example.com")
+                .build();
 
         // Act
         userService.resetPasswordRequest(request);
@@ -339,8 +340,9 @@ public class UserServiceTest {
     void shouldHandleResetPasswordRequestForNonExistentEmail() {
         // Arrange
         when(userRepository.findByEmail("nonexistent@example.com")).thenReturn(Optional.empty());
-        PasswordResetRequest request = new PasswordResetRequest();
-        request.setEmail("nonexistent@example.com");
+        PasswordResetRequest request = PasswordResetRequest.builder()
+                .email("nonexistent@example.com")
+                .build();
 
         // Act
         userService.resetPasswordRequest(request);

@@ -56,11 +56,12 @@ public class EventServiceTest {
     private EventService eventService;
 
     private static AvailabilityRulesDTO publicRulesDto() {
-        AvailabilityRulesDTO rules = new AvailabilityRulesDTO();
-        rules.setSlotDurationMinutes(60);
-        rules.setMaxSlotsPerUser(2);
-        rules.setAllowsCancellations(true);
-        rules.setIsPublic(true);
+        AvailabilityRulesDTO rules = AvailabilityRulesDTO.builder()
+                .slotDurationMinutes(60)
+                .maxSlotsPerUser(2)
+                .allowsCancellations(true)
+                .isPublic(true)
+                .build();
         return rules;
     }
 
@@ -87,12 +88,13 @@ public class EventServiceTest {
         LocalDateTime startTime = now.plusHours(12);
         LocalDateTime endTime = now.plusHours(14);
 
-        EventRequest request = new EventRequest();
-        request.setEventName("Test Event");
-        request.setEventStart(startTime);
-        request.setEventEnd(endTime);
-        request.setTimeZone("Europe/Berlin");
-        request.setRules(rules);
+        EventRequest request = EventRequest.builder()
+                .eventName("Test Event")
+                .eventStart(startTime)
+                .eventEnd(endTime)
+                .timeZone("Europe/Berlin")
+                .rules(rules)
+                .build();
 
         User host = user(1L);
 
@@ -133,12 +135,12 @@ public class EventServiceTest {
         LocalDateTime startTime = now.minusHours(1);
         LocalDateTime endTime = now.plusHours(1);
 
-        EventRequest request = new EventRequest();
-        request.setEventName("Test Event");
-        request.setEventStart(startTime);
-        request.setEventEnd(endTime);
-        request.setTimeZone("Europe/Berlin");
-        request.setRules(rules);
+        EventRequest request = EventRequest.builder()
+                .eventStart(startTime)
+                .eventEnd(endTime)
+                .timeZone("Europe/Berlin")
+                .rules(rules)
+                .build();
 
         when(userService.getCurrentUser()).thenReturn(user(1L));
 
@@ -155,17 +157,19 @@ public class EventServiceTest {
 
         LocalDateTime startTime = LocalDateTime.now().plusHours(12);
 
-        EventRequest req1 = new EventRequest();
-        req1.setEventStart(startTime);
-        req1.setEventEnd(startTime.minusHours(1));
-        req1.setTimeZone("Europe/Berlin");
-        req1.setRules(rules);
+        EventRequest req1 = EventRequest.builder()
+                .eventStart(startTime)
+                .eventEnd(startTime.minusHours(1))
+                .timeZone("Europe/Berlin")
+                .rules(rules)
+                .build();
 
-        EventRequest req2 = new EventRequest();
-        req2.setEventStart(startTime);
-        req2.setEventEnd(startTime);
-        req2.setTimeZone("Europe/Berlin");
-        req2.setRules(rules);
+        EventRequest req2 = EventRequest.builder()
+                .eventStart(startTime)
+                .eventEnd(startTime)
+                .timeZone("Europe/Berlin")
+                .rules(rules)
+                .build();
 
         when(userService.getCurrentUser()).thenReturn(user(1L));
 

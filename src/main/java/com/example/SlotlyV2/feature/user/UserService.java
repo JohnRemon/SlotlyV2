@@ -43,7 +43,7 @@ public class UserService {
 
     @Transactional(rollbackOn = Exception.class)
     public User registerUser(RegisterRequest request) {
-        // Check if email already exsists
+        // Check if email already exists
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new UserAlreadyExistsException("User Already Exists. Please Login");
         }

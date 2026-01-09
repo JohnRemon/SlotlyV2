@@ -6,9 +6,9 @@ import com.example.SlotlyV2.feature.availability.AvailabilityRulesDTO;
 import com.example.SlotlyV2.feature.event.Event;
 import com.example.SlotlyV2.feature.user.dto.UserResponse;
 
-import lombok.Data;
+import lombok.Value;
 
-@Data
+@Value
 public class EventResponse {
     private Long id;
     private String eventName;
@@ -30,7 +30,12 @@ public class EventResponse {
         this.eventEnd = event.getEventEnd();
         this.timeZone = event.getTimeZone();
         this.createdAt = event.getCreatedAt();
-        this.rules = new AvailabilityRulesDTO(event.getRules());
+        this.rules = AvailabilityRulesDTO.builder()
+                .slotDurationMinutes(event.getRules().getSlotDurationMinutes())
+                .maxSlotsPerUser(event.getRules().getMaxSlotsPerUser())
+                .allowsCancellations(event.getRules().getAllowsCancellations())
+                .isPublic(event.getRules().getIsPublic())
+                .build();
         this.shareableId = event.getShareableId();
     }
 

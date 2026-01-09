@@ -48,10 +48,7 @@ public class SlotService {
         }
 
         // TODO: Improve the slot generation algorithm
-        while (start.plusMinutes(event.getRules().getSlotDurationMinutes()).isBefore(end)
-                || start.plusMinutes(event.getRules().getSlotDurationMinutes()).isEqual(end))
-
-        {
+        while (!start.isAfter(end.minusMinutes(event.getRules().getSlotDurationMinutes()))) {
             Slot slot = new Slot();
             slot.setEvent(event);
             slot.setStartTime(start);
@@ -103,17 +100,17 @@ public class SlotService {
 
         // Prepare Booking data for emails
         String hostDisplayName = getHostDisplayName(savedSlot.getEvent().getHost());
-        BookingEmailDTO bookingData = new BookingEmailDTO(
-                savedSlot.getBookedByEmail(),
-                savedSlot.getEvent().getHost().getEmail(),
-                savedSlot.getBookedByName(),
-                savedSlot.getBookedByEmail(),
-                savedSlot.getEvent().getEventName(),
-                savedSlot.getStartTime(),
-                savedSlot.getEndTime(),
-                savedSlot.getEvent().getTimeZone(),
-                hostDisplayName,
-                savedSlot.getId());
+        BookingEmailDTO bookingData = BookingEmailDTO.builder()
+                .attendeeEmail(savedSlot.getBookedByEmail())
+                .hostEmail(savedSlot.getEvent().getHost().getEmail())
+                .attendeeName(savedSlot.getBookedByName())
+                .eventName(savedSlot.getEvent().getEventName())
+                .startTime(savedSlot.getStartTime())
+                .endTime(savedSlot.getEndTime())
+                .timeZone(savedSlot.getEvent().getTimeZone())
+                .hostDisplayName(hostDisplayName)
+                .slotId(savedSlot.getId())
+                .build();
 
         // Publish the Booking Event
         eventPublisher.publishEvent(new SlotBookedEvent(bookingData));
