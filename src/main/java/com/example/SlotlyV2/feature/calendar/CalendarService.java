@@ -7,20 +7,24 @@ import java.time.format.DateTimeFormatter;
 
 import org.springframework.stereotype.Service;
 
+import com.example.SlotlyV2.common.util.NameUtils;
 import com.example.SlotlyV2.feature.slot.Slot;
-import com.example.SlotlyV2.feature.user.User;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
+@RequiredArgsConstructor
 @Slf4j
 public class CalendarService {
+    private final NameUtils nameUtils;
+
     private static final DateTimeFormatter ICS_DATE_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss'Z'");
 
     public String generateIcsFile(Slot slot) {
         // Get event details
         String eventName = slot.getEvent().getEventName();
-        String hostName = getHostDisplayName(slot);
+        String hostName = nameUtils.getUserDisplayName(slot);
         String hostEmail = slot.getEvent().getHost().getEmail();
         String attendeeName = slot.getBookedByName();
         String attendeeEmail = slot.getBookedByEmail();
@@ -65,18 +69,5 @@ public class CalendarService {
         ZonedDateTime utcTime = zonedDateTime.withZoneSameInstant(ZoneId.of("UTC"));
 
         return utcTime.format(ICS_DATE_FORMAT);
-    }
-
-    private String getHostDisplayName(Slot slot) {
-        User host = slot.getEvent().getHost();
-        String displayName = "";
-        if (host.getFirstName() != null) {
-            displayName += host.getFirstName();
-        }
-        if (host.getLastName() != null) {
-            displayName += " " + host.getLastName();
-        }
-
-        return displayName.trim();
     }
 }

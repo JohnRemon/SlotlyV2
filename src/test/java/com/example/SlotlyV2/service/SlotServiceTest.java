@@ -34,6 +34,7 @@ import com.example.SlotlyV2.common.exception.event.MaxCapacityExceededException;
 import com.example.SlotlyV2.common.exception.slot.InvalidSlotException;
 import com.example.SlotlyV2.common.exception.slot.SlotAlreadyBookedException;
 import com.example.SlotlyV2.common.exception.slot.SlotNotFoundException;
+import com.example.SlotlyV2.common.util.NameUtils;
 import com.example.SlotlyV2.feature.availability.AvailabilityRules;
 import com.example.SlotlyV2.feature.email.event.SlotBookedEvent;
 import com.example.SlotlyV2.feature.event.Event;
@@ -57,6 +58,9 @@ public class SlotServiceTest {
     @Mock
     private ApplicationEventPublisher eventPublisher;
 
+    @Mock
+    private NameUtils nameUtils;
+
     @InjectMocks
     private SlotService slotService;
 
@@ -64,7 +68,7 @@ public class SlotServiceTest {
 
     @BeforeEach
     void setUp() {
-        reset(slotRepository, eventRepository, eventPublisher);
+        reset(slotRepository, eventRepository, eventPublisher, nameUtils);
     }
 
     @SuppressWarnings("unchecked")

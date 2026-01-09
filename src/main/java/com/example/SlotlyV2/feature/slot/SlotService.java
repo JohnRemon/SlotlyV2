@@ -15,6 +15,7 @@ import com.example.SlotlyV2.common.exception.event.MaxCapacityExceededException;
 import com.example.SlotlyV2.common.exception.slot.InvalidSlotException;
 import com.example.SlotlyV2.common.exception.slot.SlotAlreadyBookedException;
 import com.example.SlotlyV2.common.exception.slot.SlotNotFoundException;
+import com.example.SlotlyV2.common.util.NameUtils;
 import com.example.SlotlyV2.feature.email.dto.BookingEmailDTO;
 import com.example.SlotlyV2.feature.email.event.SlotBookedEvent;
 import com.example.SlotlyV2.feature.email.event.SlotCancelledEvent;
@@ -36,6 +37,7 @@ public class SlotService {
     private final SlotRepository slotRepository;
     private final EventRepository eventRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final NameUtils nameUtils;
 
     @Transactional(rollbackOn = Exception.class)
     public void generateSlots(Event event) {
@@ -99,7 +101,7 @@ public class SlotService {
         Slot savedSlot = slotRepository.save(slot);
 
         // Prepare Booking data for emails
-        String hostDisplayName = getHostDisplayName(savedSlot.getEvent().getHost());
+        String hostDisplayName = nameUtils.getUserDisplayName(savedSlot);
         BookingEmailDTO bookingData = BookingEmailDTO.builder()
                 .attendeeEmail(savedSlot.getBookedByEmail())
                 .hostEmail(savedSlot.getEvent().getHost().getEmail())
@@ -152,7 +154,7 @@ public class SlotService {
         Slot savedSlot = slotRepository.save(slot);
 
         // Prepare Cancellation data
-        String hostDisplayName = getHostDisplayName(savedSlot.getEvent().getHost());
+        String hostDisplayName = nameUtils.getUserDisplayName(savedSlot);
 
         SlotCancelledEmailDTO cancellationData = new SlotCancelledEmailDTO(
                 savedSlot.getId(),
@@ -168,17 +170,6 @@ public class SlotService {
         eventPublisher.publishEvent(new SlotCancelledEvent(cancellationData));
 
         return savedSlot;
-    }
-
-    private String getHostDisplayName(User host) {
-        String displayName = "";
-        if (host.getFirstName() != null) {
-            displayName += host.getFirstName();
-        }
-        if (host.getLastName() != null) {
-            displayName += " " + host.getLastName();
-        }
-        return displayName.trim();
     }
 
     public List<Slot> getSlots(Long eventId) {

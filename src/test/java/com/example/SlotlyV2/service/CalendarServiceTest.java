@@ -1,14 +1,17 @@
 package com.example.SlotlyV2.service;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.when;
 
 import java.time.LocalDateTime;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.example.SlotlyV2.common.util.NameUtils;
 import com.example.SlotlyV2.feature.availability.AvailabilityRules;
 import com.example.SlotlyV2.feature.calendar.CalendarService;
 import com.example.SlotlyV2.feature.event.Event;
@@ -18,6 +21,9 @@ import com.example.SlotlyV2.feature.user.User;
 @ExtendWith(MockitoExtension.class)
 public class CalendarServiceTest {
 
+    @Mock
+    private NameUtils nameUtils;
+
     @InjectMocks
     private CalendarService calendarService;
 
@@ -25,6 +31,7 @@ public class CalendarServiceTest {
     void shouldGenerateICSCalendarSuccessfully() {
         // Arrange
         Slot slot = createTestSlot();
+        when(nameUtils.getUserDisplayName(slot)).thenReturn("John Doe");
 
         // Act
         String ics = calendarService.generateIcsFile(slot);
@@ -69,6 +76,7 @@ public class CalendarServiceTest {
         // Arrange
         Slot slot = createTestSlot();
         slot.getEvent().getHost().setLastName(null);
+        when(nameUtils.getUserDisplayName(slot)).thenReturn("John");
 
         // Act
         String ics = calendarService.generateIcsFile(slot);
@@ -83,6 +91,7 @@ public class CalendarServiceTest {
         // Arrange
         Slot slot = createTestSlot();
         slot.getEvent().getHost().setFirstName(null);
+        when(nameUtils.getUserDisplayName(slot)).thenReturn("Doe");
 
         // Act
         String ics = calendarService.generateIcsFile(slot);
@@ -98,6 +107,7 @@ public class CalendarServiceTest {
         Slot slot = createTestSlot();
         slot.getEvent().getHost().setFirstName(null);
         slot.getEvent().getHost().setLastName(null);
+        when(nameUtils.getUserDisplayName(slot)).thenReturn("");
 
         // Act
         String ics = calendarService.generateIcsFile(slot);
