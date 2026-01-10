@@ -1,29 +1,20 @@
 package com.example.SlotlyV2.common.rate_limiting;
 
-import java.time.Duration;
-
 import org.springframework.stereotype.Service;
 
 import com.example.SlotlyV2.common.config.RateLimitProperties;
 import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
 
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 
 @Service
+@RequiredArgsConstructor
 public class RateLimitService {
     private final RateLimitProperties rateLimitProperties;
     private final Cache<String, Bucket> cache;
-
-    public RateLimitService(RateLimitProperties rateLimitProperties) {
-        this.rateLimitProperties = rateLimitProperties;
-        this.cache = Caffeine.newBuilder()
-                .maximumSize(10000)
-                .expireAfterAccess(Duration.ofHours(2))
-                .build();
-    }
 
     public Bucket resolveBucket(String key, Bandwidth limit) {
         return cache.get(key, k -> Bucket.builder()
