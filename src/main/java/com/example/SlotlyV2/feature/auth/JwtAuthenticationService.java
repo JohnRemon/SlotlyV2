@@ -1,6 +1,7 @@
 package com.example.SlotlyV2.feature.auth;
 
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -35,31 +36,36 @@ public class JwtAuthenticationService {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new InvalidCredentialsException("Invalid Credentials"));
 
-        if (!user.getIsVerified()) {
+        if (!user.isVerified()) {
             throw new AccountNotVerifiedException("Please verify your account first");
         }
 
         // Authenticate the user with email and password
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.getEmail(), request.getPassword()));
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            request.getEmail(), request.getPassword()));
 
-        // Get the user
-        user = (User) authentication.getPrincipal();
+            // Get the user
+            user = (User) authentication.getPrincipal();
 
-        // Generate Access and Refresh Tokens
-        String accessToken = jwtTokenProvider.generateAccessToken(user);
-        String refreshToken = jwtTokenProvider.generateRefreshToken(user);
+            // Generate Access and Refresh Tokens
+            String accessToken = jwtTokenProvider.generateAccessToken(user);
+            String refreshToken = jwtTokenProvider.generateRefreshToken(user);
 
-        // Convert expiration to seconds
-        Long expiresIn = jwtProperties.getAccessTokenExpiration() / 1000;
+            // Convert expiration to seconds
+            Long expiresIn = jwtProperties.getAccessTokenExpiration() / 1000;
 
-        return JwtAuthenticationResponse.builder()
-                .accessToken(accessToken)
-                .refreshToken(refreshToken)
-                .expiresIn(expiresIn)
-                .user(new UserResponse(user))
-                .build();
+            return JwtAuthenticationResponse.builder()
+                    .accessToken(accessToken)
+                    .refreshToken(refreshToken)
+                    .expiresIn(expiresIn)
+                    .user(new UserResponse(user))
+                    .build();
+
+        } catch (BadCredentialsException ex) {
+            throw new InvalidCredentialsException("Invalid Credentials");
+        }
     }
 
     public RefreshTokenResponse refresh(RefreshTokenRequest request) {

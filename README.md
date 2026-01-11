@@ -183,9 +183,9 @@ graph TB
 | **CalendarService**          | 100%                 | 100%            | 5 tests      |
 | **VerificationTokenService** | 100%                 | 100%            | 14 tests     |
 | **CustomUserDetailsService** | 100%                 | 100%            | 2 tests      |
-| **RateLimitService**         | 21%                  | 75%             | 2 tests      |
+| **RateLimitService**         | 100%                 | 75%             | 9 tests      |
 | **RateLimitHelper**          | 100%                 | 100%            | 4 tests      |
-| **Overall Project**          | **45%**              | **67%**         | **84 tests** |
+| **Overall Project**          | **49%**              | **62%**         | **92 tests** |
 
 ### 🎯 Testing Strategy
 
@@ -614,4 +614,3 @@ _Built with passion for modern software development_
 [![Watch](https://img.shields.io/github/watchers/your-username/SlotlyV2.svg?style=social&label=Watch)](https://github.com/your-username/SlotlyV2)
 
 </div>
-

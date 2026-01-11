@@ -54,28 +54,31 @@ public class UserService {
         }
 
         // Create the user
-        User user = new User();
-        user.setEmail(request.getEmail());
-        user.setDisplayName(request.getDisplayName());
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setFirstName(request.getFirstName());
-        user.setLastName(request.getLastName());
-        user.setTimeZone(request.getTimeZone());
-        user.setIsVerified(false);
+        User user = User.builder()
+                .email(request.getEmail())
+                .displayName(request.getDisplayName())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .firstName(request.getFirstName())
+                .lastName(request.getLastName())
+                .timeZone(request.getTimeZone())
+                .isVerified(false)
+                .build();
 
-        // generate verification token
-        user = verificationTokenService.generateEmailVerificationToken(user);
+        user = userRepository.save(user);
+
+        // generate email verification token
+        String token = verificationTokenService.generateEmailVerificationToken(user);
 
         // generate the needed verification data
         UserVerificationDTO data = new UserVerificationDTO(
                 user.getDisplayName(),
                 user.getEmail(),
-                user.getEmailVerificationToken());
+                token);
 
         // Publish Verification Email Event
         eventPublisher.publishEvent(new EmailVerificationEvent(data));
 
-        // Save and Return the user
+        log.info("Registered new user: {}", user.getEmail());
         return user;
     }
 
@@ -86,7 +89,7 @@ public class UserService {
 
             User user = (User) authentication.getPrincipal();
 
-            if (!user.getIsVerified()) {
+            if (!user.isVerified()) {
                 throw new AccountNotVerifiedException("Please verify your account first");
             }
 
@@ -104,17 +107,19 @@ public class UserService {
                 .orElse(null);
 
         // return successfully
-        if (user == null)
+        if (user == null) {
+            log.info("Password reset requested for non-existing email: {}", request.getEmail());
             return;
+        }
 
-        // generate password token and expiry date
-        user = verificationTokenService.generatePasswordVerificationToken(user);
+        // generate password token
+        String token = verificationTokenService.generatePasswordResetToken(user);
 
         // generate needed password reset data
         PasswordResetDTO data = new PasswordResetDTO(
                 user.getDisplayName(),
                 user.getEmail(),
-                user.getPasswordVerificationToken());
+                token);
 
         // publish password reset event
         eventPublisher.publishEvent(new PasswordResetEvent(data));
@@ -122,17 +127,16 @@ public class UserService {
 
     @Transactional(rollbackOn = Exception.class)
     public void resetPassword(String token, PasswordResetConfirmRequest request) {
-        User user = verificationTokenService.verifyPasswordVerificationToken(token);
+        User user = verificationTokenService.verifyPasswordResetToken(token);
 
         if (!request.getPassword().equals(request.getConfirmPassword())) {
             throw new PasswordMismatchException("Passwords don't match");
         }
 
         user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setPasswordVerificationToken(null);
-        user.setPasswordVerificationTokenExpiresAt(null);
-
         userRepository.save(user);
+
+        log.info("Password reset successfully for user: {}", user.getEmail());
     }
 
     public User getCurrentUser() {

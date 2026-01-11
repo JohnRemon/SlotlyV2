@@ -2,11 +2,15 @@ package com.example.SlotlyV2.feature.availability;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Value;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@Value
+@Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class AvailabilityRulesDTO {
     @NotNull
     @Min(value = 5, message = "Slot duration must be at least 5 minutes")

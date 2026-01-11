@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.SlotlyV2.common.dto.ApiResponse;
 import com.example.SlotlyV2.feature.slot.dto.CancelBookingRequest;
+import com.example.SlotlyV2.feature.slot.dto.SlotRequest;
 import com.example.SlotlyV2.feature.slot.dto.SlotResponse;
 import com.example.SlotlyV2.feature.user.User;
 import com.example.SlotlyV2.feature.user.UserService;
@@ -25,7 +26,7 @@ public class SlotController {
     private final SlotService slotService;
     private final UserService userService;
 
-    @GetMapping("events/{eventId}/slots")
+    @GetMapping("/events/{eventId}/slots")
     public ApiResponse<List<SlotResponse>> getSlots(@PathVariable Long eventId) {
         List<Slot> slots = slotService.getSlots(eventId);
 
@@ -36,13 +37,19 @@ public class SlotController {
         return new ApiResponse<>("Slots fetched successfully", slotResponses);
     }
 
-    @PostMapping("slots/cancel")
+    @PostMapping("/slots/book")
+    public ApiResponse<SlotResponse> bookSlot(@Valid @RequestBody SlotRequest request) {
+        Slot bookedSlot = slotService.bookSlot(request);
+        return new ApiResponse<>("Slot booked successfully", new SlotResponse(bookedSlot));
+    }
+
+    @PostMapping("/slots/cancel")
     public ApiResponse<SlotResponse> cancelBooking(@Valid @RequestBody CancelBookingRequest request) {
         Slot cancelledSlot = slotService.cancelBooking(request);
         return new ApiResponse<>("Slot booking cancelled successfully", new SlotResponse(cancelledSlot));
     }
 
-    @GetMapping("share/{shareableId}/slots")
+    @GetMapping("/share/{shareableId}/slots")
     public ApiResponse<List<SlotResponse>> getAvailableSlotsByShareableId(
             @PathVariable String shareableId) {
         List<Slot> availableSlots = slotService.getAvailableSlotsByShareableId(shareableId);
@@ -54,7 +61,7 @@ public class SlotController {
         return new ApiResponse<>("Slots fetched successfully", availableSlotsResponse);
     }
 
-    @GetMapping("users/me/bookings")
+    @GetMapping("/users/me/bookings")
     public ApiResponse<List<SlotResponse>> getBookedSlots() {
         User currentUser = userService.getCurrentUser();
         List<Slot> slots = slotService.getBookedSlots(currentUser);

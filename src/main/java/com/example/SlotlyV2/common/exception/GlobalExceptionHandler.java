@@ -22,6 +22,7 @@ import com.example.SlotlyV2.common.exception.event.EventNotFoundException;
 import com.example.SlotlyV2.common.exception.event.InvalidEventException;
 import com.example.SlotlyV2.common.exception.event.MaxCapacityExceededException;
 import com.example.SlotlyV2.common.exception.slot.InvalidSlotException;
+import com.example.SlotlyV2.common.exception.slot.SlotAlreadyBookedException;
 import com.example.SlotlyV2.common.exception.slot.SlotNotBookedException;
 import com.example.SlotlyV2.common.exception.slot.SlotNotFoundException;
 import com.example.SlotlyV2.common.exception.user.UserAlreadyExistsException;
@@ -40,8 +41,10 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({
             UserAlreadyExistsException.class,
             UsernameAlreadyExistsException.class,
-            OptimisticLockException.class
+            OptimisticLockException.class,
+            SlotAlreadyBookedException.class
     })
+
     @ResponseStatus(HttpStatus.CONFLICT)
     public ApiResponse<Void> handleConflictExceptions(RuntimeException ex) {
         return new ApiResponse<>(ex.getMessage(), null);

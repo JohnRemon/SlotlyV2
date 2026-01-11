@@ -190,6 +190,7 @@ public class EmailService {
         }
     }
 
+    @Async("emailTaskExecutor")
     public void sendEventCancellationNotifications(EventCancelledEmailDTO data) {
         for (String attendeeEmail : data.getAttendeeEmails()) {
             try {

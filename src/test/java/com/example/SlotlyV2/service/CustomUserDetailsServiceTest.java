@@ -32,7 +32,7 @@ public class CustomUserDetailsServiceTest {
     void shouldLoadUsernameSuccessfully() {
         // Arrange
         User testUser = createTestUser();
-        testUser.setIsVerified(true);
+        testUser.setVerified(true);
         when(userRepository.findByEmail(testUser.getEmail())).thenReturn(Optional.of(testUser));
 
         // Act

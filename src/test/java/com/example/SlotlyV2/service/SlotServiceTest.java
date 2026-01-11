@@ -71,7 +71,6 @@ public class SlotServiceTest {
         reset(slotRepository, eventRepository, eventPublisher, nameUtils);
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     void shouldGenerateSlotsWithinEventTimeBoundsAndPersistThem() {
         // Arrange
@@ -129,7 +128,6 @@ public class SlotServiceTest {
         assertThrows(InvalidSlotException.class, () -> slotService.generateSlots(event));
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     void shouldGenerateSlotWhenEndTimeIsExactlyEqualToSlotEnd() {
         // Arrange
@@ -166,7 +164,6 @@ public class SlotServiceTest {
         verify(slotRepository).saveAll(any(List.class));
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     void shouldGenerateNoSlotsWhenSlotDurationExceedsEventDuration() {
         // Arrange
@@ -196,7 +193,6 @@ public class SlotServiceTest {
         verify(slotRepository).saveAll(any(List.class));
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     void shouldNotGenerateOverlappingSlots() {
         // Arrange
@@ -230,7 +226,6 @@ public class SlotServiceTest {
         verify(slotRepository).saveAll(any(List.class));
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     void shouldCallSaveAllOnceWhenGeneratingSlots() {
         // Arrange

@@ -3,6 +3,10 @@ package com.example.SlotlyV2.feature.event;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
+
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import com.example.SlotlyV2.feature.availability.AvailabilityRules;
 import com.example.SlotlyV2.feature.slot.Slot;
@@ -12,6 +16,7 @@ import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -32,6 +37,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "events")
+@EntityListeners(AuditingEntityListener.class)
 public class Event {
 
     @Id
@@ -46,6 +52,8 @@ public class Event {
     @JoinColumn(name = "host_id", nullable = false)
     private User host;
 
+    @CreatedDate
+    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
     @Column(name = "event_start")
@@ -80,9 +88,6 @@ public class Event {
     }
 
     private String generateShareableId() {
-        return "event-" + System.currentTimeMillis() + "-" +
-                eventName.toLowerCase()
-                        .replaceAll("[^a-z0-9]+", "-")
-                        .replaceAll("^-|-$", "");
+        return UUID.randomUUID().toString().substring(0, 8);
     }
 }

@@ -103,9 +103,10 @@ public class SlotService {
         // Prepare Booking data for emails
         String hostDisplayName = nameUtils.getUserDisplayName(savedSlot);
         BookingEmailDTO bookingData = BookingEmailDTO.builder()
-                .attendeeEmail(savedSlot.getBookedByEmail())
+                .toEmail(savedSlot.getBookedByEmail())
                 .hostEmail(savedSlot.getEvent().getHost().getEmail())
                 .attendeeName(savedSlot.getBookedByName())
+                .attendeeEmail(savedSlot.getBookedByEmail())
                 .eventName(savedSlot.getEvent().getEventName())
                 .startTime(savedSlot.getStartTime())
                 .endTime(savedSlot.getEndTime())

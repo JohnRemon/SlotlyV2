@@ -21,6 +21,6 @@ public class UserResponse {
         this.firstName = user.getFirstName();
         this.lastName = user.getLastName();
         this.timeZone = user.getTimeZone();
-        this.isVerified = user.getIsVerified();
+        this.isVerified = user.isVerified();
     }
 }

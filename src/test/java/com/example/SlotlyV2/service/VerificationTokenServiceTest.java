@@ -1,17 +1,25 @@
 package com.example.SlotlyV2.service;
 
-import static org.mockito.Mockito.*;
-
-import java.time.LocalDateTime;
-import java.util.Optional;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,26 +27,58 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
-import com.example.SlotlyV2.common.exception.auth.AccountAlreadyVerifiedException;
 import com.example.SlotlyV2.common.exception.auth.InvalidTokenException;
 import com.example.SlotlyV2.common.exception.auth.TokenAlreadyExpiredException;
+import com.example.SlotlyV2.feature.auth.TokenType;
+import com.example.SlotlyV2.feature.auth.VerificationToken;
+import com.example.SlotlyV2.feature.auth.VerificationTokenRepository;
 import com.example.SlotlyV2.feature.auth.VerificationTokenService;
 import com.example.SlotlyV2.feature.user.User;
 import com.example.SlotlyV2.feature.user.UserRepository;
 
 @ExtendWith(MockitoExtension.class)
-public class VerificationTokenServiceTest {
+@MockitoSettings(strictness = Strictness.LENIENT)
+class VerificationTokenServiceTest {
+
+    @Mock
+    private VerificationTokenRepository tokenRepository;
 
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private PasswordEncoder passwordEncoder;
+
     @InjectMocks
     private VerificationTokenService verificationTokenService;
 
+    private User testUser;
+    private VerificationToken testToken;
+
     @BeforeEach
     void setUp() {
-        reset(userRepository);
+        testUser = User.builder()
+                .id(1L)
+                .email("test@example.com")
+                .displayName("testuser")
+                .password("encodedPassword")
+                .isVerified(false)
+                .build();
+
+        testToken = VerificationToken.builder()
+                .id(UUID.randomUUID())
+                .user(testUser)
+                .tokenHash("hashedToken")
+                .tokenType(TokenType.EMAIL_VERIFICATION)
+                .expiresAt(LocalDateTime.now().plusHours(24))
+                .usedAt(null)
+                .build();
+
+        doReturn(true).when(passwordEncoder).matches(anyString(), anyString());
     }
 
     // ============== generateEmailVerificationToken ==========
@@ -46,233 +86,329 @@ public class VerificationTokenServiceTest {
     @Test
     void shouldGenerateEmailVerificationTokenSuccessfully() {
         // Arrange
-        User testUser = createTestUser();
-        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(passwordEncoder.encode(anyString())).thenReturn("hashedToken");
+        when(tokenRepository.save(any(VerificationToken.class))).thenAnswer(i -> i.getArgument(0));
+        when(tokenRepository.invalidateAllUserTokens(anyLong(), any(), any())).thenReturn(0);
 
         // Act
-        User result = verificationTokenService.generateEmailVerificationToken(testUser);
+        String rawToken = verificationTokenService.generateEmailVerificationToken(testUser);
 
         // Assert
-        assertNotNull(result.getEmailVerificationToken());
-        assertNotNull(result.getEmailVerificationTokenExpiresAt());
-        verify(userRepository).save(testUser);
+        assertNotNull(rawToken);
+        assertTrue(rawToken.length() > 0);
+        verify(tokenRepository).save(argThat(token -> token.getUser().equals(testUser) &&
+                token.getTokenType() == TokenType.EMAIL_VERIFICATION));
     }
 
     @Test
     void shouldSetTokenExpirationTo24Hours() {
         // Arrange
-        User testUser = createTestUser();
-        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(passwordEncoder.encode(anyString())).thenReturn("hashedToken");
+        when(tokenRepository.save(any(VerificationToken.class))).thenAnswer(i -> i.getArgument(0));
+        when(tokenRepository.invalidateAllUserTokens(anyLong(), any(), any())).thenReturn(0);
 
         // Act
-        User result = verificationTokenService.generateEmailVerificationToken(testUser);
+        verificationTokenService.generateEmailVerificationToken(testUser);
 
         // Assert
-        assertTrue(result.getEmailVerificationTokenExpiresAt().isAfter(LocalDateTime.now()));
-        assertTrue(result.getEmailVerificationTokenExpiresAt().isBefore(LocalDateTime.now().plusHours(25)));
+        verify(tokenRepository).save(argThat(token -> token.getExpiresAt().isAfter(LocalDateTime.now()) &&
+                token.getExpiresAt().isBefore(LocalDateTime.now().plusHours(25))));
     }
 
     @Test
     void shouldOverwriteExistingTokenWhenGeneratingNew() {
         // Arrange
-        User testUser = createTestUser();
-        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(passwordEncoder.encode(anyString())).thenReturn("hashedToken");
+        when(tokenRepository.save(any(VerificationToken.class))).thenAnswer(i -> i.getArgument(0));
+        when(tokenRepository.invalidateAllUserTokens(anyLong(), any(), any())).thenReturn(0);
 
         // Act
-        User result1 = verificationTokenService.generateEmailVerificationToken(testUser);
-        String tokenBefore = result1.getEmailVerificationToken();
-
-        User result2 = verificationTokenService.generateEmailVerificationToken(testUser);
-        String tokenAfter = result2.getEmailVerificationToken();
+        String rawToken1 = verificationTokenService.generateEmailVerificationToken(testUser);
+        String rawToken2 = verificationTokenService.generateEmailVerificationToken(testUser);
 
         // Assert
-        assertNotEquals(tokenBefore, tokenAfter); // Should generate different tokens
-        assertNotNull(tokenAfter);
+        assertNotEquals(rawToken1, rawToken2);
+        verify(tokenRepository, times(2)).save(any(VerificationToken.class));
+        verify(tokenRepository, times(2)).invalidateAllUserTokens(anyLong(), any(), any());
     }
 
     @Test
-    void shouldGenerateUniqueUUIDToken() {
+    void shouldGenerateUniqueUUIDTokens() {
         // Arrange
-        User user1 = createTestUser();
-        User user2 = createTestUser();
-        user2.setEmail("different@example.com");
-        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        User user1 = User.builder().id(1L).email("user1@example.com").build();
+        User user2 = User.builder().id(2L).email("user2@example.com").build();
+        when(passwordEncoder.encode(anyString())).thenReturn("hashedToken");
+        when(tokenRepository.save(any(VerificationToken.class))).thenAnswer(i -> i.getArgument(0));
+        when(tokenRepository.invalidateAllUserTokens(anyLong(), any(), any())).thenReturn(0);
 
         // Act
-        User result1 = verificationTokenService.generateEmailVerificationToken(user1);
-        User result2 = verificationTokenService.generateEmailVerificationToken(user2);
+        String rawToken1 = verificationTokenService.generateEmailVerificationToken(user1);
+        String rawToken2 = verificationTokenService.generateEmailVerificationToken(user2);
 
         // Assert
-        assertNotEquals(result1.getEmailVerificationToken(), result2.getEmailVerificationToken());
+        assertNotEquals(rawToken1, rawToken2);
     }
 
-    // ================== verifyVerificationToken ===================
+    // =================== verifyEmailVerificationToken ===================
 
     @Test
     void shouldVerifyEmailWithValidToken() {
         // Arrange
-        User testUser = createTestUser();
-        testUser.setEmailVerificationToken("valid-token-123");
-        testUser.setEmailVerificationTokenExpiresAt(LocalDateTime.now().plusHours(24));
-        testUser.setIsVerified(false);
+        String rawToken = "test-raw-token";
 
-        when(userRepository.findByEmailVerificationToken("valid-token-123"))
-                .thenReturn(Optional.of(testUser));
-        when(userRepository.save(any(User.class))).thenReturn(testUser);
+        // Mock repository to return list of tokens
+        when(tokenRepository.findAllByTokenTypeAndUsedAtIsNull(TokenType.EMAIL_VERIFICATION))
+                .thenReturn(Arrays.asList(testToken));
+
+        // Mock password encoder to match the raw token with the stored hash
+        when(passwordEncoder.matches(rawToken, testToken.getTokenHash())).thenReturn(true);
+        when(tokenRepository.save(any(VerificationToken.class))).thenAnswer(i -> i.getArgument(0));
+        when(userRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
 
         // Act
-        Boolean result = verificationTokenService.verifyVerificationToken("valid-token-123");
+        verificationTokenService.verifyEmailVerificationToken(rawToken);
 
         // Assert
-        assertTrue(result);
-        assertTrue(testUser.getIsVerified());
-        assertNull(testUser.getEmailVerificationToken());
-        assertNull(testUser.getEmailVerificationTokenExpiresAt());
+        assertTrue(testUser.isVerified());
+        assertNotNull(testToken.getUsedAt());
+        verify(tokenRepository).save(testToken);
         verify(userRepository).save(testUser);
     }
 
     @Test
     void shouldThrowInvalidTokenExceptionWhenTokenNotFound() {
         // Arrange
-        when(userRepository.findByEmailVerificationToken("invalid-token"))
-                .thenReturn(Optional.empty());
+        String rawToken = "invalid-token";
+
+        // Return empty list
+        when(tokenRepository.findAllByTokenTypeAndUsedAtIsNull(TokenType.EMAIL_VERIFICATION))
+                .thenReturn(Collections.emptyList());
 
         // Act & Assert
         assertThrows(InvalidTokenException.class,
-                () -> verificationTokenService.verifyVerificationToken("invalid-token"));
+                () -> verificationTokenService.verifyEmailVerificationToken(rawToken));
     }
 
     @Test
-    void shouldThrowAccountAlreadyVerifiedExceptionWhenUserAlreadyVerified() {
+    void shouldThrowInvalidTokenExceptionWhenPasswordDoesNotMatch() {
         // Arrange
-        User testUser = createTestUser();
-        testUser.setEmailVerificationToken("valid-token-123");
-        testUser.setEmailVerificationTokenExpiresAt(LocalDateTime.now().plusHours(24));
-        testUser.setIsVerified(true);
+        String rawToken = "wrong-token";
 
-        when(userRepository.findByEmailVerificationToken("valid-token-123"))
-                .thenReturn(Optional.of(testUser));
+        when(tokenRepository.findAllByTokenTypeAndUsedAtIsNull(TokenType.EMAIL_VERIFICATION))
+                .thenReturn(Arrays.asList(testToken));
+
+        // Mock password encoder to NOT match
+        when(passwordEncoder.matches(rawToken, testToken.getTokenHash())).thenReturn(false);
 
         // Act & Assert
-        assertThrows(AccountAlreadyVerifiedException.class,
-                () -> verificationTokenService.verifyVerificationToken("valid-token-123"));
+        assertThrows(InvalidTokenException.class,
+                () -> verificationTokenService.verifyEmailVerificationToken(rawToken));
     }
 
     @Test
-    void shouldThrowTokenAlreadyExpiredExceptionWhenTokenExpired() {
+    void shouldThrowInvalidTokenExceptionWhenTokenExpired() {
         // Arrange
-        User testUser = createTestUser();
-        testUser.setEmailVerificationToken("expired-token");
-        testUser.setEmailVerificationTokenExpiresAt(LocalDateTime.now().minusHours(1));
-        testUser.setIsVerified(false);
+        String rawToken = "expired-token";
+        testToken.setExpiresAt(LocalDateTime.now().minusHours(1));
 
-        when(userRepository.findByEmailVerificationToken("expired-token"))
-                .thenReturn(Optional.of(testUser));
+        when(tokenRepository.findAllByTokenTypeAndUsedAtIsNull(TokenType.EMAIL_VERIFICATION))
+                .thenReturn(Arrays.asList(testToken));
+        when(passwordEncoder.matches(rawToken, testToken.getTokenHash())).thenReturn(true);
 
         // Act & Assert
         assertThrows(TokenAlreadyExpiredException.class,
-                () -> verificationTokenService.verifyVerificationToken("expired-token"));
+                () -> verificationTokenService.verifyEmailVerificationToken(rawToken));
     }
 
-    // ================== generatePasswordVerificationToken ===================
+    @Test
+    void shouldThrowInvalidTokenExceptionWhenTokenAlreadyUsed() {
+        // Arrange
+        String rawToken = "used-token";
+        testToken.setUsedAt(LocalDateTime.now());
+
+        // Token with usedAt set should not be returned by the query
+        when(tokenRepository.findAllByTokenTypeAndUsedAtIsNull(TokenType.EMAIL_VERIFICATION))
+                .thenReturn(Collections.emptyList());
+
+        // Act & Assert
+        assertThrows(InvalidTokenException.class,
+                () -> verificationTokenService.verifyEmailVerificationToken(rawToken));
+    }
+
+    @Test
+    void shouldFindCorrectTokenWhenMultipleTokensExist() {
+        // Arrange
+        String rawToken = "correct-token";
+
+        VerificationToken token1 = VerificationToken.builder()
+                .id(UUID.randomUUID())
+                .user(testUser)
+                .tokenHash("hash1")
+                .tokenType(TokenType.EMAIL_VERIFICATION)
+                .expiresAt(LocalDateTime.now().plusHours(24))
+                .build();
+
+        VerificationToken token2 = VerificationToken.builder()
+                .id(UUID.randomUUID())
+                .user(testUser)
+                .tokenHash("hash2")
+                .tokenType(TokenType.EMAIL_VERIFICATION)
+                .expiresAt(LocalDateTime.now().plusHours(24))
+                .build();
+
+        List<VerificationToken> tokens = Arrays.asList(token1, token2);
+
+        when(tokenRepository.findAllByTokenTypeAndUsedAtIsNull(TokenType.EMAIL_VERIFICATION))
+                .thenReturn(tokens);
+        when(passwordEncoder.matches(rawToken, "hash1")).thenReturn(false);
+        when(passwordEncoder.matches(rawToken, "hash2")).thenReturn(true);
+        when(tokenRepository.save(any(VerificationToken.class))).thenAnswer(i -> i.getArgument(0));
+        when(userRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
+
+        // Act
+        verificationTokenService.verifyEmailVerificationToken(rawToken);
+
+        // Assert
+        assertTrue(testUser.isVerified());
+        assertNotNull(token2.getUsedAt());
+    }
+
+    // =================== generatePasswordVerificationToken ===================
 
     @Test
     void shouldGeneratePasswordVerificationTokenSuccessfully() {
         // Arrange
-        User testUser = createTestUser();
-        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(passwordEncoder.encode(anyString())).thenReturn("hashedToken");
+        when(tokenRepository.save(any(VerificationToken.class))).thenAnswer(i -> i.getArgument(0));
+        when(tokenRepository.invalidateAllUserTokens(anyLong(), any(), any())).thenReturn(0);
 
         // Act
-        User result = verificationTokenService.generatePasswordVerificationToken(testUser);
+        String rawToken = verificationTokenService.generatePasswordResetToken(testUser);
 
         // Assert
-        assertNotNull(result.getPasswordVerificationToken());
-        assertNotNull(result.getPasswordVerificationTokenExpiresAt());
-        verify(userRepository).save(testUser);
+        assertNotNull(rawToken);
+        verify(tokenRepository).save(argThat(token -> token.getTokenType() == TokenType.PASSWORD_RESET));
     }
 
     @Test
     void shouldSetPasswordTokenExpirationTo30Minutes() {
         // Arrange
-        User testUser = createTestUser();
-        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(passwordEncoder.encode(anyString())).thenReturn("hashedToken");
+        when(tokenRepository.save(any(VerificationToken.class))).thenAnswer(i -> i.getArgument(0));
+        when(tokenRepository.invalidateAllUserTokens(anyLong(), any(), any())).thenReturn(0);
 
         // Act
-        User result = verificationTokenService.generatePasswordVerificationToken(testUser);
+        verificationTokenService.generatePasswordResetToken(testUser);
 
         // Assert
-        assertTrue(result.getPasswordVerificationTokenExpiresAt().isAfter(LocalDateTime.now()));
-        assertTrue(result.getPasswordVerificationTokenExpiresAt().isBefore(LocalDateTime.now().plusMinutes(31)));
+        verify(tokenRepository).save(argThat(token -> token.getExpiresAt().isAfter(LocalDateTime.now()) &&
+                token.getExpiresAt().isBefore(LocalDateTime.now().plusMinutes(31))));
     }
 
     @Test
     void shouldOverwriteExistingPasswordTokenWhenGeneratingNew() {
         // Arrange
-        User testUser = createTestUser();
-        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(passwordEncoder.encode(anyString())).thenReturn("hashedToken");
+        when(tokenRepository.save(any(VerificationToken.class))).thenAnswer(i -> i.getArgument(0));
+        when(tokenRepository.invalidateAllUserTokens(anyLong(), any(), any())).thenReturn(0);
 
         // Act
-        User result1 = verificationTokenService.generatePasswordVerificationToken(testUser);
-        String tokenBefore = result1.getPasswordVerificationToken();
-
-        User result2 = verificationTokenService.generatePasswordVerificationToken(testUser);
-        String tokenAfter = result2.getPasswordVerificationToken();
+        String rawToken1 = verificationTokenService.generatePasswordResetToken(testUser);
+        String rawToken2 = verificationTokenService.generatePasswordResetToken(testUser);
 
         // Assert
-        assertNotEquals(tokenBefore, tokenAfter);
-        assertNotNull(tokenAfter);
+        assertNotEquals(rawToken1, rawToken2);
+        verify(tokenRepository, times(2)).invalidateAllUserTokens(anyLong(), any(), any());
     }
 
     @Test
     void shouldThrowInvalidTokenExceptionForInvalidPasswordToken() {
         // Arrange
-        when(userRepository.findByPasswordVerificationToken("invalid-password-token"))
-                .thenReturn(Optional.empty());
+        String rawToken = "invalid-password-token";
+
+        when(tokenRepository.findAllByTokenTypeAndUsedAtIsNull(TokenType.PASSWORD_RESET))
+                .thenReturn(Collections.emptyList());
 
         // Act & Assert
         assertThrows(InvalidTokenException.class,
-                () -> verificationTokenService.verifyPasswordVerificationToken("invalid-password-token"));
+                () -> verificationTokenService.verifyPasswordResetToken(rawToken));
     }
 
     @Test
-    void shouldThrowTokenAlreadyExpiredExceptionForExpiredPasswordToken() {
+    void shouldThrowInvalidTokenExceptionForMismatchedPasswordToken() {
         // Arrange
-        User testUser = createTestUser();
-        testUser.setPasswordVerificationToken("expired-password-token");
-        testUser.setPasswordVerificationTokenExpiresAt(LocalDateTime.now().minusMinutes(1));
+        String rawToken = "wrong-password-token";
+        testToken.setTokenType(TokenType.PASSWORD_RESET);
+        testToken.setExpiresAt(LocalDateTime.now().plusMinutes(30));
 
-        when(userRepository.findByPasswordVerificationToken("expired-password-token"))
-                .thenReturn(Optional.of(testUser));
+        when(tokenRepository.findAllByTokenTypeAndUsedAtIsNull(TokenType.PASSWORD_RESET))
+                .thenReturn(Arrays.asList(testToken));
+        when(passwordEncoder.matches(rawToken, testToken.getTokenHash())).thenReturn(false);
 
         // Act & Assert
-        assertThrows(TokenAlreadyExpiredException.class,
-                () -> verificationTokenService.verifyPasswordVerificationToken("expired-password-token"));
+        assertThrows(InvalidTokenException.class,
+                () -> verificationTokenService.verifyPasswordResetToken(rawToken));
     }
 
     @Test
     void shouldVerifyPasswordVerificationTokenSuccessfully() {
         // Arrange
-        User testUser = createTestUser();
-        testUser.setPasswordVerificationToken("valid-password-token");
-        testUser.setPasswordVerificationTokenExpiresAt(LocalDateTime.now().plusMinutes(30));
+        String rawToken = "valid-password-token";
+        testToken.setTokenType(TokenType.PASSWORD_RESET);
+        testToken.setExpiresAt(LocalDateTime.now().plusMinutes(30));
 
-        when(userRepository.findByPasswordVerificationToken("valid-password-token"))
-                .thenReturn(Optional.of(testUser));
+        when(tokenRepository.findAllByTokenTypeAndUsedAtIsNull(TokenType.PASSWORD_RESET))
+                .thenReturn(Arrays.asList(testToken));
+        when(passwordEncoder.matches(rawToken, testToken.getTokenHash())).thenReturn(true);
+        when(tokenRepository.save(any(VerificationToken.class))).thenAnswer(i -> i.getArgument(0));
 
         // Act
-        User result = verificationTokenService.verifyPasswordVerificationToken("valid-password-token");
+        User result = verificationTokenService.verifyPasswordResetToken(rawToken);
 
         // Assert
         assertEquals(testUser, result);
+        assertNotNull(testToken.getUsedAt());
     }
 
-    User createTestUser() {
-        User testUser = new User();
-        testUser.setEmail("test@example.com");
-        testUser.setDisplayName("testUser");
-        testUser.setPassword("encodedPassword");
-        testUser.setFirstName("John");
-        testUser.setLastName("Doe");
-        return testUser;
+    @Test
+    void shouldTokenAlreadyExpiredExceptionForExpiredPasswordToken() {
+        // Arrange
+        String rawToken = "expired-password-token";
+        testToken.setTokenType(TokenType.PASSWORD_RESET);
+        testToken.setExpiresAt(LocalDateTime.now().minusMinutes(1));
+
+        when(tokenRepository.findAllByTokenTypeAndUsedAtIsNull(TokenType.PASSWORD_RESET))
+                .thenReturn(Arrays.asList(testToken));
+        when(passwordEncoder.matches(rawToken, testToken.getTokenHash())).thenReturn(true);
+
+        // Act & Assert
+        assertThrows(TokenAlreadyExpiredException.class,
+                () -> verificationTokenService.verifyPasswordResetToken(rawToken));
+    }
+
+    // =================== Utility Tests ===================
+
+    @Test
+    void shouldInvalidateExistingUserTokens() {
+        // Arrange
+        when(tokenRepository.invalidateAllUserTokens(anyLong(), any(), any())).thenReturn(1);
+
+        // Act
+        verificationTokenService.invalidateUserToken(1L, TokenType.EMAIL_VERIFICATION);
+
+        // Assert
+        verify(tokenRepository).invalidateAllUserTokens(eq(1L), eq(TokenType.EMAIL_VERIFICATION), any());
+    }
+
+    @Test
+    void shouldDeleteExpiredTokens() {
+        // Arrange
+        when(tokenRepository.deleteAllExpiredTokens(any(LocalDateTime.class))).thenReturn(5);
+
+        // Act
+        verificationTokenService.deleteExpiredTokens();
+
+        // Assert
+        verify(tokenRepository).deleteAllExpiredTokens(any(LocalDateTime.class));
     }
 }

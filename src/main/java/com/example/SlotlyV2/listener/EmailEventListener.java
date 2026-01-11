@@ -102,5 +102,4 @@ public class EmailEventListener {
             log.error("Failed to send password reset email for email {}: {}", data.getEmail(), e.getMessage(), e);
         }
     }
-
 }

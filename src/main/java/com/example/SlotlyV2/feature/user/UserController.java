@@ -64,11 +64,11 @@ public class UserController {
 
     @PostMapping("/verify-email")
     public ApiResponse<Void> verifyEmail(@RequestParam String token) {
-        verificationTokenService.verifyVerificationToken(token);
+        verificationTokenService.verifyEmailVerificationToken(token);
         return new ApiResponse<>("Account verified successfully. Please login into your account", null);
     }
 
-    @PostMapping("/reset-password/request")
+    @PostMapping("/password-reset/request")
     public ApiResponse<Void> resetPassword(@RequestBody @Valid PasswordResetRequest request) {
         rateLimitHelper.checkPasswordResetRateLimit(request.getEmail());
 
@@ -76,7 +76,7 @@ public class UserController {
         return new ApiResponse<>("An email has been sent to your inbox", null);
     }
 
-    @PostMapping("/reset-password/confirm")
+    @PostMapping("/password-reset/confirm")
     public ApiResponse<Void> verifyPassword(@RequestParam String token,
             @RequestBody @Valid PasswordResetConfirmRequest request, HttpServletRequest httpServletRequest) {
         userService.resetPassword(token, request);
