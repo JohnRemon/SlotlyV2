@@ -9,6 +9,8 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import com.example.SlotlyV2.feature.availability.AvailabilityRules;
+import com.example.SlotlyV2.feature.event.enums.RecurrenceFrequency;
+import com.example.SlotlyV2.feature.event.enums.RecurringEndType;
 import com.example.SlotlyV2.feature.slot.Slot;
 import com.example.SlotlyV2.feature.user.User;
 
@@ -17,6 +19,8 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -73,6 +77,29 @@ public class Event {
 
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<Slot> slots = new ArrayList<>();
+
+    @Column(name = "isRecurring")
+    private boolean isRecurring = false;
+
+    @Column(name = "recurrence_frequency")
+    @Enumerated(EnumType.STRING)
+    private RecurrenceFrequency recurrenceFrequency;
+
+    @Column(name = "recurrence_interval")
+    private Integer recurrenceInterval = 1;
+
+    @Column(name = "recurrence_days_of_week")
+    private Integer[] recurrenceDaysOfWeek;
+
+    @Column(name = "recurrent_end_type")
+    @Enumerated(EnumType.STRING)
+    private RecurringEndType recurrentEndType;
+
+    @Column(name = "recurrence_occurrences")
+    private Integer recurrenceOccurrences;
+
+    @Column(name = "recurrence_end_date")
+    private LocalDateTime recurrenceEndDate;
 
     @PrePersist
     private void onCreate() {
