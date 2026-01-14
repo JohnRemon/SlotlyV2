@@ -616,7 +616,7 @@ public class SlotServiceTest {
     void shouldGetAvailableSlotsByShareableIdSuccessfully() {
         // Arrange
         AvailabilityRules rules = new AvailabilityRules();
-        rules.setIsPublic(true);
+        rules.setPublic(true);
 
         Event event = new Event();
         event.setId(1L);
@@ -653,7 +653,7 @@ public class SlotServiceTest {
     void shouldThrowUnauthorizedAccessExceptionWhenEventIsPrivate() {
         // Arrange
         AvailabilityRules rules = new AvailabilityRules();
-        rules.setIsPublic(false);
+        rules.setPublic(false);
 
         Event event = new Event();
         event.setId(1L);
@@ -714,7 +714,7 @@ public class SlotServiceTest {
         rules.setSlotDurationMinutes(60);
         rules.setMaxSlotsPerUser(2);
         rules.setAllowsCancellations(true);
-        rules.setIsPublic(true);
+        rules.setPublic(true);
 
         Event event = new Event();
         event.setId(1L);

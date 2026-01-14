@@ -9,8 +9,6 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import com.example.SlotlyV2.feature.availability.AvailabilityRules;
-import com.example.SlotlyV2.feature.event.enums.RecurrenceFrequency;
-import com.example.SlotlyV2.feature.event.enums.RecurringEndType;
 import com.example.SlotlyV2.feature.slot.Slot;
 import com.example.SlotlyV2.feature.user.User;
 
@@ -19,8 +17,6 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -31,6 +27,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -40,6 +37,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 @Table(name = "events")
 @EntityListeners(AuditingEntityListener.class)
 public class Event {
@@ -76,30 +74,15 @@ public class Event {
     private String shareableId;
 
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Builder.Default
     private List<Slot> slots = new ArrayList<>();
 
     @Column(name = "isRecurring")
+    @Builder.Default
     private boolean isRecurring = false;
 
-    @Column(name = "recurrence_frequency")
-    @Enumerated(EnumType.STRING)
-    private RecurrenceFrequency recurrenceFrequency;
-
-    @Column(name = "recurrence_interval")
-    private Integer recurrenceInterval = 1;
-
-    @Column(name = "recurrence_days_of_week")
-    private Integer[] recurrenceDaysOfWeek;
-
-    @Column(name = "recurrent_end_type")
-    @Enumerated(EnumType.STRING)
-    private RecurringEndType recurrentEndType;
-
-    @Column(name = "recurrence_occurrences")
-    private Integer recurrenceOccurrences;
-
-    @Column(name = "recurrence_end_date")
-    private LocalDateTime recurrenceEndDate;
+    @Embedded
+    private RecurringRules recurringRules;
 
     @PrePersist
     private void onCreate() {
@@ -115,6 +98,6 @@ public class Event {
     }
 
     private String generateShareableId() {
-        return UUID.randomUUID().toString().substring(0, 8);
+        return UUID.randomUUID().toString().substring(0, 16);
     }
 }

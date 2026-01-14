@@ -127,7 +127,7 @@ public class SlotService {
         Slot slot = slotRepository.findByEventIdAndStartTime(request.getEventId(), request.getStartTime())
                 .orElseThrow(() -> new SlotNotFoundException("Slot Not Found"));
 
-        if (!slot.getEvent().getRules().getAllowsCancellations()) {
+        if (!slot.getEvent().getRules().isAllowsCancellations()) {
             throw new InvalidSlotException("Cancellations are not allowed for this event");
         }
 
@@ -186,7 +186,7 @@ public class SlotService {
         Event event = eventRepository.findByShareableId(shareableId)
                 .orElseThrow(() -> new EventNotFoundException("Event Not Found"));
 
-        if (!event.getRules().getIsPublic()) {
+        if (!event.getRules().isPublic()) {
             throw new UnauthorizedAccessException("Event is private");
         }
 

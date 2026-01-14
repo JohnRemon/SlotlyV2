@@ -24,9 +24,13 @@ public class AvailabilityRulesDTO {
 
     @NotNull
     @Builder.Default
-    private Boolean allowsCancellations = true;
+    private boolean allowCancellations = true;
 
     @NotNull
     @Builder.Default
-    private Boolean isPublic = true;
+    private boolean isPublic = true;
+
+    @NotNull
+    @Min(value = 1, message = "Max capacity must be greater than 1")
+    private Integer maxCapacity;
 }

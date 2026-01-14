@@ -16,6 +16,7 @@ import com.example.SlotlyV2.feature.email.dto.EventCancelledEmailDTO;
 import com.example.SlotlyV2.feature.email.event.EventCancelledEvent;
 import com.example.SlotlyV2.feature.event.dto.EventRequest;
 import com.example.SlotlyV2.feature.event.dto.EventResponse;
+import com.example.SlotlyV2.feature.event.dto.RecurringEventRequest;
 import com.example.SlotlyV2.feature.slot.SlotService;
 import com.example.SlotlyV2.feature.user.User;
 import com.example.SlotlyV2.feature.user.UserService;
@@ -51,19 +52,23 @@ public class EventService {
         }
 
         // Creat the Event
-        Event event = new Event();
-        event.setEventName(request.getEventName());
-        event.setDescription(request.getDescription());
-        event.setHost(host);
-        event.setEventStart(request.getEventStart());
-        event.setEventEnd(request.getEventEnd());
-        event.setTimeZone(request.getTimeZone());
+        Event event = Event.builder()
+                .eventName(request.getEventName())
+                .description(request.getDescription())
+                .host(host)
+                .eventStart(request.getEventStart())
+                .eventEnd(request.getEventEnd())
+                .timeZone(request.getTimeZone())
+                .isRecurring(request.isRecurring())
+                .build();
 
-        AvailabilityRules rules = new AvailabilityRules();
-        rules.setSlotDurationMinutes(request.getRules().getSlotDurationMinutes());
-        rules.setMaxSlotsPerUser(request.getRules().getMaxSlotsPerUser());
-        rules.setAllowsCancellations(request.getRules().getAllowsCancellations());
-        rules.setIsPublic(request.getRules().getIsPublic());
+        AvailabilityRules rules = AvailabilityRules.builder()
+                .slotDurationMinutes(request.getRules().getSlotDurationMinutes())
+                .maxSlotsPerUser(request.getRules().getMaxSlotsPerUser())
+                .allowsCancellations(request.getRules().isAllowCancellations())
+                .isPublic(request.getRules().isPublic())
+                .maxCapacity(request.getRules().getMaxCapacity())
+                .build();
 
         event.setRules(rules);
 
@@ -73,6 +78,8 @@ public class EventService {
 
         return savedEvent;
     }
+
+    // public Event createRecurringEvent(RecurringEventRequest request) {}
 
     public Page<EventResponse> getEvents(User host, Pageable pageable) {
         return eventRepository.findByHost(host, pageable)
@@ -114,7 +121,7 @@ public class EventService {
         Event event = eventRepository.findByShareableId(shareableId)
                 .orElseThrow(() -> new EventNotFoundException("Event Not Found"));
 
-        if (!event.getRules().getIsPublic()) {
+        if (!event.getRules().isPublic()) {
             throw new UnauthorizedAccessException("You are not authorized to access this event");
         }
 

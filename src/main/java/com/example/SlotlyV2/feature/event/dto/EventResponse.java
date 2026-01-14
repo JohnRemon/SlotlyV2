@@ -33,8 +33,8 @@ public class EventResponse {
         this.rules = AvailabilityRulesDTO.builder()
                 .slotDurationMinutes(event.getRules().getSlotDurationMinutes())
                 .maxSlotsPerUser(event.getRules().getMaxSlotsPerUser())
-                .allowsCancellations(event.getRules().getAllowsCancellations())
-                .isPublic(event.getRules().getIsPublic())
+                .allowCancellations(event.getRules().isAllowsCancellations())
+                .isPublic(event.getRules().isPublic())
                 .build();
         this.shareableId = event.getShareableId();
     }

@@ -75,7 +75,7 @@ public class EventServiceTest {
         rules.setSlotDurationMinutes(60);
         rules.setMaxSlotsPerUser(2);
         rules.setAllowsCancellations(true);
-        rules.setIsPublic(isPublic);
+        rules.setPublic(isPublic);
         return rules;
     }
 
@@ -123,8 +123,8 @@ public class EventServiceTest {
         assertNotNull(event.getRules());
         assertEquals(60, event.getRules().getSlotDurationMinutes());
         assertEquals(2, event.getRules().getMaxSlotsPerUser());
-        assertEquals(true, event.getRules().getAllowsCancellations());
-        assertEquals(true, event.getRules().getIsPublic());
+        assertEquals(true, event.getRules().isAllowsCancellations());
+        assertEquals(true, event.getRules().isPublic());
 
         verify(userService).getCurrentUser();
         verify(eventRepository).save(any(Event.class));

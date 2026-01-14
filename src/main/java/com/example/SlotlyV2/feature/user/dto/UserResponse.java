@@ -12,7 +12,7 @@ public class UserResponse {
     private final String firstName;
     private final String lastName;
     private final String timeZone;
-    private final Boolean isVerified;
+    private final boolean isVerified;
 
     public UserResponse(User user) {
         this.id = user.getId();

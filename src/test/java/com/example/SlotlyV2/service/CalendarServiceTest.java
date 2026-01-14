@@ -128,7 +128,7 @@ public class CalendarServiceTest {
         rules.setSlotDurationMinutes(60);
         rules.setMaxSlotsPerUser(2);
         rules.setAllowsCancellations(true);
-        rules.setIsPublic(true);
+        rules.setPublic(true);
 
         Event event = new Event();
         event.setId(1L);
