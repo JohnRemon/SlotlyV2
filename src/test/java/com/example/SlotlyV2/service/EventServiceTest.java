@@ -64,7 +64,7 @@ public class EventServiceTest {
         AvailabilityRulesDTO rules = AvailabilityRulesDTO.builder()
                 .slotDurationMinutes(60)
                 .maxSlotsPerUser(2)
-                .allowsCancellations(true)
+                .allowCancellations(true)
                 .isPublic(true)
                 .build();
         return rules;
