@@ -68,7 +68,7 @@ public class Event {
     private String timeZone;
 
     @Embedded
-    private AvailabilityRules rules;
+    private AvailabilityRules availabilityRules;
 
     @Column(unique = true)
     private String shareableId;
@@ -92,8 +92,8 @@ public class Event {
             shareableId = generateShareableId();
         }
 
-        if (rules == null) {
-            rules = new AvailabilityRules();
+        if (availabilityRules == null) {
+            availabilityRules = new AvailabilityRules();
         }
     }
 

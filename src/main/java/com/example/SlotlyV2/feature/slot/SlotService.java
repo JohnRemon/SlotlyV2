@@ -3,7 +3,6 @@ package com.example.SlotlyV2.feature.slot;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.context.ApplicationEventPublisher;
@@ -16,11 +15,14 @@ import com.example.SlotlyV2.common.exception.slot.InvalidSlotException;
 import com.example.SlotlyV2.common.exception.slot.SlotAlreadyBookedException;
 import com.example.SlotlyV2.common.exception.slot.SlotNotFoundException;
 import com.example.SlotlyV2.common.util.NameUtils;
+import com.example.SlotlyV2.common.util.SlotUtils;
 import com.example.SlotlyV2.feature.email.dto.BookingEmailDTO;
 import com.example.SlotlyV2.feature.email.event.SlotBookedEvent;
 import com.example.SlotlyV2.feature.email.event.SlotCancelledEvent;
 import com.example.SlotlyV2.feature.event.Event;
 import com.example.SlotlyV2.feature.event.EventRepository;
+import com.example.SlotlyV2.feature.event.strategy.RecurrenceStrategy;
+import com.example.SlotlyV2.feature.event.strategy.RecurrenceStrategyFactory;
 import com.example.SlotlyV2.feature.slot.dto.CancelBookingRequest;
 import com.example.SlotlyV2.feature.slot.dto.SlotCancelledEmailDTO;
 import com.example.SlotlyV2.feature.slot.dto.SlotRequest;
@@ -38,31 +40,28 @@ public class SlotService {
     private final EventRepository eventRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final NameUtils nameUtils;
+    private final SlotUtils slotUtils;
+    private final RecurrenceStrategyFactory recurrenceStrategyFactory;
 
     @Transactional(rollbackOn = Exception.class)
     public void generateSlots(Event event) {
         LocalDateTime start = event.getEventStart();
         LocalDateTime end = event.getEventEnd();
-        List<Slot> slots = new ArrayList<>();
 
-        if (event.getRules().getSlotDurationMinutes() <= 0) {
+        if (event.getAvailabilityRules().getSlotDurationMinutes() <= 0) {
             throw new InvalidSlotException("Slot duration must be greater than zero");
         }
 
-        // TODO: Improve the slot generation algorithm
-        while (!start.isAfter(end.minusMinutes(event.getRules().getSlotDurationMinutes()))) {
-            Slot slot = new Slot();
-            slot.setEvent(event);
-            slot.setStartTime(start);
-            slot.setEndTime(start.plusMinutes(event.getRules().getSlotDurationMinutes()));
-            slot.setBookedByName(null);
-            slot.setBookedByEmail(null);
+        slotRepository.saveAll(slotUtils.buildSlotsByTime(event, start, end));
+    }
 
-            slots.add(slot);
-            start = start.plusMinutes(event.getRules().getSlotDurationMinutes());
-        }
+    @Transactional(rollbackOn = Exception.class)
+    public void generateSlotsRecurring(Event event) {
+        String strategyType = event.getRecurringRules().getRecurrenceFrequency() + "_"
+                + event.getRecurringRules().getRecurrentEndType();
+        RecurrenceStrategy recurrenceStrategy = recurrenceStrategyFactory.getStrategy(strategyType);
 
-        slotRepository.saveAll(slots);
+        slotRepository.saveAll(recurrenceStrategy.generateSlots(event));
     }
 
     @Transactional(rollbackOn = Exception.class)
@@ -83,7 +82,7 @@ public class SlotService {
         }
 
         // Check event capacity
-        Integer maxCapacity = slot.getEvent().getRules().getMaxCapacity();
+        Integer maxCapacity = slot.getEvent().getAvailabilityRules().getMaxCapacity();
         if (maxCapacity != null) {
             Integer currentCapacity = slotRepository
                     .countByEventAndBookedByEmailIsNotNullAndBookedByNameIsNotNull(slot.getEvent());
@@ -127,7 +126,7 @@ public class SlotService {
         Slot slot = slotRepository.findByEventIdAndStartTime(request.getEventId(), request.getStartTime())
                 .orElseThrow(() -> new SlotNotFoundException("Slot Not Found"));
 
-        if (!slot.getEvent().getRules().isAllowsCancellations()) {
+        if (!slot.getEvent().getAvailabilityRules().isAllowsCancellations()) {
             throw new InvalidSlotException("Cancellations are not allowed for this event");
         }
 
@@ -186,7 +185,7 @@ public class SlotService {
         Event event = eventRepository.findByShareableId(shareableId)
                 .orElseThrow(() -> new EventNotFoundException("Event Not Found"));
 
-        if (!event.getRules().isPublic()) {
+        if (!event.getAvailabilityRules().isPublic()) {
             throw new UnauthorizedAccessException("Event is private");
         }
 

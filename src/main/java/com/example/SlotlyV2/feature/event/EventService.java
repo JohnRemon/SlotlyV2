@@ -52,6 +52,14 @@ public class EventService {
         }
 
         // Creat the Event
+        AvailabilityRules availabilityRules = AvailabilityRules.builder()
+                .slotDurationMinutes(request.getAvailabilityRulesDTO().getSlotDurationMinutes())
+                .maxSlotsPerUser(request.getAvailabilityRulesDTO().getMaxSlotsPerUser())
+                .allowsCancellations(request.getAvailabilityRulesDTO().isAllowCancellations())
+                .isPublic(request.getAvailabilityRulesDTO().isPublic())
+                .maxCapacity(request.getAvailabilityRulesDTO().getMaxCapacity())
+                .build();
+
         Event event = Event.builder()
                 .eventName(request.getEventName())
                 .description(request.getDescription())
@@ -59,18 +67,8 @@ public class EventService {
                 .eventStart(request.getEventStart())
                 .eventEnd(request.getEventEnd())
                 .timeZone(request.getTimeZone())
-                .isRecurring(request.isRecurring())
+                .availabilityRules(availabilityRules)
                 .build();
-
-        AvailabilityRules rules = AvailabilityRules.builder()
-                .slotDurationMinutes(request.getRules().getSlotDurationMinutes())
-                .maxSlotsPerUser(request.getRules().getMaxSlotsPerUser())
-                .allowsCancellations(request.getRules().isAllowCancellations())
-                .isPublic(request.getRules().isPublic())
-                .maxCapacity(request.getRules().getMaxCapacity())
-                .build();
-
-        event.setRules(rules);
 
         Event savedEvent = eventRepository.save(event);
 
@@ -79,7 +77,22 @@ public class EventService {
         return savedEvent;
     }
 
-    // public Event createRecurringEvent(RecurringEventRequest request) {}
+    @Transactional(rollbackOn = Exception.class)
+    public Event createRecurringEvent(RecurringEventRequest request) {
+        // Validate the Event
+        validateRecurringEvent(request);
+
+        // Create the event
+        Event event = buildRecurringEvent(request);
+
+        // Save the event
+        event = eventRepository.save(event);
+
+        // Generate slots
+        slotService.generateSlotsRecurring(event);
+
+        return event;
+    }
 
     public Page<EventResponse> getEvents(User host, Pageable pageable) {
         return eventRepository.findByHost(host, pageable)
@@ -121,11 +134,58 @@ public class EventService {
         Event event = eventRepository.findByShareableId(shareableId)
                 .orElseThrow(() -> new EventNotFoundException("Event Not Found"));
 
-        if (!event.getRules().isPublic()) {
+        if (!event.getAvailabilityRules().isPublic()) {
             throw new UnauthorizedAccessException("You are not authorized to access this event");
         }
 
         return event;
     }
 
+    private Event buildRecurringEvent(RecurringEventRequest request) {
+        AvailabilityRules availabilityRules = AvailabilityRules.builder()
+                .slotDurationMinutes(request.getAvailabilityRulesDTO().getSlotDurationMinutes())
+                .maxSlotsPerUser(request.getAvailabilityRulesDTO().getMaxSlotsPerUser())
+                .allowsCancellations(request.getAvailabilityRulesDTO().isAllowCancellations())
+                .isPublic(request.getAvailabilityRulesDTO().isPublic())
+                .maxCapacity(request.getAvailabilityRulesDTO().getMaxCapacity())
+                .build();
+
+        RecurringRules recurringRules = RecurringRules.builder()
+                .recurrenceFrequency(request.getRecurringRulesDTO().getRecurrenceFrequency())
+                .recurrentEndType(request.getRecurringRulesDTO().getRecurringEndType())
+                .recurrenceDayOfWeek(request.getRecurringRulesDTO().getRecurrenceDayOfWeek())
+                .recurrenceOccurrences(request.getRecurringRulesDTO().getRecurrenceOccurrences())
+                .recurrenceEndDate(request.getRecurringRulesDTO().getRecurrenceEndDate())
+                .build();
+
+        return Event.builder()
+                .eventName(request.getEventName())
+                .description(request.getDescription())
+                .host(userService.getCurrentUser())
+                .eventStart(request.getEventStart())
+                .eventEnd(request.getEventEnd())
+                .timeZone(request.getTimeZone())
+                .isRecurring(true)
+                .availabilityRules(availabilityRules)
+                .recurringRules(recurringRules)
+                .build();
+    }
+
+    private void validateRecurringEvent(RecurringEventRequest request) {
+        if (!request.getEventEnd().isAfter(request.getEventStart())) {
+            throw new InvalidEventException("Event end must be after start");
+        }
+
+        if (request.getRecurringRulesDTO().getRecurrenceEndDate() != null
+                && !request.getRecurringRulesDTO().getRecurrenceEndDate().isAfter(request.getEventStart())) {
+            throw new InvalidEventException("Recurrence end date must be after event start");
+        }
+
+        ZoneId zone = ZoneId.of(request.getTimeZone());
+        ZonedDateTime now = ZonedDateTime.now(zone);
+
+        if (request.getEventStart().atZone(zone).isBefore(now)) {
+            throw new InvalidEventException("Event must start in the future");
+        }
+    }
 }

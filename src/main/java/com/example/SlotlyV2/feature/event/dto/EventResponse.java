@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 
 import com.example.SlotlyV2.feature.availability.AvailabilityRulesDTO;
 import com.example.SlotlyV2.feature.event.Event;
+import com.example.SlotlyV2.feature.event.RecurringRulesDTO;
 import com.example.SlotlyV2.feature.user.dto.UserResponse;
 
 import lombok.Value;
@@ -18,7 +19,9 @@ public class EventResponse {
     private LocalDateTime eventEnd;
     private String timeZone;
     private LocalDateTime createdAt;
-    private AvailabilityRulesDTO rules;
+    private AvailabilityRulesDTO availabilityRulesDTO;
+    private boolean isRecurring;
+    private RecurringRulesDTO recurringRulesDTO;
     private String shareableId;
 
     public EventResponse(Event event) {
@@ -30,13 +33,24 @@ public class EventResponse {
         this.eventEnd = event.getEventEnd();
         this.timeZone = event.getTimeZone();
         this.createdAt = event.getCreatedAt();
-        this.rules = AvailabilityRulesDTO.builder()
-                .slotDurationMinutes(event.getRules().getSlotDurationMinutes())
-                .maxSlotsPerUser(event.getRules().getMaxSlotsPerUser())
-                .allowCancellations(event.getRules().isAllowsCancellations())
-                .isPublic(event.getRules().isPublic())
+        this.availabilityRulesDTO = AvailabilityRulesDTO.builder()
+                .slotDurationMinutes(event.getAvailabilityRules().getSlotDurationMinutes())
+                .maxSlotsPerUser(event.getAvailabilityRules().getMaxSlotsPerUser())
+                .allowCancellations(event.getAvailabilityRules().isAllowsCancellations())
+                .isPublic(event.getAvailabilityRules().isPublic())
                 .build();
+
+        this.isRecurring = event.isRecurring();
+        this.recurringRulesDTO = event.getRecurringRules() != null
+                ? RecurringRulesDTO.builder()
+                        .recurrenceDayOfWeek(event.getRecurringRules().getRecurrenceDayOfWeek())
+                        .recurrenceEndDate(event.getRecurringRules().getRecurrenceEndDate())
+                        .recurrenceFrequency(event.getRecurringRules().getRecurrenceFrequency())
+                        .recurrenceOccurrences(event.getRecurringRules().getRecurrenceOccurrences())
+                        .recurringEndType(event.getRecurringRules().getRecurrentEndType())
+                        .build()
+                : null;
+
         this.shareableId = event.getShareableId();
     }
-
 }

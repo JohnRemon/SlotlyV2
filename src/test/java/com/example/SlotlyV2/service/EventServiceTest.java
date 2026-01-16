@@ -98,7 +98,7 @@ public class EventServiceTest {
                 .eventStart(startTime)
                 .eventEnd(endTime)
                 .timeZone("Europe/Berlin")
-                .rules(rules)
+                .availabilityRulesDTO(rules)
                 .build();
 
         User host = user(1L);
@@ -120,11 +120,11 @@ public class EventServiceTest {
         assertEquals(endTime, event.getEventEnd());
         assertEquals("Europe/Berlin", event.getTimeZone());
 
-        assertNotNull(event.getRules());
-        assertEquals(60, event.getRules().getSlotDurationMinutes());
-        assertEquals(2, event.getRules().getMaxSlotsPerUser());
-        assertEquals(true, event.getRules().isAllowsCancellations());
-        assertEquals(true, event.getRules().isPublic());
+        assertNotNull(event.getAvailabilityRules());
+        assertEquals(60, event.getAvailabilityRules().getSlotDurationMinutes());
+        assertEquals(2, event.getAvailabilityRules().getMaxSlotsPerUser());
+        assertEquals(true, event.getAvailabilityRules().isAllowsCancellations());
+        assertEquals(true, event.getAvailabilityRules().isPublic());
 
         verify(userService).getCurrentUser();
         verify(eventRepository).save(any(Event.class));
@@ -144,7 +144,7 @@ public class EventServiceTest {
                 .eventStart(startTime)
                 .eventEnd(endTime)
                 .timeZone("Europe/Berlin")
-                .rules(rules)
+                .availabilityRulesDTO(rules)
                 .build();
 
         when(userService.getCurrentUser()).thenReturn(user(1L));
@@ -166,14 +166,14 @@ public class EventServiceTest {
                 .eventStart(startTime)
                 .eventEnd(startTime.minusHours(1))
                 .timeZone("Europe/Berlin")
-                .rules(rules)
+                .availabilityRulesDTO(rules)
                 .build();
 
         EventRequest req2 = EventRequest.builder()
                 .eventStart(startTime)
                 .eventEnd(startTime)
                 .timeZone("Europe/Berlin")
-                .rules(rules)
+                .availabilityRulesDTO(rules)
                 .build();
 
         when(userService.getCurrentUser()).thenReturn(user(1L));
@@ -195,13 +195,13 @@ public class EventServiceTest {
         event1.setId(1L);
         event1.setEventName("Event 1");
         event1.setHost(host);
-        event1.setRules(rules(true));
+        event1.setAvailabilityRules(rules(true));
 
         Event event2 = new Event();
         event2.setId(2L);
         event2.setEventName("Event 2");
         event2.setHost(host);
-        event2.setRules(rules(true));
+        event2.setAvailabilityRules(rules(true));
 
         List<Event> eventsList = List.of(event1, event2);
         Page<Event> pagedEvents = new PageImpl<>(
@@ -339,7 +339,7 @@ public class EventServiceTest {
     void shouldGetEventByShareableIdSuccessfullyWhenPublic() {
         Event event = new Event();
         event.setId(1L);
-        event.setRules(rules(true));
+        event.setAvailabilityRules(rules(true));
 
         when(eventRepository.findByShareableId("abc")).thenReturn(Optional.of(event));
 
@@ -362,7 +362,7 @@ public class EventServiceTest {
     @Test
     void shouldThrowUnauthorizedAccessExceptionWhenAccessingPrivateEventByShareableId() {
         Event event = new Event();
-        event.setRules(rules(false));
+        event.setAvailabilityRules(rules(false));
 
         when(eventRepository.findByShareableId("private")).thenReturn(Optional.of(event));
 

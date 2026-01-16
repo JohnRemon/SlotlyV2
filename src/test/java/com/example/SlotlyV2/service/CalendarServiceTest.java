@@ -134,7 +134,7 @@ public class CalendarServiceTest {
         event.setId(1L);
         event.setEventName("Test Meeting");
         event.setHost(mockUser);
-        event.setRules(rules);
+        event.setAvailabilityRules(rules);
         event.setTimeZone("Europe/Berlin");
 
         Slot slot = new Slot();

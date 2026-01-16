@@ -35,6 +35,7 @@ import com.example.SlotlyV2.common.exception.slot.InvalidSlotException;
 import com.example.SlotlyV2.common.exception.slot.SlotAlreadyBookedException;
 import com.example.SlotlyV2.common.exception.slot.SlotNotFoundException;
 import com.example.SlotlyV2.common.util.NameUtils;
+import com.example.SlotlyV2.common.util.SlotUtils;
 import com.example.SlotlyV2.feature.availability.AvailabilityRules;
 import com.example.SlotlyV2.feature.email.event.SlotBookedEvent;
 import com.example.SlotlyV2.feature.event.Event;
@@ -61,6 +62,9 @@ public class SlotServiceTest {
     @Mock
     private NameUtils nameUtils;
 
+    @Mock
+    private SlotUtils slotUtils;
+
     @InjectMocks
     private SlotService slotService;
 
@@ -68,7 +72,7 @@ public class SlotServiceTest {
 
     @BeforeEach
     void setUp() {
-        reset(slotRepository, eventRepository, eventPublisher, nameUtils);
+        reset(slotRepository, eventRepository, eventPublisher, nameUtils, slotUtils);
     }
 
     @Test
@@ -79,7 +83,7 @@ public class SlotServiceTest {
 
         Event event = new Event();
         event.setId(1L);
-        event.setRules(rules);
+        event.setAvailabilityRules(rules);
 
         LocalDateTime eventStart = LocalDateTime.of(2025, 1, 1, 10, 0);
         LocalDateTime eventEnd = LocalDateTime.of(2025, 1, 1, 12, 0);
@@ -87,22 +91,21 @@ public class SlotServiceTest {
         event.setEventStart(eventStart);
         event.setEventEnd(eventEnd);
 
-        when(slotRepository.saveAll(any(List.class))).thenAnswer(invocation -> {
-            List<Slot> slots = invocation.getArgument(0);
+        Slot slot1 = Slot.builder()
+                .event(event)
+                .startTime(eventStart)
+                .endTime(eventStart.plusMinutes(30))
+                .build();
+        Slot slot2 = Slot.builder()
+                .event(event)
+                .startTime(eventStart.plusMinutes(30))
+                .endTime(eventStart.plusMinutes(60))
+                .build();
 
-            assertNotNull(slots);
-            assertFalse(slots.isEmpty());
+        when(slotUtils.buildSlotsByTime(any(Event.class), any(LocalDateTime.class), any(LocalDateTime.class)))
+                .thenReturn(List.of(slot1, slot2));
 
-            slots.forEach(slot -> {
-                assertEquals(event, slot.getEvent());
-                assertFalse(slot.getStartTime().isBefore(eventStart));
-                assertFalse(slot.getEndTime().isAfter(eventEnd));
-                assertEquals(null, slot.getBookedByEmail());
-                assertEquals(null, slot.getBookedByName());
-            });
-
-            return slots;
-        });
+        when(slotRepository.saveAll(any(List.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // Act
         slotService.generateSlots(event);
@@ -119,7 +122,7 @@ public class SlotServiceTest {
 
         Event event = new Event();
         event.setId(1L);
-        event.setRules(rules);
+        event.setAvailabilityRules(rules);
 
         event.setEventStart(LocalDateTime.of(2025, 1, 1, 10, 0));
         event.setEventEnd(LocalDateTime.of(2025, 1, 1, 11, 0));
@@ -136,7 +139,7 @@ public class SlotServiceTest {
 
         Event event = new Event();
         event.setId(1L);
-        event.setRules(rules);
+        event.setAvailabilityRules(rules);
 
         LocalDateTime start = LocalDateTime.of(2025, 1, 1, 9, 0);
         LocalDateTime end = LocalDateTime.of(2025, 1, 1, 10, 0);
@@ -144,18 +147,16 @@ public class SlotServiceTest {
         event.setEventStart(start);
         event.setEventEnd(end);
 
-        when(slotRepository.saveAll(any(List.class))).thenAnswer(invocation -> {
-            List<Slot> slots = invocation.getArgument(0);
+        Slot slot = Slot.builder()
+                .event(event)
+                .startTime(start)
+                .endTime(end)
+                .build();
 
-            assertEquals(1, slots.size());
+        when(slotUtils.buildSlotsByTime(any(Event.class), any(LocalDateTime.class), any(LocalDateTime.class)))
+                .thenReturn(List.of(slot));
 
-            Slot slot = slots.get(0);
-            assertEquals(start, slot.getStartTime());
-            assertEquals(end, slot.getEndTime());
-            assertEquals(event, slot.getEvent());
-
-            return slots;
-        });
+        when(slotRepository.saveAll(any(List.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // Act
         slotService.generateSlots(event);
@@ -172,7 +173,7 @@ public class SlotServiceTest {
 
         Event event = new Event();
         event.setId(1L);
-        event.setRules(rules);
+        event.setAvailabilityRules(rules);
 
         event.setEventStart(LocalDateTime.of(2025, 1, 1, 10, 0));
         event.setEventEnd(LocalDateTime.of(2025, 1, 1, 11, 0));
@@ -201,7 +202,7 @@ public class SlotServiceTest {
 
         Event event = new Event();
         event.setId(1L);
-        event.setRules(rules);
+        event.setAvailabilityRules(rules);
 
         event.setEventStart(LocalDateTime.of(2025, 1, 1, 10, 0));
         event.setEventEnd(LocalDateTime.of(2025, 1, 1, 12, 0));
@@ -234,7 +235,7 @@ public class SlotServiceTest {
 
         Event event = new Event();
         event.setId(1L);
-        event.setRules(rules);
+        event.setAvailabilityRules(rules);
 
         event.setEventStart(LocalDateTime.of(2025, 1, 1, 10, 0));
         event.setEventEnd(LocalDateTime.of(2025, 1, 1, 11, 0));
@@ -260,7 +261,7 @@ public class SlotServiceTest {
 
         Event event = new Event();
         event.setId(1L);
-        event.setRules(rules);
+        event.setAvailabilityRules(rules);
         event.setHost(host);
         event.setTimeZone("Europe/Berlin");
 
@@ -334,7 +335,7 @@ public class SlotServiceTest {
 
         Event event = new Event();
         event.setId(1L);
-        event.setRules(rules);
+        event.setAvailabilityRules(rules);
         event.setTimeZone("Europe/Berlin");
 
         LocalDateTime startTime = ZonedDateTime.now(EVENT_ZONE).plusHours(1).toLocalDateTime();
@@ -390,7 +391,7 @@ public class SlotServiceTest {
 
         Event event = new Event();
         event.setId(1L);
-        event.setRules(rules);
+        event.setAvailabilityRules(rules);
         event.setTimeZone("Europe/Berlin");
 
         LocalDateTime startTime = ZonedDateTime.now(EVENT_ZONE).plusHours(1).toLocalDateTime();
@@ -592,7 +593,7 @@ public class SlotServiceTest {
 
         Event event = new Event();
         event.setId(1L);
-        event.setRules(rules);
+        event.setAvailabilityRules(rules);
 
         Slot slot = createTestSlot();
         slot.setEvent(event);
@@ -621,7 +622,7 @@ public class SlotServiceTest {
         Event event = new Event();
         event.setId(1L);
         event.setShareableId("event1");
-        event.setRules(rules);
+        event.setAvailabilityRules(rules);
 
         LocalDateTime startTime = ZonedDateTime.now(EVENT_ZONE).plusHours(1).toLocalDateTime();
         Slot slot = new Slot();
@@ -658,7 +659,7 @@ public class SlotServiceTest {
         Event event = new Event();
         event.setId(1L);
         event.setShareableId("event1");
-        event.setRules(rules);
+        event.setAvailabilityRules(rules);
 
         when(eventRepository.findByShareableId(event.getShareableId())).thenReturn(Optional.of(event));
 
@@ -720,7 +721,7 @@ public class SlotServiceTest {
         event.setId(1L);
         event.setEventName("Event 1");
         event.setHost(mockUser);
-        event.setRules(rules);
+        event.setAvailabilityRules(rules);
         event.setTimeZone("Europe/Berlin");
 
         Slot slot = new Slot();

@@ -15,6 +15,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -25,6 +26,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "slots")
+@Builder
 public class Slot {
 
     @Id
@@ -44,7 +46,6 @@ public class Slot {
     @Column(name = "end_time")
     private LocalDateTime endTime;
 
-    // Doesn't need logged in user
     @Column(name = "booked_by_name")
     private String bookedByName;
 
