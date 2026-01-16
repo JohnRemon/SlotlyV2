@@ -58,7 +58,7 @@ public class SlotService {
     @Transactional(rollbackOn = Exception.class)
     public void generateSlotsRecurring(Event event) {
         String strategyType = event.getRecurringRules().getRecurrenceFrequency() + "_"
-                + event.getRecurringRules().getRecurrentEndType();
+                + event.getRecurringRules().getRecurrenceEndType();
         RecurrenceStrategy recurrenceStrategy = recurrenceStrategyFactory.getStrategy(strategyType);
 
         slotRepository.saveAll(recurrenceStrategy.generateSlots(event));

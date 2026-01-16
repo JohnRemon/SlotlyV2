@@ -17,6 +17,7 @@ import com.example.SlotlyV2.feature.email.event.EventCancelledEvent;
 import com.example.SlotlyV2.feature.event.dto.EventRequest;
 import com.example.SlotlyV2.feature.event.dto.EventResponse;
 import com.example.SlotlyV2.feature.event.dto.RecurringEventRequest;
+import com.example.SlotlyV2.feature.event.enums.RecurrenceFrequency;
 import com.example.SlotlyV2.feature.slot.SlotService;
 import com.example.SlotlyV2.feature.user.User;
 import com.example.SlotlyV2.feature.user.UserService;
@@ -150,9 +151,9 @@ public class EventService {
                 .maxCapacity(request.getAvailabilityRulesDTO().getMaxCapacity())
                 .build();
 
-        RecurringRules recurringRules = RecurringRules.builder()
+        RecurrenceRules recurringRules = RecurrenceRules.builder()
                 .recurrenceFrequency(request.getRecurringRulesDTO().getRecurrenceFrequency())
-                .recurrentEndType(request.getRecurringRulesDTO().getRecurringEndType())
+                .recurrenceEndType(request.getRecurringRulesDTO().getRecurrenceEndType())
                 .recurrenceDayOfWeek(request.getRecurringRulesDTO().getRecurrenceDayOfWeek())
                 .recurrenceOccurrences(request.getRecurringRulesDTO().getRecurrenceOccurrences())
                 .recurrenceEndDate(request.getRecurringRulesDTO().getRecurrenceEndDate())
@@ -179,6 +180,11 @@ public class EventService {
         if (request.getRecurringRulesDTO().getRecurrenceEndDate() != null
                 && !request.getRecurringRulesDTO().getRecurrenceEndDate().isAfter(request.getEventStart())) {
             throw new InvalidEventException("Recurrence end date must be after event start");
+        }
+
+        if (request.getRecurringRulesDTO().getRecurrenceFrequency() == RecurrenceFrequency.WEEKLY
+                && request.getRecurringRulesDTO().getRecurrenceDayOfWeek() == null) {
+            throw new InvalidEventException("Day of week is required for weekly recurrence");
         }
 
         ZoneId zone = ZoneId.of(request.getTimeZone());

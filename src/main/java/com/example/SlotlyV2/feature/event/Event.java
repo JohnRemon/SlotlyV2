@@ -82,7 +82,7 @@ public class Event {
     private boolean isRecurring = false;
 
     @Embedded
-    private RecurringRules recurringRules;
+    private RecurrenceRules recurringRules;
 
     @PrePersist
     private void onCreate() {

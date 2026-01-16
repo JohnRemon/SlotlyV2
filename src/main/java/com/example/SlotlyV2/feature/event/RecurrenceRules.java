@@ -3,7 +3,7 @@ package com.example.SlotlyV2.feature.event;
 import java.time.LocalDateTime;
 
 import com.example.SlotlyV2.feature.event.enums.RecurrenceFrequency;
-import com.example.SlotlyV2.feature.event.enums.RecurringEndType;
+import com.example.SlotlyV2.feature.event.enums.RecurrenceEndType;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
@@ -21,7 +21,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class RecurringRules {
+public class RecurrenceRules {
     @Column(name = "recurrence_frequency")
     @Enumerated(EnumType.STRING)
     private RecurrenceFrequency recurrenceFrequency;
@@ -31,7 +31,7 @@ public class RecurringRules {
 
     @Column(name = "recurrent_end_type")
     @Enumerated(EnumType.STRING)
-    private RecurringEndType recurrentEndType;
+    private RecurrenceEndType recurrenceEndType;
 
     @Column(name = "recurrence_occurrences")
     private Integer recurrenceOccurrences;

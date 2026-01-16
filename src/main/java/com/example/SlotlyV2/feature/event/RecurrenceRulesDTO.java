@@ -3,7 +3,7 @@ package com.example.SlotlyV2.feature.event;
 import java.time.LocalDateTime;
 
 import com.example.SlotlyV2.feature.event.enums.RecurrenceFrequency;
-import com.example.SlotlyV2.feature.event.enums.RecurringEndType;
+import com.example.SlotlyV2.feature.event.enums.RecurrenceEndType;
 
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.Max;
@@ -18,7 +18,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class RecurringRulesDTO {
+public class RecurrenceRulesDTO {
     @NotNull(message = "Recurrence frequency is required")
     private RecurrenceFrequency recurrenceFrequency;
 
@@ -26,7 +26,7 @@ public class RecurringRulesDTO {
     private Integer recurrenceDayOfWeek;
 
     @NotNull(message = "How does the event end")
-    private RecurringEndType recurringEndType;
+    private RecurrenceEndType recurrenceEndType;
 
     @Min(1)
     @Max(100)

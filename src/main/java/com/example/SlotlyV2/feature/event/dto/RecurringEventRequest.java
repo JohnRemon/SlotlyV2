@@ -3,7 +3,7 @@ package com.example.SlotlyV2.feature.event.dto;
 import java.time.LocalDateTime;
 
 import com.example.SlotlyV2.feature.availability.AvailabilityRulesDTO;
-import com.example.SlotlyV2.feature.event.RecurringRulesDTO;
+import com.example.SlotlyV2.feature.event.RecurrenceRulesDTO;
 
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
@@ -38,5 +38,5 @@ public class RecurringEventRequest {
     private AvailabilityRulesDTO availabilityRulesDTO;
 
     @NotNull(message = "Recurring rules are required")
-    private RecurringRulesDTO recurringRulesDTO;
+    private RecurrenceRulesDTO recurringRulesDTO;
 }

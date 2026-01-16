@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 
 import com.example.SlotlyV2.feature.availability.AvailabilityRulesDTO;
 import com.example.SlotlyV2.feature.event.Event;
-import com.example.SlotlyV2.feature.event.RecurringRulesDTO;
+import com.example.SlotlyV2.feature.event.RecurrenceRulesDTO;
 import com.example.SlotlyV2.feature.user.dto.UserResponse;
 
 import lombok.Value;
@@ -21,7 +21,7 @@ public class EventResponse {
     private LocalDateTime createdAt;
     private AvailabilityRulesDTO availabilityRulesDTO;
     private boolean isRecurring;
-    private RecurringRulesDTO recurringRulesDTO;
+    private RecurrenceRulesDTO recurringRulesDTO;
     private String shareableId;
 
     public EventResponse(Event event) {
@@ -42,12 +42,12 @@ public class EventResponse {
 
         this.isRecurring = event.isRecurring();
         this.recurringRulesDTO = event.getRecurringRules() != null
-                ? RecurringRulesDTO.builder()
+                ? RecurrenceRulesDTO.builder()
                         .recurrenceDayOfWeek(event.getRecurringRules().getRecurrenceDayOfWeek())
                         .recurrenceEndDate(event.getRecurringRules().getRecurrenceEndDate())
                         .recurrenceFrequency(event.getRecurringRules().getRecurrenceFrequency())
                         .recurrenceOccurrences(event.getRecurringRules().getRecurrenceOccurrences())
-                        .recurringEndType(event.getRecurringRules().getRecurrentEndType())
+                        .recurrenceEndType(event.getRecurringRules().getRecurrenceEndType())
                         .build()
                 : null;
 
