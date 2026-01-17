@@ -21,6 +21,8 @@ import com.example.SlotlyV2.common.exception.auth.UnauthorizedAccessException;
 import com.example.SlotlyV2.common.exception.event.EventNotFoundException;
 import com.example.SlotlyV2.common.exception.event.InvalidEventException;
 import com.example.SlotlyV2.common.exception.event.MaxCapacityExceededException;
+import com.example.SlotlyV2.common.exception.schedule.InvalidScheduleException;
+import com.example.SlotlyV2.common.exception.schedule.ScheduleNotFoundException;
 import com.example.SlotlyV2.common.exception.slot.InvalidSlotException;
 import com.example.SlotlyV2.common.exception.slot.SlotAlreadyBookedException;
 import com.example.SlotlyV2.common.exception.slot.SlotNotBookedException;
@@ -53,8 +55,10 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({
             UserNotFoundException.class,
             EventNotFoundException.class,
-            SlotNotFoundException.class
+            SlotNotFoundException.class,
+            ScheduleNotFoundException.class
     })
+
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ApiResponse<Void> handleNotFoundExceptions(RuntimeException ex) {
         return new ApiResponse<>(ex.getMessage(), null);
@@ -78,7 +82,8 @@ public class GlobalExceptionHandler {
             InvalidTokenException.class,
             TokenAlreadyExpiredException.class,
             PasswordMismatchException.class,
-            InvalidSlotException.class
+            InvalidSlotException.class,
+            InvalidScheduleException.class
     })
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiResponse<Void> handleBadRequestExceptions(RuntimeException ex) {

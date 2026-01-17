@@ -1,6 +1,6 @@
 package com.example.SlotlyV2.feature.schedule.dto;
 
-import java.time.LocalTime;
+import java.util.List;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -13,12 +13,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ScheduleRequest {
-    @NotNull(message = "days of week are required")
-    private boolean[] daysOfWeek;
-
-    @NotNull(message = "start times are required")
-    private LocalTime[] startTimes;
-
-    @NotNull(message = "end times are required")
-    private LocalTime[] endTimes;
+    @NotNull(message = "daily schedules are required")
+    private List<DailyScheduleRequest> days;
 }

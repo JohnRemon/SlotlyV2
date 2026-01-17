@@ -18,6 +18,7 @@ import com.example.SlotlyV2.common.exception.user.UsernameAlreadyExistsException
 import com.example.SlotlyV2.feature.auth.VerificationTokenService;
 import com.example.SlotlyV2.feature.email.event.EmailVerificationEvent;
 import com.example.SlotlyV2.feature.email.event.PasswordResetEvent;
+import com.example.SlotlyV2.feature.schedule.ScheduleService;
 import com.example.SlotlyV2.feature.user.dto.LoginRequest;
 import com.example.SlotlyV2.feature.user.dto.PasswordResetConfirmRequest;
 import com.example.SlotlyV2.feature.user.dto.PasswordResetDTO;
@@ -40,6 +41,7 @@ public class UserService {
     private final AuthenticationManager authenticationManager;
     private final ApplicationEventPublisher eventPublisher;
     private final VerificationTokenService verificationTokenService;
+    private final ScheduleService scheduleService;
 
     @Transactional(rollbackOn = Exception.class)
     public User registerUser(RegisterRequest request) {
@@ -65,6 +67,9 @@ public class UserService {
                 .build();
 
         user = userRepository.save(user);
+
+        // Create the default schedule
+        scheduleService.createDefaultSchedule(user);
 
         // generate email verification token
         String token = verificationTokenService.generateEmailVerificationToken(user);

@@ -21,4 +21,9 @@ public class BlockedPeriodRequest {
     @Future(message = "end time must be in the future")
     @NotNull(message = "end time is required")
     private OffsetDateTime endTime;
+
+    private String reason;
+
+    @NotNull(message = "recurrence is required")
+    private boolean isRecurring;
 }
