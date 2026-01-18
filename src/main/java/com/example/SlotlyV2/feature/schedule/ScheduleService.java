@@ -1,5 +1,6 @@
 package com.example.SlotlyV2.feature.schedule;
 
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -8,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import com.example.SlotlyV2.common.exception.schedule.InvalidScheduleException;
 import com.example.SlotlyV2.common.exception.schedule.ScheduleNotFoundException;
+import com.example.SlotlyV2.common.util.TimeZoneConverter;
 import com.example.SlotlyV2.feature.schedule.dto.BlockedPeriodRequest;
 import com.example.SlotlyV2.feature.schedule.dto.BlockedPeriodResponse;
 import com.example.SlotlyV2.feature.schedule.dto.DailyScheduleRequest;
@@ -23,6 +25,7 @@ import lombok.RequiredArgsConstructor;
 public class ScheduleService {
     private final DailyScheduleRepository dailyScheduleRepository;
     private final BlockedPeriodRepository blockedPeriodRepository;
+    private final TimeZoneConverter timeZoneConverter;
 
     @Transactional(rollbackOn = Exception.class)
     public void updateSchedule(User user, ScheduleRequest request) {
@@ -83,6 +86,36 @@ public class ScheduleService {
                 .findByUserIdAndEndTimeAfterAndStartTimeBefore(
                         user.getId(), start, end);
         return overlapping.isEmpty();
+    }
+
+    public boolean isValidSlot(User user, LocalDateTime start, Integer slotDuration) {
+        Integer dayOfWeek = start.getDayOfWeek().getValue();
+        DailySchedule day = dailyScheduleRepository.findByUserIdAndDayOfWeek(user.getId(), dayOfWeek)
+                .orElseThrow(() -> new ScheduleNotFoundException("Schedule not found"));
+
+        LocalDateTime end = start.plusMinutes(slotDuration);
+
+        if (!day.isAvailable()) {
+            return false;
+        }
+
+        if (end.toLocalTime().isBefore(start.toLocalTime())) {
+            return false;
+        }
+        if (start.toLocalTime().isBefore(day.getStartTime()) || end.toLocalTime().isAfter(day.getEndTime())) {
+            return false;
+        }
+        OffsetDateTime utcStart = timeZoneConverter.toUtc(start, user.getTimeZone());
+        OffsetDateTime utcEnd = timeZoneConverter.toUtc(end, user.getTimeZone());
+
+        List<BlockedPeriod> blocks = blockedPeriodRepository.findByUserId(user.getId());
+        for (BlockedPeriod block : blocks) {
+            if (utcStart.isBefore(block.getEndTime()) && utcEnd.isAfter(block.getStartTime())) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     public void createDefaultSchedule(User user) {

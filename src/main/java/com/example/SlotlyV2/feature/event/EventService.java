@@ -96,7 +96,7 @@ public class EventService {
     }
 
     public Page<EventResponse> getEvents(User host, Pageable pageable) {
-        return eventRepository.findByHost(host, pageable)
+        return (Page<EventResponse>) eventRepository.findByHost(host, pageable)
                 .map(EventResponse::new);
     }
 

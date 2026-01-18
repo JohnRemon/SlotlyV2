@@ -45,6 +45,8 @@ public class SecurityConfig {
                                 "/api/v1/auth/jwt/**",
                                 "/api/v1/calendar/**",
                                 "/api/v1/users/verify-email/**",
+                                "/api/v1/users/password-reset/request",
+                                "/api/v1/users/password-reset/confirm/**",
                                 "/actuator/health")
                         .permitAll()
                         .anyRequest().authenticated())

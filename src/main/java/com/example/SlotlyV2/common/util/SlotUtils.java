@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 
 import com.example.SlotlyV2.feature.event.Event;
 import com.example.SlotlyV2.feature.event.enums.RecurrenceFrequency;
+import com.example.SlotlyV2.feature.schedule.ScheduleService;
 import com.example.SlotlyV2.feature.slot.Slot;
 
 import lombok.RequiredArgsConstructor;
@@ -16,25 +17,24 @@ import lombok.RequiredArgsConstructor;
 @Component
 @RequiredArgsConstructor
 public class SlotUtils {
+    private final ScheduleService scheduleService;
 
     public List<Slot> buildSlotsByTime(Event event, LocalDateTime start, LocalDateTime end) {
         List<Slot> slots = new ArrayList<>();
         LocalDateTime currentStart = start;
         int slotDuration = event.getAvailabilityRules().getSlotDurationMinutes();
 
-        while (!currentStart.isAfter(end.minusMinutes(slotDuration))) {
-            Slot slot = Slot.builder()
-                    .event(event)
-                    .startTime(currentStart)
-                    .endTime(currentStart.plusMinutes(slotDuration))
-                    .bookedByEmail(null)
-                    .bookedByName(null)
-                    .bookedAt(null)
-                    .build();
-            slots.add(slot);
+        while (currentStart.isBefore(end) && !currentStart.plusMinutes(slotDuration).isAfter(end)) {
+            if (scheduleService.isValidSlot(event.getHost(), currentStart, slotDuration)) {
+                Slot slot = Slot.builder()
+                        .event(event)
+                        .startTime(currentStart)
+                        .endTime(currentStart.plusMinutes(slotDuration))
+                        .build();
+                slots.add(slot);
+            }
             currentStart = currentStart.plusMinutes(slotDuration);
         }
-
         return slots;
     }
 
