@@ -2,14 +2,17 @@ package com.example.SlotlyV2.feature.event.dto;
 
 import java.time.LocalDateTime;
 
+import com.example.SlotlyV2.common.util.TimeZoneConverter;
 import com.example.SlotlyV2.feature.availability.AvailabilityRulesDTO;
 import com.example.SlotlyV2.feature.event.Event;
 import com.example.SlotlyV2.feature.event.RecurrenceRulesDTO;
 import com.example.SlotlyV2.feature.user.dto.UserResponse;
 
+import lombok.RequiredArgsConstructor;
 import lombok.Value;
 
 @Value
+@RequiredArgsConstructor
 public class EventResponse {
     private Long id;
     private String eventName;
@@ -24,13 +27,13 @@ public class EventResponse {
     private RecurrenceRulesDTO recurringRulesDTO;
     private String shareableId;
 
-    public EventResponse(Event event) {
+    public EventResponse(Event event, String userTimezone, TimeZoneConverter timeZoneConverter) {
         this.id = event.getId();
         this.eventName = event.getEventName();
         this.description = event.getDescription();
         this.host = new UserResponse(event.getHost());
-        this.eventStart = event.getEventStart();
-        this.eventEnd = event.getEventEnd();
+        this.eventStart = timeZoneConverter.toUserTimezone(event.getEventStart(), userTimezone);
+        this.eventEnd = timeZoneConverter.toUserTimezone(event.getEventEnd(), userTimezone);
         this.timeZone = event.getTimeZone();
         this.createdAt = event.getCreatedAt();
         this.availabilityRulesDTO = AvailabilityRulesDTO.builder()
@@ -44,7 +47,9 @@ public class EventResponse {
         this.recurringRulesDTO = event.getRecurringRules() != null
                 ? RecurrenceRulesDTO.builder()
                         .recurrenceDayOfWeek(event.getRecurringRules().getRecurrenceDayOfWeek())
-                        .recurrenceEndDate(event.getRecurringRules().getRecurrenceEndDate())
+                        .recurrenceEndDate(event.getRecurringRules().getRecurrenceEndDate() != null
+                                ? timeZoneConverter.toUserTimezone(event.getRecurringRules().getRecurrenceEndDate(), userTimezone)
+                                : null)
                         .recurrenceFrequency(event.getRecurringRules().getRecurrenceFrequency())
                         .recurrenceOccurrences(event.getRecurringRules().getRecurrenceOccurrences())
                         .recurrenceEndType(event.getRecurringRules().getRecurrenceEndType())

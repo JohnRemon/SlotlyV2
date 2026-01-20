@@ -3,7 +3,8 @@ package com.example.SlotlyV2.service;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -140,8 +141,8 @@ public class CalendarServiceTest {
         Slot slot = new Slot();
         slot.setId(1L);
         slot.setEvent(event);
-        slot.setStartTime(LocalDateTime.of(2024, 1, 15, 10, 0));
-        slot.setEndTime(LocalDateTime.of(2024, 1, 15, 11, 0));
+        slot.setStartTime(OffsetDateTime.of(2024, 1, 15, 10, 0, 0, 0, ZoneId.of("Europe/Berlin").getRules().getOffset(OffsetDateTime.now().toInstant())));
+        slot.setEndTime(OffsetDateTime.of(2024, 1, 15, 11, 0, 0, 0, ZoneId.of("Europe/Berlin").getRules().getOffset(OffsetDateTime.now().toInstant())));
         slot.setBookedByName("Jane Smith");
         slot.setBookedByEmail("jane@example.com");
 

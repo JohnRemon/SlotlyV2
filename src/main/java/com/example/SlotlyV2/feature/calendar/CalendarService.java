@@ -1,6 +1,6 @@
 package com.example.SlotlyV2.feature.calendar;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -22,23 +22,18 @@ public class CalendarService {
     private static final DateTimeFormatter ICS_DATE_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss'Z'");
 
     public String generateIcsFile(Slot slot) {
-        // Get event details
         String eventName = slot.getEvent().getEventName();
         String hostName = nameUtils.getUserDisplayName(slot);
         String hostEmail = slot.getEvent().getHost().getEmail();
         String attendeeName = slot.getBookedByName();
         String attendeeEmail = slot.getBookedByEmail();
-        String timeZone = slot.getEvent().getTimeZone();
 
-        // Convert times to UTC
-        String startTimeUTC = convertToUTC(slot.getStartTime(), timeZone);
-        String endTimeUTC = convertToUTC(slot.getEndTime(), timeZone);
+        String startTimeUTC = convertToUTC(slot.getStartTime());
+        String endTimeUTC = convertToUTC(slot.getEndTime());
         String timestampUTC = ZonedDateTime.now(ZoneId.of("UTC")).format(ICS_DATE_FORMAT);
 
-        // Generate unique ID
         String uuid = slot.getId().toString();
 
-        // Build the ICS file
         StringBuilder ics = new StringBuilder();
 
         ics.append("BEGIN:VCALENDAR\r\n");
@@ -61,13 +56,8 @@ public class CalendarService {
         return ics.toString();
     }
 
-    private String convertToUTC(LocalDateTime localDateTime, String timeZoneId) {
-        ZoneId zoneId = ZoneId.of(timeZoneId);
-
-        ZonedDateTime zonedDateTime = localDateTime.atZone(zoneId);
-
-        ZonedDateTime utcTime = zonedDateTime.withZoneSameInstant(ZoneId.of("UTC"));
-
+    private String convertToUTC(OffsetDateTime offsetDateTime) {
+        ZonedDateTime utcTime = offsetDateTime.toZonedDateTime().withZoneSameInstant(ZoneId.of("UTC"));
         return utcTime.format(ICS_DATE_FORMAT);
     }
 }

@@ -1,7 +1,7 @@
 package com.example.SlotlyV2.common.util;
 
 import java.time.Duration;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,9 +19,9 @@ import lombok.RequiredArgsConstructor;
 public class SlotUtils {
     private final ScheduleService scheduleService;
 
-    public List<Slot> buildSlotsByTime(Event event, LocalDateTime start, LocalDateTime end) {
+    public List<Slot> buildSlotsByTime(Event event, OffsetDateTime start, OffsetDateTime end) {
         List<Slot> slots = new ArrayList<>();
-        LocalDateTime currentStart = start;
+        OffsetDateTime currentStart = start;
         int slotDuration = event.getAvailabilityRules().getSlotDurationMinutes();
 
         while (currentStart.isBefore(end) && !currentStart.plusMinutes(slotDuration).isAfter(end)) {
@@ -39,13 +39,13 @@ public class SlotUtils {
     }
 
     public List<Slot> buildRecurringSlots(Event event, RecurrenceFrequency recurrenceFrequency,
-            LocalDateTime recurrenceStart, LocalDateTime recurrenceEnd) {
+            OffsetDateTime recurrenceStart, OffsetDateTime recurrenceEnd) {
         List<Slot> slots = new ArrayList<>();
-        LocalDateTime currentStart = recurrenceStart;
+        OffsetDateTime currentStart = recurrenceStart;
         Duration eventDuration = Duration.between(event.getEventStart(), event.getEventEnd());
 
         while (!currentStart.isAfter(recurrenceEnd)) {
-            LocalDateTime currentEnd = currentStart.plus(eventDuration);
+            OffsetDateTime currentEnd = currentStart.plus(eventDuration);
             slots.addAll(buildSlotsByTime(event, currentStart, currentEnd));
             currentStart = getNextRecurrence(currentStart, recurrenceFrequency);
         }
@@ -56,12 +56,12 @@ public class SlotUtils {
     public List<Slot> buildRecurringSlotsByOccurrences(Event event, RecurrenceFrequency recurrenceFrequency,
             Integer occurrences) {
         List<Slot> slots = new ArrayList<>();
-        LocalDateTime currentStart = event.getEventStart();
+        OffsetDateTime currentStart = event.getEventStart();
         Duration eventDuration = Duration.between(event.getEventStart(), event.getEventEnd());
         int count = 0;
 
         while (count < occurrences) {
-            LocalDateTime currentEnd = currentStart.plus(eventDuration);
+            OffsetDateTime currentEnd = currentStart.plus(eventDuration);
             slots.addAll(buildSlotsByTime(event, currentStart, currentEnd));
             currentStart = getNextRecurrence(currentStart, recurrenceFrequency);
             count++;
@@ -70,7 +70,7 @@ public class SlotUtils {
         return slots;
     }
 
-    private LocalDateTime getNextRecurrence(LocalDateTime current, RecurrenceFrequency frequency) {
+    private OffsetDateTime getNextRecurrence(OffsetDateTime current, RecurrenceFrequency frequency) {
         return switch (frequency) {
             case DAILY -> current.plusDays(1);
             case WEEKLY -> current.plusWeeks(1);

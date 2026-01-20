@@ -1,6 +1,6 @@
 package com.example.SlotlyV2.feature.slot;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 import com.example.SlotlyV2.feature.event.Event;
 
@@ -41,10 +41,10 @@ public class Slot {
     private Event event;
 
     @Column(name = "start_time")
-    private LocalDateTime startTime;
+    private OffsetDateTime startTime;
 
     @Column(name = "end_time")
-    private LocalDateTime endTime;
+    private OffsetDateTime endTime;
 
     @Column(name = "booked_by_name")
     private String bookedByName;
@@ -52,7 +52,7 @@ public class Slot {
     @Column(name = "booked_by_email")
     private String bookedByEmail;
 
-    private LocalDateTime bookedAt;
+    private OffsetDateTime bookedAt;
 
     public boolean isAvailable() {
         return bookedByEmail == null && bookedByName == null;

@@ -1,6 +1,7 @@
 package com.example.SlotlyV2.feature.event;
 
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -59,10 +60,10 @@ public class Event {
     private LocalDateTime createdAt;
 
     @Column(name = "event_start")
-    private LocalDateTime eventStart;
+    private OffsetDateTime eventStart;
 
     @Column(name = "event_end")
-    private LocalDateTime eventEnd;
+    private OffsetDateTime eventEnd;
 
     @Column(name = "time_zone")
     private String timeZone;

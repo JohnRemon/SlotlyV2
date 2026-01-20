@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.SlotlyV2.common.dto.ApiResponse;
 import com.example.SlotlyV2.common.dto.PagedResponse;
+import com.example.SlotlyV2.common.util.TimeZoneConverter;
 import com.example.SlotlyV2.feature.event.dto.EventRequest;
 import com.example.SlotlyV2.feature.event.dto.EventResponse;
 import com.example.SlotlyV2.feature.event.dto.RecurringEventRequest;
@@ -30,19 +31,22 @@ import lombok.RequiredArgsConstructor;
 public class EventController {
     private final EventService eventService;
     private final UserService userService;
+    private final TimeZoneConverter timeZoneConverter;
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResponse<EventResponse> createEvent(@Valid @RequestBody EventRequest request) {
         Event event = eventService.createEvent(request);
-        return new ApiResponse<>("Event created successfully", new EventResponse(event));
+        String userTimezone = userService.getCurrentUser().getTimeZone();
+        return new ApiResponse<>("Event created successfully", new EventResponse(event, userTimezone, timeZoneConverter));
     }
 
     @PostMapping("/recurring")
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResponse<EventResponse> createRecurringEvent(@Valid @RequestBody RecurringEventRequest request) {
         Event event = eventService.createRecurringEvent(request);
-        return new ApiResponse<>("Event created successfully", new EventResponse(event));
+        String userTimezone = userService.getCurrentUser().getTimeZone();
+        return new ApiResponse<>("Event created successfully", new EventResponse(event, userTimezone, timeZoneConverter));
     }
 
     @GetMapping
@@ -63,7 +67,8 @@ public class EventController {
     @GetMapping("/{id}")
     public ApiResponse<EventResponse> getEventById(@PathVariable Long id) {
         Event event = eventService.getEventById(id);
-        return new ApiResponse<>("Event fetched successfully", new EventResponse(event));
+        String userTimezone = userService.getCurrentUser().getTimeZone();
+        return new ApiResponse<>("Event fetched successfully", new EventResponse(event, userTimezone, timeZoneConverter));
     }
 
     @DeleteMapping("/{id}")
@@ -75,6 +80,6 @@ public class EventController {
     @GetMapping("/share/{shareableId}")
     public ApiResponse<EventResponse> getEventByShareableId(@PathVariable String shareableId) {
         Event event = eventService.getEventByShareableId(shareableId);
-        return new ApiResponse<>("Event fetched successfully", new EventResponse(event));
+        return new ApiResponse<>("Event fetched successfully", new EventResponse(event, event.getTimeZone(), timeZoneConverter));
     }
 }

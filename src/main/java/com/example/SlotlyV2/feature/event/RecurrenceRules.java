@@ -1,6 +1,6 @@
 package com.example.SlotlyV2.feature.event;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 import com.example.SlotlyV2.feature.event.enums.RecurrenceFrequency;
 import com.example.SlotlyV2.feature.event.enums.RecurrenceEndType;
@@ -37,5 +37,5 @@ public class RecurrenceRules {
     private Integer recurrenceOccurrences;
 
     @Column(name = "recurrence_end_date")
-    private LocalDateTime recurrenceEndDate;
+    private OffsetDateTime recurrenceEndDate;
 }

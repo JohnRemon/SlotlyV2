@@ -1,6 +1,6 @@
 package com.example.SlotlyV2.feature.slot;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,7 +25,7 @@ public interface SlotRepository extends JpaRepository<Slot, Long> {
     @EntityGraph(attributePaths = { "event", "event.host" })
     List<Slot> findByBookedByEmail(String email);
 
-    Optional<Slot> findByEventIdAndStartTime(Long eventId, LocalDateTime startTime);
+    Optional<Slot> findByEventIdAndStartTime(Long eventId, OffsetDateTime startTime);
 
     Integer countByEventAndBookedByEmailIsNotNullAndBookedByNameIsNotNull(Event event);
 }

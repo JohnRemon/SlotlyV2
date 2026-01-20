@@ -1,16 +1,21 @@
 package com.example.SlotlyV2.feature.event;
 
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.List;
 
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.example.SlotlyV2.common.exception.auth.UnauthorizedAccessException;
 import com.example.SlotlyV2.common.exception.event.EventNotFoundException;
 import com.example.SlotlyV2.common.exception.event.InvalidEventException;
+import com.example.SlotlyV2.common.util.TimeZoneConverter;
 import com.example.SlotlyV2.feature.availability.AvailabilityRules;
 import com.example.SlotlyV2.feature.email.dto.EventCancelledEmailDTO;
 import com.example.SlotlyV2.feature.email.event.EventCancelledEvent;
@@ -34,6 +39,7 @@ public class EventService {
     private final SlotService slotService;
     private final UserService userService;
     private final ApplicationEventPublisher eventPublisher;
+    private final TimeZoneConverter timeZoneConverter;
 
     @Transactional(rollbackOn = Exception.class)
     public Event createEvent(EventRequest request) {
@@ -61,12 +67,15 @@ public class EventService {
                 .maxCapacity(request.getAvailabilityRulesDTO().getMaxCapacity())
                 .build();
 
+        OffsetDateTime utcStart = timeZoneConverter.toUtc(request.getEventStart(), request.getTimeZone());
+        OffsetDateTime utcEnd = timeZoneConverter.toUtc(request.getEventEnd(), request.getTimeZone());
+
         Event event = Event.builder()
                 .eventName(request.getEventName())
                 .description(request.getDescription())
                 .host(host)
-                .eventStart(request.getEventStart())
-                .eventEnd(request.getEventEnd())
+                .eventStart(utcStart)
+                .eventEnd(utcEnd)
                 .timeZone(request.getTimeZone())
                 .availabilityRules(availabilityRules)
                 .build();
@@ -96,8 +105,12 @@ public class EventService {
     }
 
     public Page<EventResponse> getEvents(User host, Pageable pageable) {
-        return (Page<EventResponse>) eventRepository.findByHost(host, pageable)
-                .map(EventResponse::new);
+        Page<Event> eventPage = eventRepository.findByHost(host, pageable);
+        String userTimezone = userService.getCurrentUser().getTimeZone();
+        List<EventResponse> responses = eventPage.getContent().stream()
+                .map(event -> new EventResponse(event, userTimezone, timeZoneConverter))
+                .toList();
+        return new PageImpl<>(responses, pageable, eventPage.getTotalElements());
     }
 
     public Event getEventById(Long id) {
@@ -151,20 +164,25 @@ public class EventService {
                 .maxCapacity(request.getAvailabilityRulesDTO().getMaxCapacity())
                 .build();
 
+        OffsetDateTime utcStart = timeZoneConverter.toUtc(request.getEventStart(), request.getTimeZone());
+        OffsetDateTime utcEnd = timeZoneConverter.toUtc(request.getEventEnd(), request.getTimeZone());
+
         RecurrenceRules recurringRules = RecurrenceRules.builder()
                 .recurrenceFrequency(request.getRecurringRulesDTO().getRecurrenceFrequency())
                 .recurrenceEndType(request.getRecurringRulesDTO().getRecurrenceEndType())
                 .recurrenceDayOfWeek(request.getRecurringRulesDTO().getRecurrenceDayOfWeek())
                 .recurrenceOccurrences(request.getRecurringRulesDTO().getRecurrenceOccurrences())
-                .recurrenceEndDate(request.getRecurringRulesDTO().getRecurrenceEndDate())
+                .recurrenceEndDate(request.getRecurringRulesDTO().getRecurrenceEndDate() != null
+                        ? timeZoneConverter.toUtc(request.getRecurringRulesDTO().getRecurrenceEndDate(), request.getTimeZone())
+                        : null)
                 .build();
 
         return Event.builder()
                 .eventName(request.getEventName())
                 .description(request.getDescription())
                 .host(userService.getCurrentUser())
-                .eventStart(request.getEventStart())
-                .eventEnd(request.getEventEnd())
+                .eventStart(utcStart)
+                .eventEnd(utcEnd)
                 .timeZone(request.getTimeZone())
                 .isRecurring(true)
                 .availabilityRules(availabilityRules)

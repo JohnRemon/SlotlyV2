@@ -37,9 +37,11 @@ import com.example.SlotlyV2.common.exception.auth.TokenAlreadyExpiredException;
 import com.example.SlotlyV2.common.exception.auth.UnauthorizedAccessException;
 import com.example.SlotlyV2.common.exception.user.UserAlreadyExistsException;
 import com.example.SlotlyV2.common.exception.user.UsernameAlreadyExistsException;
+import com.example.SlotlyV2.common.util.TimeZoneConverter;
 import com.example.SlotlyV2.feature.auth.VerificationTokenService;
 import com.example.SlotlyV2.feature.email.event.EmailVerificationEvent;
 import com.example.SlotlyV2.feature.email.event.PasswordResetEvent;
+import com.example.SlotlyV2.feature.schedule.ScheduleService;
 import com.example.SlotlyV2.feature.user.User;
 import com.example.SlotlyV2.feature.user.UserRepository;
 import com.example.SlotlyV2.feature.user.UserService;
@@ -68,13 +70,19 @@ public class UserServiceTest {
     @Mock
     private ApplicationEventPublisher applicationEventPublisher;
 
+    @Mock
+    private ScheduleService scheduleService;
+
+    @Mock
+    private TimeZoneConverter timeZoneConverter;
+
     @InjectMocks
     private UserService userService;
 
     @BeforeEach
     void setUp() {
         reset(userRepository, passwordEncoder, authenticationManager, verificationTokenService,
-                applicationEventPublisher);
+                applicationEventPublisher, scheduleService, timeZoneConverter);
     }
 
     // ============================= Register Tests =============================

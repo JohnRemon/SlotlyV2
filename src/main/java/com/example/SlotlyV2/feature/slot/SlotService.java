@@ -1,6 +1,6 @@
 package com.example.SlotlyV2.feature.slot;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -16,6 +16,7 @@ import com.example.SlotlyV2.common.exception.slot.SlotAlreadyBookedException;
 import com.example.SlotlyV2.common.exception.slot.SlotNotFoundException;
 import com.example.SlotlyV2.common.util.NameUtils;
 import com.example.SlotlyV2.common.util.SlotUtils;
+import com.example.SlotlyV2.common.util.TimeZoneConverter;
 import com.example.SlotlyV2.feature.email.dto.BookingEmailDTO;
 import com.example.SlotlyV2.feature.email.event.SlotBookedEvent;
 import com.example.SlotlyV2.feature.email.event.SlotCancelledEvent;
@@ -42,11 +43,12 @@ public class SlotService {
     private final NameUtils nameUtils;
     private final SlotUtils slotUtils;
     private final RecurrenceStrategyFactory recurrenceStrategyFactory;
+    private final TimeZoneConverter timeZoneConverter;
 
     @Transactional(rollbackOn = Exception.class)
     public void generateSlots(Event event) {
-        LocalDateTime start = event.getEventStart();
-        LocalDateTime end = event.getEventEnd();
+        OffsetDateTime start = event.getEventStart();
+        OffsetDateTime end = event.getEventEnd();
 
         if (event.getAvailabilityRules().getSlotDurationMinutes() <= 0) {
             throw new InvalidSlotException("Slot duration must be greater than zero");
@@ -66,8 +68,12 @@ public class SlotService {
 
     @Transactional(rollbackOn = Exception.class)
     public Slot bookSlot(SlotRequest request) {
-        // Find the slot
-        Slot slot = slotRepository.findByEventIdAndStartTime(request.getEventId(), request.getStartTime())
+        Event event = eventRepository.findById(request.getEventId())
+                .orElseThrow(() -> new EventNotFoundException("Event Not Found"));
+
+        OffsetDateTime utcStartTime = timeZoneConverter.toUtc(request.getStartTime(), event.getTimeZone());
+
+        Slot slot = slotRepository.findByEventIdAndStartTime(request.getEventId(), utcStartTime)
                 .orElseThrow(() -> new SlotNotFoundException("Slot Not Found"));
 
         // Check that slot is available
@@ -77,7 +83,7 @@ public class SlotService {
 
         // Check that slot is not in the past
         ZoneId zone = ZoneId.of(slot.getEvent().getTimeZone());
-        if (slot.getStartTime().atZone(zone).isBefore(ZonedDateTime.now(zone))) {
+        if (slot.getStartTime().toZonedDateTime().isBefore(ZonedDateTime.now(zone))) {
             throw new InvalidSlotException("Cannot book a past slot");
         }
 
@@ -94,7 +100,7 @@ public class SlotService {
         // Book the Slot
         slot.setBookedByName(request.getAttendeeName());
         slot.setBookedByEmail(request.getAttendeeEmail());
-        slot.setBookedAt(LocalDateTime.now());
+        slot.setBookedAt(OffsetDateTime.now());
 
         // Save the Slot
         Slot savedSlot = slotRepository.save(slot);
@@ -122,8 +128,12 @@ public class SlotService {
 
     @Transactional(rollbackOn = Exception.class)
     public Slot cancelBooking(CancelBookingRequest request) {
-        // Find the slot
-        Slot slot = slotRepository.findByEventIdAndStartTime(request.getEventId(), request.getStartTime())
+        Event event = eventRepository.findById(request.getEventId())
+                .orElseThrow(() -> new EventNotFoundException("Event Not Found"));
+
+        OffsetDateTime utcStartTime = timeZoneConverter.toUtc(request.getStartTime(), event.getTimeZone());
+
+        Slot slot = slotRepository.findByEventIdAndStartTime(request.getEventId(), utcStartTime)
                 .orElseThrow(() -> new SlotNotFoundException("Slot Not Found"));
 
         if (!slot.getEvent().getAvailabilityRules().isAllowsCancellations()) {
@@ -131,7 +141,7 @@ public class SlotService {
         }
 
         ZoneId zone = ZoneId.of(slot.getEvent().getTimeZone());
-        if (slot.getStartTime().atZone(zone).isBefore(ZonedDateTime.now(zone))) {
+        if (slot.getStartTime().toZonedDateTime().isBefore(ZonedDateTime.now(zone))) {
             throw new InvalidSlotException("Cannot cancel a past slot");
         }
 
