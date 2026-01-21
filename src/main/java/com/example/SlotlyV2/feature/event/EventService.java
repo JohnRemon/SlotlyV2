@@ -1,6 +1,5 @@
 package com.example.SlotlyV2.feature.event;
 
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -173,7 +172,8 @@ public class EventService {
                 .recurrenceDayOfWeek(request.getRecurringRulesDTO().getRecurrenceDayOfWeek())
                 .recurrenceOccurrences(request.getRecurringRulesDTO().getRecurrenceOccurrences())
                 .recurrenceEndDate(request.getRecurringRulesDTO().getRecurrenceEndDate() != null
-                        ? timeZoneConverter.toUtc(request.getRecurringRulesDTO().getRecurrenceEndDate(), request.getTimeZone())
+                        ? timeZoneConverter.toUtc(request.getRecurringRulesDTO().getRecurrenceEndDate(),
+                                request.getTimeZone())
                         : null)
                 .build();
 
