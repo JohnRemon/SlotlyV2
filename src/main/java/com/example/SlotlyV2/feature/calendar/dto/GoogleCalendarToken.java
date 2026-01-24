@@ -1,6 +1,6 @@
 package com.example.SlotlyV2.feature.calendar.dto;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 import com.example.SlotlyV2.feature.user.User;
@@ -33,42 +33,39 @@ public class GoogleCalendarToken {
     private UUID id;
 
     @OneToOne
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
 
-    @Column(nullable = false, length = 1000)
+    @Column(nullable = false)
     private String accessToken;
 
-    @Column(nullable = false, length = 1000)
+    @Column(nullable = false)
     private String refreshToken;
 
     @Column(nullable = false)
-    private LocalDateTime expiresAt;
+    private OffsetDateTime expiresAt;
 
-    @Column(length = 500)
+    @Column
     private String scope;
 
-    @Column(length = 100)
-    private String tokenType;
+    @Column(nullable = false)
+    private OffsetDateTime createdAt;
 
     @Column(nullable = false)
-    private LocalDateTime createdAt;
-
-    @Column(nullable = false)
-    private LocalDateTime updatedAt;
+    private OffsetDateTime updatedAt;
 
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
+        createdAt = OffsetDateTime.now();
+        updatedAt = OffsetDateTime.now();
     }
 
     @PreUpdate
     protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
+        updatedAt = OffsetDateTime.now();
     }
 
     public boolean isExpired() {
-        return LocalDateTime.now().isAfter(expiresAt);
+        return OffsetDateTime.now().isAfter(expiresAt);
     }
 }

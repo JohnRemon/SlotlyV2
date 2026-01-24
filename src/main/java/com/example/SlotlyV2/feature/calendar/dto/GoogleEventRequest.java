@@ -1,6 +1,6 @@
 package com.example.SlotlyV2.feature.calendar.dto;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
@@ -14,10 +14,10 @@ public class GoogleEventRequest {
     private String description;
 
     @NotNull(message = "Start time is required")
-    private LocalDateTime startTime;
+    private OffsetDateTime startTime;
 
     @NotNull(message = "End time is required")
-    private LocalDateTime endtime;
+    private OffsetDateTime endTime;
 
     @NotNull(message = "Timezone is required")
     private String timeZone;

@@ -1,0 +1,166 @@
+package com.example.SlotlyV2.feature.calendar;
+
+import java.io.IOException;
+import java.time.OffsetDateTime;
+import java.util.Collection;
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+
+import com.example.SlotlyV2.common.config.GoogleCalendarConfig;
+import com.example.SlotlyV2.common.exception.calendar.GoogleCalendarException;
+import com.example.SlotlyV2.common.exception.calendar.GoogleCalendarNotConnectedException;
+import com.example.SlotlyV2.feature.calendar.dto.GoogleCalendarToken;
+import com.example.SlotlyV2.feature.user.User;
+import com.google.api.client.auth.oauth2.BearerToken;
+import com.google.api.client.auth.oauth2.ClientParametersAuthentication;
+import com.google.api.client.auth.oauth2.Credential;
+import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeRequestUrl;
+import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeTokenRequest;
+import com.google.api.client.googleapis.auth.oauth2.GoogleRefreshTokenRequest;
+import com.google.api.client.googleapis.auth.oauth2.GoogleTokenResponse;
+import com.google.api.client.http.HttpTransport;
+import com.google.api.client.json.JsonFactory;
+import com.google.api.services.calendar.CalendarScopes;
+
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+@Service
+@RequiredArgsConstructor
+@Slf4j
+public class GoogleOAuth2Service {
+    private final GoogleCalendarConfig config;
+    private final GoogleCalendarTokenRepository tokenRepository;
+    private final HttpTransport httpTransport;
+    private final JsonFactory jsonFactory;
+
+    private static final String TOKEN_URL = "https://oauth2.googleapis.com/token";
+    private static final Collection<String> SCOPES = List.of(
+            CalendarScopes.CALENDAR,
+            CalendarScopes.CALENDAR_EVENTS);
+
+    public String generateAuthorizationUrl(String state) {
+        return new GoogleAuthorizationCodeRequestUrl(
+                config.getClientId(),
+                config.getRedirectUri(),
+                SCOPES)
+                .setAccessType("offline")
+                .setApprovalPrompt("consent")
+                .setState(state)
+                .build();
+    }
+
+    @Transactional
+    public GoogleCalendarToken exchangeCodeForToken(String code, User user) {
+        try {
+            GoogleTokenResponse tokenResponse = new GoogleAuthorizationCodeTokenRequest(
+                    httpTransport,
+                    jsonFactory,
+                    TOKEN_URL,
+                    config.getClientId(),
+                    config.getClientSecret(),
+                    code,
+                    config.getRedirectUri())
+                    .execute();
+
+            return saveTokens(user, tokenResponse);
+
+        } catch (IOException e) {
+            log.error("Failed to exchange authorization coede for user {}", user.getId(), e);
+            throw new GoogleCalendarException("Failed to connect to google calendar");
+        }
+    }
+
+    public Credential getCredentials(Long userId) throws IOException {
+        GoogleCalendarToken token = tokenRepository.findByUserId(userId)
+                .orElseThrow(() -> new GoogleCalendarNotConnectedException("Please connect your google calendar"));
+
+        if (token.isExpired()) {
+            token = refreshAccessToken(token);
+        }
+
+        return buildCredentials(token);
+    }
+
+    @Transactional
+    public GoogleCalendarToken refreshAccessToken(GoogleCalendarToken token) {
+        try {
+            GoogleTokenResponse tokenResponse = new GoogleRefreshTokenRequest(
+                    httpTransport,
+                    jsonFactory,
+                    token.getRefreshToken(),
+                    config.getClientId(),
+                    config.getClientSecret())
+                    .execute();
+
+            return updateTokens(token, tokenResponse);
+
+        } catch (IOException e) {
+            log.error("Failed to refresh token for user {}", token.getUser().getId(), e);
+            throw new GoogleCalendarException("Failed to refresh access token");
+        }
+    }
+
+    @Transactional
+    public void disconnect(User user) {
+        tokenRepository.deleteByUserId(user.getId());
+        log.info("Disconnected Google Calendar for user {}", user.getId());
+    }
+
+    public boolean isConnected(Long userId) {
+        return tokenRepository.findByUserId(userId)
+                .map(token -> !token.isExpired())
+                .orElse(false);
+    }
+
+    private GoogleCalendarToken saveTokens(User user, GoogleTokenResponse tokenResponse) {
+        GoogleCalendarToken token = tokenRepository.findByUserId(user.getId())
+                .orElseGet(GoogleCalendarToken::new);
+
+        token.setUser(user);
+        token.setAccessToken(tokenResponse.getAccessToken());
+
+        if (tokenResponse.getRefreshToken() != null) {
+            token.setRefreshToken(tokenResponse.getRefreshToken());
+        }
+
+        token.setExpiresAt(calculateExpirationTime(tokenResponse.getExpiresInSeconds()));
+        token.setScope(tokenResponse.getScope());
+
+        return tokenRepository.save(token);
+    }
+
+    private GoogleCalendarToken updateTokens(GoogleCalendarToken token, GoogleTokenResponse tokenResponse) {
+        token.setAccessToken(tokenResponse.getAccessToken());
+
+        if (tokenResponse.getRefreshToken() != null) {
+            token.setRefreshToken(tokenResponse.getRefreshToken());
+        }
+
+        token.setExpiresAt(calculateExpirationTime(tokenResponse.getExpiresInSeconds()));
+
+        return tokenRepository.save(token);
+    }
+
+    private Credential buildCredentials(GoogleCalendarToken token) {
+        return new Credential.Builder(BearerToken.authorizationHeaderAccessMethod())
+                .setTransport(httpTransport)
+                .setJsonFactory(jsonFactory)
+                .setTokenServerEncodedUrl(TOKEN_URL)
+                .setClientAuthentication(new ClientParametersAuthentication(
+                        config.getClientId(),
+                        config.getClientSecret()))
+                .build()
+                .setAccessToken(token.getAccessToken())
+                .setRefreshToken(token.getRefreshToken())
+                .setExpirationTimeMilliseconds(token.getExpiresAt().toInstant().toEpochMilli());
+
+    }
+
+    private OffsetDateTime calculateExpirationTime(Long expiresInSeconds) {
+        return OffsetDateTime.now()
+                .plusSeconds(expiresInSeconds != null ? expiresInSeconds : 3600);
+    }
+}
