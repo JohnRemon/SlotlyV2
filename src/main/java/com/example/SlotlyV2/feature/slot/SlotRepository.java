@@ -20,6 +20,7 @@ public interface SlotRepository extends JpaRepository<Slot, Long> {
     @EntityGraph(attributePaths = { "event", "event.host" })
     List<Slot> findByEventAndBookedByEmailIsNullAndBookedByNameIsNull(Event event);
 
+    @EntityGraph(attributePaths = { "event", "event.host" })
     Optional<Slot> findById(Long id);
 
     @EntityGraph(attributePaths = { "event", "event.host" })

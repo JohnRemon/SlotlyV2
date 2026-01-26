@@ -1,9 +1,11 @@
 package com.example.SlotlyV2.feature.calendar;
 
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.time.OffsetDateTime;
+
 import com.example.SlotlyV2.feature.calendar.dto.GoogleEventRequest;
+import com.example.SlotlyV2.feature.calendar.enums.SyncStatus;
 import com.example.SlotlyV2.feature.slot.Slot;
 import com.example.SlotlyV2.feature.user.User;
 import com.google.api.services.calendar.model.Event;
@@ -21,7 +23,6 @@ public class GoogleCalendarSyncService {
     private final SlotGoogleEventRepository slotGoogleEventRepository;
 
     @Transactional
-    @Async("calendarSyncExecutor")
     public void syncSlot(Slot slot, User user) {
 
         if (!googleOAuth2Service.isConnected(user.getId())) {
@@ -34,31 +35,59 @@ public class GoogleCalendarSyncService {
         GoogleEventRequest request = buildGoogleEventRequest(slot);
 
         if (mapping == null) {
-            Event event = googleCalendarService.createEvent(user, request);
+            try {
+                Event event = googleCalendarService.createEvent(user, request);
 
-            SlotGoogleEvent newMapping = new SlotGoogleEvent();
-            newMapping.setSlot(slot);
-            newMapping.markSynced(event.getId());
-            slotGoogleEventRepository.save(newMapping);
-        } else {
+                SlotGoogleEvent newMapping = new SlotGoogleEvent();
+                newMapping.setSlot(slot);
+                newMapping.markSynced(event.getId());
+                slotGoogleEventRepository.save(newMapping);
+            } catch (Exception e) {
+                log.error("Failed to sync slot {} to Google Calendar", slot.getId(), e);
+            }
+
+            return;
+        }
+
+        try {
             googleCalendarService.updateEvent(user, mapping.getGoogleEventId(), request);
             mapping.markSynced(mapping.getGoogleEventId());
-            slotGoogleEventRepository.save(mapping);
+        } catch (Exception e) {
+            log.error("Failed to update Google Calendar event {} for slot {}",
+                    mapping.getGoogleEventId(), slot.getId(), e);
+            mapping.markFailed(e.getMessage());
         }
+
+        slotGoogleEventRepository.save(mapping);
     }
 
     @Transactional
-    @Async("calendarSyncExecutor")
     public void deleteGoogleEvent(Slot slot, User user) {
         SlotGoogleEvent mapping = slotGoogleEventRepository.findBySlotId(slot.getId()).orElse(null);
 
         if (mapping == null) {
-            log.debug("slot not found");
+            log.debug("Google Calendar mapping not found for slot {}", slot.getId());
             return;
         }
 
-        googleCalendarService.deleteEvent(user, mapping.getGoogleEventId());
-        slotGoogleEventRepository.delete(mapping);
+        if (!googleOAuth2Service.isConnected(user.getId())) {
+            log.warn("Google calendar not connected for user {}, marking slot {} for deletion",
+                    user.getId(), slot.getId());
+            mapping.setSyncStatus(SyncStatus.PENDING_DELETION);
+            mapping.setSyncedAt(OffsetDateTime.now());
+            slotGoogleEventRepository.save(mapping);
+            return;
+        }
+
+        try {
+            googleCalendarService.deleteEvent(user, mapping.getGoogleEventId());
+            slotGoogleEventRepository.delete(mapping);
+        } catch (Exception e) {
+            log.error("Failed to delete Google Calendar event {} for slot {}",
+                    mapping.getGoogleEventId(), slot.getId(), e);
+            mapping.markFailed(e.getMessage());
+            slotGoogleEventRepository.save(mapping);
+        }
     }
 
     private GoogleEventRequest buildGoogleEventRequest(Slot slot) {

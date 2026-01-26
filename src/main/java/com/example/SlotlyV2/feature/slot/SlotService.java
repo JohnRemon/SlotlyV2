@@ -220,6 +220,5 @@ public class SlotService {
     public Slot getSlotById(Long slotId) {
         return slotRepository.findById(slotId)
                 .orElseThrow(() -> new SlotNotFoundException("Slot not found with ID: " + slotId));
-
     }
 }
