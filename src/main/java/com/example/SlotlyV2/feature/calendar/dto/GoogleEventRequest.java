@@ -3,9 +3,11 @@ package com.example.SlotlyV2.feature.calendar.dto;
 import java.time.OffsetDateTime;
 
 import jakarta.validation.constraints.NotNull;
+import lombok.Builder;
 import lombok.Data;
 
 @Data
+@Builder
 public class GoogleEventRequest {
     @NotNull(message = "Summary is required")
     private String summary;
@@ -18,7 +20,4 @@ public class GoogleEventRequest {
 
     @NotNull(message = "End time is required")
     private OffsetDateTime endTime;
-
-    @NotNull(message = "Timezone is required")
-    private String timeZone;
 }

@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 import com.example.SlotlyV2.common.config.GoogleCalendarConfig;
 import com.example.SlotlyV2.common.exception.calendar.GoogleCalendarException;
 import com.example.SlotlyV2.common.exception.calendar.GoogleCalendarNotConnectedException;
-import com.example.SlotlyV2.feature.calendar.dto.GoogleCalendarToken;
 import com.example.SlotlyV2.feature.user.User;
 import com.google.api.client.auth.oauth2.BearerToken;
 import com.google.api.client.auth.oauth2.ClientParametersAuthentication;
@@ -19,7 +18,7 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeReque
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeTokenRequest;
 import com.google.api.client.googleapis.auth.oauth2.GoogleRefreshTokenRequest;
 import com.google.api.client.googleapis.auth.oauth2.GoogleTokenResponse;
-import com.google.api.client.http.HttpTransport;
+import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.services.calendar.CalendarScopes;
 
@@ -33,7 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 public class GoogleOAuth2Service {
     private final GoogleCalendarConfig config;
     private final GoogleCalendarTokenRepository tokenRepository;
-    private final HttpTransport httpTransport;
+    private final NetHttpTransport httpTransport;
     private final JsonFactory jsonFactory;
 
     private static final String TOKEN_URL = "https://oauth2.googleapis.com/token";
@@ -47,7 +46,7 @@ public class GoogleOAuth2Service {
                 config.getRedirectUri(),
                 SCOPES)
                 .setAccessType("offline")
-                .setApprovalPrompt("consent")
+                .setApprovalPrompt("force")
                 .setState(state)
                 .build();
     }
@@ -86,6 +85,11 @@ public class GoogleOAuth2Service {
 
     @Transactional
     public GoogleCalendarToken refreshAccessToken(GoogleCalendarToken token) {
+        if (token.getRefreshToken() == null) {
+            throw new GoogleCalendarNotConnectedException(
+                    "No refresh token available. Please reconnect your Google Calendar.");
+        }
+
         try {
             GoogleTokenResponse tokenResponse = new GoogleRefreshTokenRequest(
                     httpTransport,
@@ -110,9 +114,7 @@ public class GoogleOAuth2Service {
     }
 
     public boolean isConnected(Long userId) {
-        return tokenRepository.findByUserId(userId)
-                .map(token -> !token.isExpired())
-                .orElse(false);
+        return tokenRepository.findByUserId(userId).isPresent();
     }
 
     private GoogleCalendarToken saveTokens(User user, GoogleTokenResponse tokenResponse) {

@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
+import com.example.SlotlyV2.common.config.GoogleCalendarConfig;
 import com.example.SlotlyV2.common.exception.calendar.GoogleCalendarException;
 import com.example.SlotlyV2.feature.calendar.dto.GoogleEventRequest;
 import com.example.SlotlyV2.feature.user.User;
@@ -29,13 +30,14 @@ public class GoogleCalendarService {
     private final GoogleOAuth2Service oAuth2Service;
     private final HttpTransport netHttpTransport;
     private final JsonFactory jsonFactory;
+    private final GoogleCalendarConfig config;
 
     private static final String PRIMARY_CALENDAR = "primary";
 
     public Event createEvent(User user, GoogleEventRequest request) {
         try {
             Calendar service = getCalendarService(user);
-            Event event = buildEvent(request);
+            Event event = buildEvent(request, user);
 
             Event createdEvent = service.events()
                     .insert(PRIMARY_CALENDAR, event)
@@ -56,11 +58,7 @@ public class GoogleCalendarService {
         try {
             Calendar service = getCalendarService(user);
 
-            Event event = service.events()
-                    .get(PRIMARY_CALENDAR, googleEventId)
-                    .execute();
-
-            updateEventDetails(event, request);
+            Event event = buildEvent(request, user);
 
             service.events()
                     .update(PRIMARY_CALENDAR, googleEventId, event)
@@ -97,7 +95,7 @@ public class GoogleCalendarService {
     public List<Event> getUpcomingEvents(User user, int maxResults) {
         try {
             Calendar service = getCalendarService(user);
-            DateTime now = new DateTime(System.currentTimeMillis());
+            DateTime now = new DateTime(OffsetDateTime.now().toInstant().toEpochMilli());
 
             Events events = service.events()
                     .list(PRIMARY_CALENDAR)
@@ -119,26 +117,19 @@ public class GoogleCalendarService {
         Credential credential = oAuth2Service.getCredentials(user.getId());
 
         return new Calendar.Builder(netHttpTransport, jsonFactory, credential)
-                .setApplicationName("Slotly")
+                .setApplicationName(config.getApplicationName())
                 .build();
     }
 
-    private Event buildEvent(GoogleEventRequest request) {
+    private Event buildEvent(GoogleEventRequest request, User user) {
         Event event = new Event()
                 .setSummary(request.getSummary())
                 .setDescription(request.getDescription());
 
-        event.setStart(createEventDateTime(request.getStartTime(), request.getTimeZone()));
-        event.setEnd(createEventDateTime(request.getEndTime(), request.getTimeZone()));
+        event.setStart(createEventDateTime(request.getStartTime(), user.getTimeZone()));
+        event.setEnd(createEventDateTime(request.getEndTime(), user.getTimeZone()));
 
         return event;
-    }
-
-    private void updateEventDetails(Event event, GoogleEventRequest request) {
-        event.setSummary(request.getSummary());
-        event.setDescription(request.getDescription());
-        event.setStart(createEventDateTime(request.getStartTime(), request.getTimeZone()));
-        event.setEnd(createEventDateTime(request.getEndTime(), request.getTimeZone()));
     }
 
     private EventDateTime createEventDateTime(OffsetDateTime dateTime, String timeZone) {

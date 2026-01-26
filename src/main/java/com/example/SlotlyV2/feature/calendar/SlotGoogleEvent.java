@@ -17,11 +17,19 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-import lombok.Data;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name = "slot_google_events", uniqueConstraints = @UniqueConstraint(columnNames = { "slot_id" }))
-@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Getter
+@Setter
+@Builder
 public class SlotGoogleEvent {
 
     @Id
@@ -42,24 +50,14 @@ public class SlotGoogleEvent {
     @Column(nullable = false)
     private SyncStatus syncStatus;
 
-    @Column
-    private String error;
-
-    @Column
-    private Integer retryCount = 0;
-
     public void markSynced(String eventId) {
         this.googleEventId = eventId;
         this.syncStatus = SyncStatus.SYNCED;
         this.syncedAt = OffsetDateTime.now();
-        this.error = null;
-        this.retryCount = 0;
     }
 
     public void markFailed(String error) {
         this.syncStatus = SyncStatus.FAILED;
         this.syncedAt = OffsetDateTime.now();
-        this.error = error;
-        this.retryCount++;
     }
 }

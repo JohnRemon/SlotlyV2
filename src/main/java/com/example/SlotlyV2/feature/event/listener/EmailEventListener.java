@@ -1,4 +1,4 @@
-package com.example.SlotlyV2.listener;
+package com.example.SlotlyV2.feature.event.listener;
 
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;

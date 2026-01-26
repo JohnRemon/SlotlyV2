@@ -1,4 +1,4 @@
-package com.example.SlotlyV2.feature.calendar.dto;
+package com.example.SlotlyV2.feature.calendar;
 
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -65,6 +65,7 @@ public class GoogleCalendarToken {
         updatedAt = OffsetDateTime.now();
     }
 
+    // Access token expiry
     public boolean isExpired() {
         return OffsetDateTime.now().isAfter(expiresAt);
     }

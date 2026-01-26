@@ -17,6 +17,9 @@ import com.example.SlotlyV2.common.exception.slot.SlotNotFoundException;
 import com.example.SlotlyV2.common.util.NameUtils;
 import com.example.SlotlyV2.common.util.SlotUtils;
 import com.example.SlotlyV2.common.util.TimeZoneConverter;
+import com.example.SlotlyV2.feature.calendar.dto.CalendarSyncDataDTO;
+import com.example.SlotlyV2.feature.calendar.events.SlotBookedSyncEvent;
+import com.example.SlotlyV2.feature.calendar.events.SlotCancelledSyncEvent;
 import com.example.SlotlyV2.feature.email.dto.BookingEmailDTO;
 import com.example.SlotlyV2.feature.email.event.SlotBookedEvent;
 import com.example.SlotlyV2.feature.email.event.SlotCancelledEvent;
@@ -120,8 +123,14 @@ public class SlotService {
                 .slotId(savedSlot.getId())
                 .build();
 
+        CalendarSyncDataDTO calendarSyncDataDTO = CalendarSyncDataDTO.builder()
+                .userId(event.getHost().getId())
+                .slotId(slot.getId())
+                .build();
+
         // Publish the Booking Event
         eventPublisher.publishEvent(new SlotBookedEvent(bookingData));
+        eventPublisher.publishEvent(new SlotBookedSyncEvent(calendarSyncDataDTO));
 
         return savedSlot;
     }
@@ -176,8 +185,14 @@ public class SlotService {
                 hostDisplayName,
                 savedSlot.getEvent().getHost().getEmail());
 
+        CalendarSyncDataDTO calendarSyncDataDTO = CalendarSyncDataDTO.builder()
+                .userId(event.getHost().getId())
+                .slotId(slot.getId())
+                .build();
+
         // Publish the Cancellation Event
         eventPublisher.publishEvent(new SlotCancelledEvent(cancellationData));
+        eventPublisher.publishEvent(new SlotCancelledSyncEvent(calendarSyncDataDTO));
 
         return savedSlot;
     }
