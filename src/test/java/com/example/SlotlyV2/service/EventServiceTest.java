@@ -36,7 +36,7 @@ import com.example.SlotlyV2.common.exception.event.EventNotFoundException;
 import com.example.SlotlyV2.common.exception.event.InvalidEventException;
 import com.example.SlotlyV2.common.util.TimeZoneConverter;
 import com.example.SlotlyV2.feature.availability.AvailabilityRules;
-import com.example.SlotlyV2.feature.availability.AvailabilityRulesDTO;
+import com.example.SlotlyV2.feature.availability.dto.AvailabilityRulesDTO;
 import com.example.SlotlyV2.feature.email.event.EventCancelledEvent;
 import com.example.SlotlyV2.feature.event.Event;
 import com.example.SlotlyV2.feature.event.EventRepository;

@@ -2,7 +2,7 @@ package com.example.SlotlyV2.feature.event.dto;
 
 import java.time.OffsetDateTime;
 
-import com.example.SlotlyV2.feature.availability.AvailabilityRulesDTO;
+import com.example.SlotlyV2.feature.availability.dto.AvailabilityRulesDTO;
 
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;

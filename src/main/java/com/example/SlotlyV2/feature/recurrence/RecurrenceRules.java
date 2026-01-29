@@ -1,4 +1,4 @@
-package com.example.SlotlyV2.feature.event;
+package com.example.SlotlyV2.feature.recurrence;
 
 import java.time.OffsetDateTime;
 

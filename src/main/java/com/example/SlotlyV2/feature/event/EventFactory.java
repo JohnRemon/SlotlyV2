@@ -6,9 +6,11 @@ import org.springframework.stereotype.Component;
 
 import com.example.SlotlyV2.common.util.TimeZoneConverter;
 import com.example.SlotlyV2.feature.availability.AvailabilityRules;
-import com.example.SlotlyV2.feature.availability.AvailabilityRulesDTO;
+import com.example.SlotlyV2.feature.availability.dto.AvailabilityRulesDTO;
 import com.example.SlotlyV2.feature.event.dto.EventRequest;
 import com.example.SlotlyV2.feature.event.dto.RecurringEventRequest;
+import com.example.SlotlyV2.feature.recurrence.RecurrenceRules;
+import com.example.SlotlyV2.feature.recurrence.dto.RecurrenceRulesDTO;
 import com.example.SlotlyV2.feature.user.UserService;
 
 import lombok.RequiredArgsConstructor;

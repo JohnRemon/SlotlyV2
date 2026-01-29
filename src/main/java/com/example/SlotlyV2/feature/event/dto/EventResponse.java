@@ -4,9 +4,9 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 
 import com.example.SlotlyV2.common.util.TimeZoneConverter;
-import com.example.SlotlyV2.feature.availability.AvailabilityRulesDTO;
+import com.example.SlotlyV2.feature.availability.dto.AvailabilityRulesDTO;
 import com.example.SlotlyV2.feature.event.Event;
-import com.example.SlotlyV2.feature.event.RecurrenceRulesDTO;
+import com.example.SlotlyV2.feature.recurrence.dto.RecurrenceRulesDTO;
 import com.example.SlotlyV2.feature.user.dto.UserResponse;
 
 import lombok.RequiredArgsConstructor;

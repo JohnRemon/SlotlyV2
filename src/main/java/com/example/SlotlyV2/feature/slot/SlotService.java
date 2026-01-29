@@ -1,34 +1,20 @@
 package com.example.SlotlyV2.feature.slot;
 
 import java.time.OffsetDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.List;
 
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import com.example.SlotlyV2.common.exception.auth.UnauthorizedAccessException;
 import com.example.SlotlyV2.common.exception.event.EventNotFoundException;
-import com.example.SlotlyV2.common.exception.event.MaxCapacityExceededException;
-import com.example.SlotlyV2.common.exception.slot.InvalidSlotException;
-import com.example.SlotlyV2.common.exception.slot.SlotAlreadyBookedException;
 import com.example.SlotlyV2.common.exception.slot.SlotNotFoundException;
-import com.example.SlotlyV2.common.util.NameUtils;
 import com.example.SlotlyV2.common.util.SlotUtils;
 import com.example.SlotlyV2.common.util.TimeZoneConverter;
-import com.example.SlotlyV2.feature.calendar.dto.CalendarSyncDataDTO;
-import com.example.SlotlyV2.feature.calendar.events.SlotBookedSyncEvent;
-import com.example.SlotlyV2.feature.calendar.events.SlotCancelledSyncEvent;
-import com.example.SlotlyV2.feature.email.dto.BookingEmailDTO;
-import com.example.SlotlyV2.feature.email.event.SlotBookedEvent;
-import com.example.SlotlyV2.feature.email.event.SlotCancelledEvent;
 import com.example.SlotlyV2.feature.event.Event;
 import com.example.SlotlyV2.feature.event.EventRepository;
 import com.example.SlotlyV2.feature.event.strategy.RecurrenceStrategy;
 import com.example.SlotlyV2.feature.event.strategy.RecurrenceStrategyFactory;
 import com.example.SlotlyV2.feature.slot.dto.CancelBookingRequest;
-import com.example.SlotlyV2.feature.slot.dto.SlotCancelledEmailDTO;
 import com.example.SlotlyV2.feature.slot.dto.SlotRequest;
 import com.example.SlotlyV2.feature.user.User;
 
@@ -42,11 +28,12 @@ import lombok.extern.slf4j.Slf4j;
 public class SlotService {
     private final SlotRepository slotRepository;
     private final EventRepository eventRepository;
-    private final ApplicationEventPublisher eventPublisher;
-    private final NameUtils nameUtils;
     private final SlotUtils slotUtils;
     private final RecurrenceStrategyFactory recurrenceStrategyFactory;
     private final TimeZoneConverter timeZoneConverter;
+
+    private final SlotValidator slotValidator;
+    private final BookingEventPublisher bookingEventPublisher;
 
     @Transactional(rollbackOn = Exception.class)
     public void generateSlots(Event event) {
@@ -69,128 +56,31 @@ public class SlotService {
 
     @Transactional(rollbackOn = Exception.class)
     public Slot bookSlot(SlotRequest request) {
-        Event event = eventRepository.findById(request.getEventId())
-                .orElseThrow(() -> new EventNotFoundException("Event Not Found"));
+        Slot slot = findSlot(request.getEventId(), request.getStartTime());
 
-        OffsetDateTime utcStartTime = timeZoneConverter.toUtc(request.getStartTime(), event.getTimeZone());
+        slotValidator.validateSlotForBooking(slot);
 
-        Slot slot = slotRepository.findByEventIdAndStartTime(request.getEventId(), utcStartTime)
-                .orElseThrow(() -> new SlotNotFoundException("Slot Not Found"));
-
-        // Check that slot is available
-        if (!slot.isAvailable()) {
-            throw new SlotAlreadyBookedException("This slot is already booked. Please choose another slot");
-        }
-
-        // Check that slot is not in the past
-        ZoneId zone = ZoneId.of(slot.getEvent().getTimeZone());
-        if (slot.getStartTime().toZonedDateTime().isBefore(ZonedDateTime.now(zone))) {
-            throw new InvalidSlotException("Cannot book a past slot");
-        }
-
-        // Check event capacity
-        Integer maxCapacity = slot.getEvent().getAvailabilityRules().getMaxCapacity();
-        if (maxCapacity != null) {
-            Integer currentCapacity = slotRepository
-                    .countByEventAndBookedByEmailIsNotNullAndBookedByNameIsNotNull(slot.getEvent());
-            if (currentCapacity >= maxCapacity) {
-                throw new MaxCapacityExceededException("This event has reached maximum capacity");
-            }
-        }
-
-        // Book the Slot
-        slot.setBookedByName(request.getAttendeeName());
-        slot.setBookedByEmail(request.getAttendeeEmail());
-        slot.setBookedAt(OffsetDateTime.now());
-
-        // Save the Slot
+        performBooking(request, slot);
         Slot savedSlot = slotRepository.save(slot);
 
-        // Prepare Booking data for emails
-        String hostDisplayName = nameUtils.getUserDisplayName(savedSlot);
-        BookingEmailDTO bookingData = BookingEmailDTO.builder()
-                .toEmail(savedSlot.getBookedByEmail())
-                .hostEmail(savedSlot.getEvent().getHost().getEmail())
-                .attendeeName(savedSlot.getBookedByName())
-                .attendeeEmail(savedSlot.getBookedByEmail())
-                .eventName(savedSlot.getEvent().getEventName())
-                .startTime(savedSlot.getStartTime())
-                .endTime(savedSlot.getEndTime())
-                .timeZone(savedSlot.getEvent().getTimeZone())
-                .hostDisplayName(hostDisplayName)
-                .slotId(savedSlot.getId())
-                .build();
-
-        CalendarSyncDataDTO calendarSyncDataDTO = CalendarSyncDataDTO.builder()
-                .userId(event.getHost().getId())
-                .slotId(slot.getId())
-                .build();
-
-        // Publish the Booking Event
-        eventPublisher.publishEvent(new SlotBookedEvent(bookingData));
-        eventPublisher.publishEvent(new SlotBookedSyncEvent(calendarSyncDataDTO));
+        bookingEventPublisher.publishBookingEvents(savedSlot);
 
         return savedSlot;
     }
 
     @Transactional(rollbackOn = Exception.class)
     public Slot cancelBooking(CancelBookingRequest request) {
-        Event event = eventRepository.findById(request.getEventId())
-                .orElseThrow(() -> new EventNotFoundException("Event Not Found"));
+        Slot slot = findSlot(request.getEventId(), request.getStartTime());
 
-        OffsetDateTime utcStartTime = timeZoneConverter.toUtc(request.getStartTime(), event.getTimeZone());
-
-        Slot slot = slotRepository.findByEventIdAndStartTime(request.getEventId(), utcStartTime)
-                .orElseThrow(() -> new SlotNotFoundException("Slot Not Found"));
-
-        if (!slot.getEvent().getAvailabilityRules().isAllowsCancellations()) {
-            throw new InvalidSlotException("Cancellations are not allowed for this event");
-        }
-
-        ZoneId zone = ZoneId.of(slot.getEvent().getTimeZone());
-        if (slot.getStartTime().toZonedDateTime().isBefore(ZonedDateTime.now(zone))) {
-            throw new InvalidSlotException("Cannot cancel a past slot");
-        }
-
-        if (slot.isAvailable()) {
-            throw new InvalidSlotException("This slot is not booked");
-        }
-
-        if (!slot.getBookedByEmail().equals(request.getAttendeeEmail())) {
-            throw new UnauthorizedAccessException("This email is not associated with the booked slot");
-        }
+        slotValidator.validateSlotForCancellation(slot, request.getAttendeeEmail());
 
         String attendeeName = slot.getBookedByName();
         String attendeeEmail = slot.getBookedByEmail();
 
-        // Cancel the booking
-        slot.setBookedByEmail(null);
-        slot.setBookedByName(null);
-
-        // Save the Slot
+        performCancellation(slot);
         Slot savedSlot = slotRepository.save(slot);
 
-        // Prepare Cancellation data
-        String hostDisplayName = nameUtils.getUserDisplayName(savedSlot);
-
-        SlotCancelledEmailDTO cancellationData = new SlotCancelledEmailDTO(
-                savedSlot.getId(),
-                savedSlot.getStartTime().toString(),
-                savedSlot.getEndTime().toString(),
-                attendeeName,
-                attendeeEmail,
-                savedSlot.getEvent().getEventName(),
-                hostDisplayName,
-                savedSlot.getEvent().getHost().getEmail());
-
-        CalendarSyncDataDTO calendarSyncDataDTO = CalendarSyncDataDTO.builder()
-                .userId(event.getHost().getId())
-                .slotId(slot.getId())
-                .build();
-
-        // Publish the Cancellation Event
-        eventPublisher.publishEvent(new SlotCancelledEvent(cancellationData));
-        eventPublisher.publishEvent(new SlotCancelledSyncEvent(calendarSyncDataDTO));
+        bookingEventPublisher.publishCancellationEvents(slot, attendeeName, attendeeEmail);
 
         return savedSlot;
     }
@@ -204,7 +94,6 @@ public class SlotService {
     }
 
     public List<Slot> getAvailableSlotsByShareableId(String shareableId) {
-
         Event event = eventRepository.findByShareableId(shareableId)
                 .orElseThrow(() -> new EventNotFoundException("Event Not Found"));
 
@@ -218,5 +107,26 @@ public class SlotService {
     public Slot getSlotById(Long slotId) {
         return slotRepository.findById(slotId)
                 .orElseThrow(() -> new SlotNotFoundException("Slot not found with ID: " + slotId));
+    }
+
+    private void performBooking(SlotRequest request, Slot slot) {
+        slot.setBookedByName(request.getAttendeeName());
+        slot.setBookedByEmail(request.getAttendeeEmail());
+        slot.setBookedAt(OffsetDateTime.now());
+    }
+
+    private void performCancellation(Slot slot) {
+        slot.setBookedByEmail(null);
+        slot.setBookedByName(null);
+    }
+
+    private Slot findSlot(Long eventId, OffsetDateTime startTime) {
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new EventNotFoundException("Event Not Found"));
+
+        OffsetDateTime utcStartTime = timeZoneConverter.toUtc(startTime, event.getTimeZone());
+
+        return slotRepository.findByEventIdAndStartTime(eventId, utcStartTime)
+                .orElseThrow(() -> new SlotNotFoundException("Slot Not Found"));
     }
 }

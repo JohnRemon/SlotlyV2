@@ -94,7 +94,7 @@ public class EmailService {
 
     @Async("emailTaskExecutor")
     public void sendUserRegistrationVerification(UserVerificationDTO data) {
-        log.info("Sending regsitration verification to: {}", data.getEmail());
+        log.info("Sending registration verification to: {}", data.getEmail());
 
         try {
             Map<String, Object> fields = new HashMap<>();

@@ -1,4 +1,4 @@
-package com.example.SlotlyV2.feature.event;
+package com.example.SlotlyV2.feature.recurrence.dto;
 
 import java.time.OffsetDateTime;
 
@@ -35,3 +35,5 @@ public class RecurrenceRulesDTO {
     @Future(message = "End date time must be in the future")
     private OffsetDateTime recurrenceEndDate;
 }
+
+// TODO: Add Interval
