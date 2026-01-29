@@ -22,6 +22,10 @@ public class RecurrenceRulesDTO {
     @NotNull(message = "Recurrence frequency is required")
     private RecurrenceFrequency recurrenceFrequency;
 
+    @Min(1)
+    @Max(365)
+    private Integer interval;
+
     @NotNull(message = "On which day will the event recur")
     private Integer recurrenceDayOfWeek;
 
@@ -35,5 +39,3 @@ public class RecurrenceRulesDTO {
     @Future(message = "End date time must be in the future")
     private OffsetDateTime recurrenceEndDate;
 }
-
-// TODO: Add Interval

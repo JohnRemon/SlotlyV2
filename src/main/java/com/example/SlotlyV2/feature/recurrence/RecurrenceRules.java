@@ -26,6 +26,9 @@ public class RecurrenceRules {
     @Enumerated(EnumType.STRING)
     private RecurrenceFrequency recurrenceFrequency;
 
+    @Column(name = "interval")
+    private Integer interval;
+
     @Column(name = "recurrence_day_of_week")
     private Integer recurrenceDayOfWeek;
 
@@ -39,5 +42,3 @@ public class RecurrenceRules {
     @Column(name = "recurrence_end_date")
     private OffsetDateTime recurrenceEndDate;
 }
-
-// TODO: Add Interval
