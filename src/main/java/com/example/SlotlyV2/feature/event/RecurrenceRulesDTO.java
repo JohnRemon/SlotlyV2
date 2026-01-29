@@ -1,9 +1,9 @@
 package com.example.SlotlyV2.feature.event;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
-import com.example.SlotlyV2.feature.event.enums.RecurrenceFrequency;
 import com.example.SlotlyV2.feature.event.enums.RecurrenceEndType;
+import com.example.SlotlyV2.feature.event.enums.RecurrenceFrequency;
 
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.Max;
@@ -33,5 +33,5 @@ public class RecurrenceRulesDTO {
     private Integer recurrenceOccurrences;
 
     @Future(message = "End date time must be in the future")
-    private LocalDateTime recurrenceEndDate;
+    private OffsetDateTime recurrenceEndDate;
 }

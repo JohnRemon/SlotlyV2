@@ -1,24 +1,26 @@
 package com.example.SlotlyV2.common.util;
 
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
+
 import org.springframework.stereotype.Component;
+
 import lombok.RequiredArgsConstructor;
 
 @Component
 @RequiredArgsConstructor
 public class TimeZoneConverter {
 
-    public LocalDateTime toUserTimezone(OffsetDateTime utcTime, String userTimezone) {
+    private static final ZoneId UTC_ZONE = ZoneId.of("UTC");
+
+    public OffsetDateTime toUserTimezone(OffsetDateTime utcTime, String userTimezone) {
         ZoneId userZone = ZoneId.of(userTimezone);
-        return utcTime.atZoneSameInstant(userZone)
-                .toLocalDateTime();
+        return utcTime.atZoneSameInstant(UTC_ZONE).withZoneSameInstant(userZone).toOffsetDateTime();
     }
 
-    public OffsetDateTime toUtc(LocalDateTime localTime, String userTimezone) {
-        return localTime.atZone(ZoneId.of(userTimezone))
-                .withZoneSameInstant(ZoneId.of("UTC"))
+    public OffsetDateTime toUtc(OffsetDateTime localTime, String userTimezone) {
+        return localTime.atZoneSameInstant(ZoneId.of(userTimezone))
+                .withZoneSameInstant(UTC_ZONE)
                 .toOffsetDateTime();
     }
 }

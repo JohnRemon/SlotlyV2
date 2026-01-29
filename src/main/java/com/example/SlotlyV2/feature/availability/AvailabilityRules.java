@@ -16,6 +16,7 @@ import lombok.Setter;
 @Builder
 public class AvailabilityRules {
     @Builder.Default
+    @Min(5)
     private Integer slotDurationMinutes = 30;
 
     @Builder.Default

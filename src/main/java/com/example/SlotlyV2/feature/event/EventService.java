@@ -1,8 +1,7 @@
 package com.example.SlotlyV2.feature.event;
 
 import java.time.OffsetDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 
 import org.springframework.context.ApplicationEventPublisher;
@@ -13,15 +12,14 @@ import org.springframework.stereotype.Service;
 
 import com.example.SlotlyV2.common.exception.auth.UnauthorizedAccessException;
 import com.example.SlotlyV2.common.exception.event.EventNotFoundException;
-import com.example.SlotlyV2.common.exception.event.InvalidEventException;
 import com.example.SlotlyV2.common.util.TimeZoneConverter;
-import com.example.SlotlyV2.feature.availability.AvailabilityRules;
 import com.example.SlotlyV2.feature.email.dto.EventCancelledEmailDTO;
 import com.example.SlotlyV2.feature.email.event.EventCancelledEvent;
 import com.example.SlotlyV2.feature.event.dto.EventRequest;
 import com.example.SlotlyV2.feature.event.dto.EventResponse;
 import com.example.SlotlyV2.feature.event.dto.RecurringEventRequest;
-import com.example.SlotlyV2.feature.event.enums.RecurrenceFrequency;
+import com.example.SlotlyV2.feature.slot.Slot;
+import com.example.SlotlyV2.feature.slot.SlotRepository;
 import com.example.SlotlyV2.feature.slot.SlotService;
 import com.example.SlotlyV2.feature.user.User;
 import com.example.SlotlyV2.feature.user.UserService;
@@ -35,66 +33,38 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class EventService {
     private final EventRepository eventRepository;
+    private final SlotRepository slotRepository;
     private final SlotService slotService;
     private final UserService userService;
     private final ApplicationEventPublisher eventPublisher;
     private final TimeZoneConverter timeZoneConverter;
 
+    private final EventValidator eventValidator;
+    private final EventFactory eventFactory;
+
     @Transactional(rollbackOn = Exception.class)
     public Event createEvent(EventRequest request) {
-        // Get current user
-        User host = userService.getCurrentUser();
-
         // Verify Start and End Dates
-        if (!request.getEventEnd().isAfter(request.getEventStart())) {
-            throw new InvalidEventException("Event end must be after start");
-        }
+        eventValidator.validateEventDates(request.getEventStart(), request.getEventEnd(), request.getTimeZone());
 
-        ZoneId zone = ZoneId.of(request.getTimeZone());
-        ZonedDateTime now = ZonedDateTime.now(zone);
+        // Create the Event
+        Event event = eventFactory.createFrom(request);
+        event = eventRepository.save(event);
 
-        if (request.getEventStart().atZone(zone).isBefore(now)) {
-            throw new InvalidEventException("Event must start in the future");
-        }
+        // Generate slots
+        slotService.generateSlots(event);
 
-        // Creat the Event
-        AvailabilityRules availabilityRules = AvailabilityRules.builder()
-                .slotDurationMinutes(request.getAvailabilityRulesDTO().getSlotDurationMinutes())
-                .maxSlotsPerUser(request.getAvailabilityRulesDTO().getMaxSlotsPerUser())
-                .allowsCancellations(request.getAvailabilityRulesDTO().isAllowCancellations())
-                .isPublic(request.getAvailabilityRulesDTO().isPublic())
-                .maxCapacity(request.getAvailabilityRulesDTO().getMaxCapacity())
-                .build();
-
-        OffsetDateTime utcStart = timeZoneConverter.toUtc(request.getEventStart(), request.getTimeZone());
-        OffsetDateTime utcEnd = timeZoneConverter.toUtc(request.getEventEnd(), request.getTimeZone());
-
-        Event event = Event.builder()
-                .eventName(request.getEventName())
-                .description(request.getDescription())
-                .host(host)
-                .eventStart(utcStart)
-                .eventEnd(utcEnd)
-                .timeZone(request.getTimeZone())
-                .availabilityRules(availabilityRules)
-                .build();
-
-        Event savedEvent = eventRepository.save(event);
-
-        slotService.generateSlots(savedEvent);
-
-        return savedEvent;
+        return event;
     }
 
     @Transactional(rollbackOn = Exception.class)
     public Event createRecurringEvent(RecurringEventRequest request) {
         // Validate the Event
-        validateRecurringEvent(request);
+        eventValidator.validateEventDates(request.getEventStart(), request.getEventEnd(), request.getTimeZone());
+        eventValidator.validateRecurringEventRules(request);
 
         // Create the event
-        Event event = buildRecurringEvent(request);
-
-        // Save the event
+        Event event = eventFactory.createRecurringFrom(request);
         event = eventRepository.save(event);
 
         // Generate slots
@@ -106,32 +76,43 @@ public class EventService {
     public Page<EventResponse> getEvents(User host, Pageable pageable) {
         Page<Event> eventPage = eventRepository.findByHost(host, pageable);
         String userTimezone = userService.getCurrentUser().getTimeZone();
+
         List<EventResponse> responses = eventPage.getContent().stream()
                 .map(event -> new EventResponse(event, userTimezone, timeZoneConverter))
                 .toList();
+
         return new PageImpl<>(responses, pageable, eventPage.getTotalElements());
     }
 
     public Event getEventById(Long id) {
-        Event event = eventRepository.findById(id)
-                .orElseThrow(() -> new EventNotFoundException("Event Not Found with Id " + id));
+        return findAndAuthorizeEvent(id);
+    }
 
-        if (!event.getHost().getId().equals(userService.getCurrentUser().getId())) {
-            throw new UnauthorizedAccessException("You are not authorized to access other user's event");
-        }
+    public Event getEventByShareableId(String shareableId) {
+        Event event = eventRepository.findByShareableId(shareableId)
+                .orElseThrow(() -> new EventNotFoundException("Event Not Found"));
 
         return event;
     }
 
     @Transactional(rollbackOn = Exception.class)
+    public Event editEvent(EventRequest request, Long id) {
+        Event event = findAndAuthorizeEvent(id);
+
+        validateNewCapacity(request, event);
+
+        updateEventDetails(request, event);
+
+        regenerateFutureSlots(event);
+
+        return eventRepository.save(event);
+    }
+
+    @Transactional(rollbackOn = Exception.class)
     public void deleteEventById(Long id) {
-        Event event = eventRepository.findById(id)
-                .orElseThrow(() -> new EventNotFoundException("Event Not Found"));
+        Event event = findAndAuthorizeEvent(id);
 
-        if (!event.getHost().getId().equals(userService.getCurrentUser().getId())) {
-            throw new UnauthorizedAccessException("You are not authorized to delete other user's event");
-        }
-
+        // Build Cancellation Email
         EventCancelledEmailDTO data = new EventCancelledEmailDTO(
                 event.getId(),
                 event.getEventName(),
@@ -143,73 +124,51 @@ public class EventService {
         eventPublisher.publishEvent(new EventCancelledEvent(data));
     }
 
-    public Event getEventByShareableId(String shareableId) {
-        Event event = eventRepository.findByShareableId(shareableId)
+    private Event findAndAuthorizeEvent(Long id) {
+        Event event = eventRepository.findById(id)
                 .orElseThrow(() -> new EventNotFoundException("Event Not Found"));
 
-        if (!event.getAvailabilityRules().isPublic()) {
-            throw new UnauthorizedAccessException("You are not authorized to access this event");
-        }
-
+        validateHost(event);
         return event;
     }
 
-    private Event buildRecurringEvent(RecurringEventRequest request) {
-        AvailabilityRules availabilityRules = AvailabilityRules.builder()
-                .slotDurationMinutes(request.getAvailabilityRulesDTO().getSlotDurationMinutes())
-                .maxSlotsPerUser(request.getAvailabilityRulesDTO().getMaxSlotsPerUser())
-                .allowsCancellations(request.getAvailabilityRulesDTO().isAllowCancellations())
-                .isPublic(request.getAvailabilityRulesDTO().isPublic())
-                .maxCapacity(request.getAvailabilityRulesDTO().getMaxCapacity())
-                .build();
-
-        OffsetDateTime utcStart = timeZoneConverter.toUtc(request.getEventStart(), request.getTimeZone());
-        OffsetDateTime utcEnd = timeZoneConverter.toUtc(request.getEventEnd(), request.getTimeZone());
-
-        RecurrenceRules recurringRules = RecurrenceRules.builder()
-                .recurrenceFrequency(request.getRecurringRulesDTO().getRecurrenceFrequency())
-                .recurrenceEndType(request.getRecurringRulesDTO().getRecurrenceEndType())
-                .recurrenceDayOfWeek(request.getRecurringRulesDTO().getRecurrenceDayOfWeek())
-                .recurrenceOccurrences(request.getRecurringRulesDTO().getRecurrenceOccurrences())
-                .recurrenceEndDate(request.getRecurringRulesDTO().getRecurrenceEndDate() != null
-                        ? timeZoneConverter.toUtc(request.getRecurringRulesDTO().getRecurrenceEndDate(),
-                                request.getTimeZone())
-                        : null)
-                .build();
-
-        return Event.builder()
-                .eventName(request.getEventName())
-                .description(request.getDescription())
-                .host(userService.getCurrentUser())
-                .eventStart(utcStart)
-                .eventEnd(utcEnd)
-                .timeZone(request.getTimeZone())
-                .isRecurring(true)
-                .availabilityRules(availabilityRules)
-                .recurringRules(recurringRules)
-                .build();
+    private void validateHost(Event event) {
+        if (!event.getHost().getId().equals(userService.getCurrentUser().getId())) {
+            throw new UnauthorizedAccessException("You are not authorized to access other user's event");
+        }
     }
 
-    private void validateRecurringEvent(RecurringEventRequest request) {
-        if (!request.getEventEnd().isAfter(request.getEventStart())) {
-            throw new InvalidEventException("Event end must be after start");
-        }
+    private void validateNewCapacity(EventRequest request, Event event) {
+        Integer booked = slotRepository.countByEventAndBookedByEmailIsNotNullAndBookedByNameIsNotNull(event);
+        eventValidator.validateNewCapacity(request.getAvailabilityRulesDTO().getMaxCapacity(), booked);
+    }
 
-        if (request.getRecurringRulesDTO().getRecurrenceEndDate() != null
-                && !request.getRecurringRulesDTO().getRecurrenceEndDate().isAfter(request.getEventStart())) {
-            throw new InvalidEventException("Recurrence end date must be after event start");
-        }
+    private void updateEventDetails(EventRequest request, Event event) {
+        event.setEventName(request.getEventName());
+        event.setDescription(request.getDescription());
+        event.setTimeZone(request.getTimeZone());
+        event.setAvailabilityRules(
+                eventFactory.buildAvailabilityRules(request.getAvailabilityRulesDTO()));
+    }
 
-        if (request.getRecurringRulesDTO().getRecurrenceFrequency() == RecurrenceFrequency.WEEKLY
-                && request.getRecurringRulesDTO().getRecurrenceDayOfWeek() == null) {
-            throw new InvalidEventException("Day of week is required for weekly recurrence");
-        }
+    private void deleteUnbookedSlots(Event event, OffsetDateTime effectiveStart) {
+        List<Slot> unbookedSlots = slotRepository
+                .findByEventAndBookedByEmailIsNullAndBookedByNameIsNullAndStartTimeAfter(
+                        event, effectiveStart);
 
-        ZoneId zone = ZoneId.of(request.getTimeZone());
-        ZonedDateTime now = ZonedDateTime.now(zone);
+        slotRepository.deleteAll(unbookedSlots);
+    }
 
-        if (request.getEventStart().atZone(zone).isBefore(now)) {
-            throw new InvalidEventException("Event must start in the future");
+    private void regenerateFutureSlots(Event event) {
+        OffsetDateTime nowUtc = OffsetDateTime.now(ZoneOffset.UTC);
+        OffsetDateTime effectiveStart = nowUtc.isAfter(event.getEventStart())
+                ? nowUtc
+                : event.getEventStart();
+
+        deleteUnbookedSlots(event, effectiveStart);
+
+        if (effectiveStart.isBefore(event.getEventEnd())) {
+            slotService.generateSlots(event, effectiveStart, event.getEventEnd());
         }
     }
 }

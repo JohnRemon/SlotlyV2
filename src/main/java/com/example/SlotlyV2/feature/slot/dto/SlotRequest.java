@@ -1,6 +1,6 @@
 package com.example.SlotlyV2.feature.slot.dto;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Future;
@@ -22,7 +22,7 @@ public class SlotRequest {
 
     @NotNull(message = "Start time is required")
     @Future(message = "Booking must be in the future")
-    private LocalDateTime startTime;
+    private OffsetDateTime startTime;
 
     @NotBlank(message = "Attendee name is required")
     private String attendeeName;

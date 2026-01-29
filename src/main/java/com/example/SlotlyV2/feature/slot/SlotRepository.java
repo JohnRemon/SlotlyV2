@@ -29,4 +29,7 @@ public interface SlotRepository extends JpaRepository<Slot, Long> {
     Optional<Slot> findByEventIdAndStartTime(Long eventId, OffsetDateTime startTime);
 
     Integer countByEventAndBookedByEmailIsNotNullAndBookedByNameIsNotNull(Event event);
+
+    List<Slot> findByEventAndBookedByEmailIsNullAndBookedByNameIsNullAndStartTimeAfter(Event event,
+            OffsetDateTime startTime);
 }

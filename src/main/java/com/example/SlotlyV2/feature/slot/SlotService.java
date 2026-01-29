@@ -50,13 +50,11 @@ public class SlotService {
 
     @Transactional(rollbackOn = Exception.class)
     public void generateSlots(Event event) {
-        OffsetDateTime start = event.getEventStart();
-        OffsetDateTime end = event.getEventEnd();
+        slotRepository.saveAll(slotUtils.buildSlotsByTime(event, event.getEventStart(), event.getEventEnd()));
+    }
 
-        if (event.getAvailabilityRules().getSlotDurationMinutes() <= 0) {
-            throw new InvalidSlotException("Slot duration must be greater than zero");
-        }
-
+    @Transactional(rollbackOn = Exception.class)
+    public void generateSlots(Event event, OffsetDateTime start, OffsetDateTime end) {
         slotRepository.saveAll(slotUtils.buildSlotsByTime(event, start, end));
     }
 

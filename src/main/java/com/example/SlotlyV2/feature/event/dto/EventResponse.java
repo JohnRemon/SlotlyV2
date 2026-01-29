@@ -1,6 +1,7 @@
 package com.example.SlotlyV2.feature.event.dto;
 
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 import com.example.SlotlyV2.common.util.TimeZoneConverter;
 import com.example.SlotlyV2.feature.availability.AvailabilityRulesDTO;
@@ -18,8 +19,8 @@ public class EventResponse {
     private String eventName;
     private String description;
     private UserResponse host;
-    private LocalDateTime eventStart;
-    private LocalDateTime eventEnd;
+    private OffsetDateTime eventStart;
+    private OffsetDateTime eventEnd;
     private String timeZone;
     private LocalDateTime createdAt;
     private AvailabilityRulesDTO availabilityRulesDTO;
@@ -48,7 +49,8 @@ public class EventResponse {
                 ? RecurrenceRulesDTO.builder()
                         .recurrenceDayOfWeek(event.getRecurringRules().getRecurrenceDayOfWeek())
                         .recurrenceEndDate(event.getRecurringRules().getRecurrenceEndDate() != null
-                                ? timeZoneConverter.toUserTimezone(event.getRecurringRules().getRecurrenceEndDate(), userTimezone)
+                                ? timeZoneConverter.toUserTimezone(event.getRecurringRules().getRecurrenceEndDate(),
+                                        userTimezone)
                                 : null)
                         .recurrenceFrequency(event.getRecurringRules().getRecurrenceFrequency())
                         .recurrenceOccurrences(event.getRecurringRules().getRecurrenceOccurrences())

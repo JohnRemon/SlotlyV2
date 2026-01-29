@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -38,15 +39,30 @@ public class EventController {
     public ApiResponse<EventResponse> createEvent(@Valid @RequestBody EventRequest request) {
         Event event = eventService.createEvent(request);
         String userTimezone = userService.getCurrentUser().getTimeZone();
-        return new ApiResponse<>("Event created successfully", new EventResponse(event, userTimezone, timeZoneConverter));
+        return new ApiResponse<>("Event created successfully",
+                new EventResponse(event, userTimezone, timeZoneConverter));
     }
 
-    @PostMapping("/recurring")
-    @ResponseStatus(HttpStatus.CREATED)
-    public ApiResponse<EventResponse> createRecurringEvent(@Valid @RequestBody RecurringEventRequest request) {
-        Event event = eventService.createRecurringEvent(request);
+    @GetMapping("/{id}")
+    public ApiResponse<EventResponse> getEventById(@PathVariable Long id) {
+        Event event = eventService.getEventById(id);
         String userTimezone = userService.getCurrentUser().getTimeZone();
-        return new ApiResponse<>("Event created successfully", new EventResponse(event, userTimezone, timeZoneConverter));
+        return new ApiResponse<>("Event fetched successfully",
+                new EventResponse(event, userTimezone, timeZoneConverter));
+    }
+
+    @PutMapping("/{id}")
+    public ApiResponse<EventResponse> editEvent(@Valid @RequestBody EventRequest request, @PathVariable Long id) {
+        Event event = eventService.editEvent(request, id);
+        String userTimezone = userService.getCurrentUser().getTimeZone();
+        return new ApiResponse<EventResponse>("Event edited successfully",
+                new EventResponse(event, userTimezone, timeZoneConverter));
+    }
+
+    @DeleteMapping("/{id}")
+    public ApiResponse<Void> deleteEventById(@PathVariable Long id) {
+        eventService.deleteEventById(id);
+        return new ApiResponse<>("Event deleted successfully", null);
     }
 
     @GetMapping
@@ -64,22 +80,19 @@ public class EventController {
                 PagedResponse.of(events));
     }
 
-    @GetMapping("/{id}")
-    public ApiResponse<EventResponse> getEventById(@PathVariable Long id) {
-        Event event = eventService.getEventById(id);
+    @PostMapping("/recurring")
+    @ResponseStatus(HttpStatus.CREATED)
+    public ApiResponse<EventResponse> createRecurringEvent(@Valid @RequestBody RecurringEventRequest request) {
+        Event event = eventService.createRecurringEvent(request);
         String userTimezone = userService.getCurrentUser().getTimeZone();
-        return new ApiResponse<>("Event fetched successfully", new EventResponse(event, userTimezone, timeZoneConverter));
-    }
-
-    @DeleteMapping("/{id}")
-    public ApiResponse<Void> deleteEventById(@PathVariable Long id) {
-        eventService.deleteEventById(id);
-        return new ApiResponse<>("Event deleted successfully", null);
+        return new ApiResponse<>("Event created successfully",
+                new EventResponse(event, userTimezone, timeZoneConverter));
     }
 
     @GetMapping("/share/{shareableId}")
     public ApiResponse<EventResponse> getEventByShareableId(@PathVariable String shareableId) {
         Event event = eventService.getEventByShareableId(shareableId);
-        return new ApiResponse<>("Event fetched successfully", new EventResponse(event, event.getTimeZone(), timeZoneConverter));
+        return new ApiResponse<>("Event fetched successfully",
+                new EventResponse(event, event.getTimeZone(), timeZoneConverter));
     }
 }

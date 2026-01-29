@@ -12,7 +12,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.util.List;
@@ -96,9 +95,9 @@ public class EventServiceTest {
     void shouldCreateEventSuccessfully() {
         AvailabilityRulesDTO rules = publicRulesDto();
 
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime startTime = now.plusHours(12);
-        LocalDateTime endTime = now.plusHours(14);
+        OffsetDateTime now = OffsetDateTime.now();
+        OffsetDateTime startTime = now.plusHours(12);
+        OffsetDateTime endTime = now.plusHours(14);
 
         EventRequest request = EventRequest.builder()
                 .eventName("Test Event")
@@ -114,7 +113,7 @@ public class EventServiceTest {
                 ZoneId.of("UTC").getRules().getOffset(OffsetDateTime.now().toInstant()));
 
         when(userService.getCurrentUser()).thenReturn(host);
-        when(timeZoneConverter.toUtc(any(LocalDateTime.class), anyString())).thenReturn(utcStart);
+        when(timeZoneConverter.toUtc(any(OffsetDateTime.class), anyString())).thenReturn(utcStart);
         when(eventRepository.save(any(Event.class))).thenAnswer(invocation -> {
             Event e = invocation.getArgument(0);
             e.setId(1L);
@@ -147,9 +146,9 @@ public class EventServiceTest {
     void shouldThrowInvalidEventExceptionWhenEventNotInFuture() {
         AvailabilityRulesDTO rules = publicRulesDto();
 
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime startTime = now.minusHours(1);
-        LocalDateTime endTime = now.plusHours(1);
+        OffsetDateTime now = OffsetDateTime.now();
+        OffsetDateTime startTime = now.minusHours(1);
+        OffsetDateTime endTime = now.plusHours(1);
 
         EventRequest request = EventRequest.builder()
                 .eventStart(startTime)
@@ -171,7 +170,7 @@ public class EventServiceTest {
     void shouldThrowInvalidEventExceptionWhenEndBeforeOrEqualStart() {
         AvailabilityRulesDTO rules = publicRulesDto();
 
-        LocalDateTime startTime = LocalDateTime.now().plusHours(12);
+        OffsetDateTime startTime = OffsetDateTime.now().plusHours(12);
 
         EventRequest req1 = EventRequest.builder()
                 .eventStart(startTime)

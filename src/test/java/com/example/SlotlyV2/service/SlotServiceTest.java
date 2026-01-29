@@ -14,7 +14,6 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -126,8 +125,10 @@ public class SlotServiceTest {
         event.setId(1L);
         event.setAvailabilityRules(rules);
 
-        event.setEventStart(OffsetDateTime.of(2025, 1, 1, 10, 0, 0, 0, ZoneId.of("Europe/Berlin").getRules().getOffset(OffsetDateTime.now().toInstant())));
-        event.setEventEnd(OffsetDateTime.of(2025, 1, 1, 11, 0, 0, 0, ZoneId.of("Europe/Berlin").getRules().getOffset(OffsetDateTime.now().toInstant())));
+        event.setEventStart(OffsetDateTime.of(2025, 1, 1, 10, 0, 0, 0,
+                ZoneId.of("Europe/Berlin").getRules().getOffset(OffsetDateTime.now().toInstant())));
+        event.setEventEnd(OffsetDateTime.of(2025, 1, 1, 11, 0, 0, 0,
+                ZoneId.of("Europe/Berlin").getRules().getOffset(OffsetDateTime.now().toInstant())));
 
         assertThrows(InvalidSlotException.class, () -> slotService.generateSlots(event));
     }
@@ -172,8 +173,10 @@ public class SlotServiceTest {
         event.setId(1L);
         event.setAvailabilityRules(rules);
 
-        event.setEventStart(OffsetDateTime.of(2025, 1, 1, 10, 0, 0, 0, ZoneId.of("Europe/Berlin").getRules().getOffset(OffsetDateTime.now().toInstant())));
-        event.setEventEnd(OffsetDateTime.of(2025, 1, 1, 11, 0, 0, 0, ZoneId.of("Europe/Berlin").getRules().getOffset(OffsetDateTime.now().toInstant())));
+        event.setEventStart(OffsetDateTime.of(2025, 1, 1, 10, 0, 0, 0,
+                ZoneId.of("Europe/Berlin").getRules().getOffset(OffsetDateTime.now().toInstant())));
+        event.setEventEnd(OffsetDateTime.of(2025, 1, 1, 11, 0, 0, 0,
+                ZoneId.of("Europe/Berlin").getRules().getOffset(OffsetDateTime.now().toInstant())));
 
         when(slotRepository.saveAll(any(List.class))).thenAnswer(invocation -> {
             List<Slot> slots = invocation.getArgument(0);
@@ -198,8 +201,10 @@ public class SlotServiceTest {
         event.setId(1L);
         event.setAvailabilityRules(rules);
 
-        event.setEventStart(OffsetDateTime.of(2025, 1, 1, 10, 0, 0, 0, ZoneId.of("Europe/Berlin").getRules().getOffset(OffsetDateTime.now().toInstant())));
-        event.setEventEnd(OffsetDateTime.of(2025, 1, 1, 12, 0, 0, 0, ZoneId.of("Europe/Berlin").getRules().getOffset(OffsetDateTime.now().toInstant())));
+        event.setEventStart(OffsetDateTime.of(2025, 1, 1, 10, 0, 0, 0,
+                ZoneId.of("Europe/Berlin").getRules().getOffset(OffsetDateTime.now().toInstant())));
+        event.setEventEnd(OffsetDateTime.of(2025, 1, 1, 12, 0, 0, 0,
+                ZoneId.of("Europe/Berlin").getRules().getOffset(OffsetDateTime.now().toInstant())));
 
         when(slotRepository.saveAll(any(List.class))).thenAnswer(invocation -> {
             List<Slot> slots = invocation.getArgument(0);
@@ -228,8 +233,10 @@ public class SlotServiceTest {
         event.setId(1L);
         event.setAvailabilityRules(rules);
 
-        event.setEventStart(OffsetDateTime.of(2025, 1, 1, 10, 0, 0, 0, ZoneId.of("Europe/Berlin").getRules().getOffset(OffsetDateTime.now().toInstant())));
-        event.setEventEnd(OffsetDateTime.of(2025, 1, 1, 11, 0, 0, 0, ZoneId.of("Europe/Berlin").getRules().getOffset(OffsetDateTime.now().toInstant())));
+        event.setEventStart(OffsetDateTime.of(2025, 1, 1, 10, 0, 0, 0,
+                ZoneId.of("Europe/Berlin").getRules().getOffset(OffsetDateTime.now().toInstant())));
+        event.setEventEnd(OffsetDateTime.of(2025, 1, 1, 11, 0, 0, 0,
+                ZoneId.of("Europe/Berlin").getRules().getOffset(OffsetDateTime.now().toInstant())));
 
         slotService.generateSlots(event);
 
@@ -264,12 +271,12 @@ public class SlotServiceTest {
 
         SlotRequest request = SlotRequest.builder()
                 .eventId(event.getId())
-                .startTime(ZonedDateTime.now(EVENT_ZONE).plusHours(1).toLocalDateTime())
+                .startTime(ZonedDateTime.now(EVENT_ZONE).plusHours(1).toOffsetDateTime())
                 .attendeeEmail("attendee@example.com")
                 .attendeeName("Jane Smith")
                 .build();
 
-        when(timeZoneConverter.toUtc(any(LocalDateTime.class), anyString())).thenReturn(startTime);
+        when(timeZoneConverter.toUtc(any(OffsetDateTime.class), anyString())).thenReturn(startTime);
         when(eventRepository.findById(event.getId())).thenReturn(Optional.of(event));
         when(slotRepository.findByEventIdAndStartTime(event.getId(), startTime)).thenReturn(Optional.of(slot));
         when(slotRepository.countByEventAndBookedByEmailIsNotNullAndBookedByNameIsNotNull(event)).thenReturn(0);
@@ -299,7 +306,7 @@ public class SlotServiceTest {
 
     @Test
     void shouldThrowSlotNotFoundExceptionWhenSlotNotFoundByEventIdAndStartTime() {
-        LocalDateTime requestStartTime = ZonedDateTime.now(EVENT_ZONE).plusHours(1).toLocalDateTime();
+        OffsetDateTime requestStartTime = ZonedDateTime.now(EVENT_ZONE).plusHours(1).toOffsetDateTime();
         OffsetDateTime utcStartTime = ZonedDateTime.now(EVENT_ZONE).plusHours(1).toOffsetDateTime();
 
         SlotRequest request = SlotRequest.builder()
@@ -311,7 +318,7 @@ public class SlotServiceTest {
         mockEvent.setId(1L);
         mockEvent.setTimeZone("Europe/Berlin");
 
-        when(timeZoneConverter.toUtc(any(LocalDateTime.class), eq("Europe/Berlin"))).thenReturn(utcStartTime);
+        when(timeZoneConverter.toUtc(any(OffsetDateTime.class), eq("Europe/Berlin"))).thenReturn(utcStartTime);
         when(eventRepository.findById(1L)).thenReturn(Optional.of(mockEvent));
         when(slotRepository.findByEventIdAndStartTime(1L, utcStartTime))
                 .thenReturn(Optional.empty());
@@ -342,10 +349,10 @@ public class SlotServiceTest {
 
         SlotRequest request = SlotRequest.builder()
                 .eventId(1L)
-                .startTime(ZonedDateTime.now(EVENT_ZONE).plusHours(1).toLocalDateTime())
+                .startTime(ZonedDateTime.now(EVENT_ZONE).plusHours(1).toOffsetDateTime())
                 .build();
 
-        when(timeZoneConverter.toUtc(any(LocalDateTime.class), anyString())).thenReturn(startTime);
+        when(timeZoneConverter.toUtc(any(OffsetDateTime.class), anyString())).thenReturn(startTime);
         when(eventRepository.findById(1L)).thenReturn(Optional.of(event));
         when(slotRepository.findByEventIdAndStartTime(request.getEventId(), startTime))
                 .thenReturn(Optional.of(slot));
@@ -366,10 +373,10 @@ public class SlotServiceTest {
 
         SlotRequest request = SlotRequest.builder()
                 .eventId(1L)
-                .startTime(ZonedDateTime.now(EVENT_ZONE).minusHours(1).toLocalDateTime())
+                .startTime(ZonedDateTime.now(EVENT_ZONE).minusHours(1).toOffsetDateTime())
                 .build();
 
-        when(timeZoneConverter.toUtc(any(LocalDateTime.class), anyString())).thenReturn(slot.getStartTime());
+        when(timeZoneConverter.toUtc(any(OffsetDateTime.class), anyString())).thenReturn(slot.getStartTime());
         when(eventRepository.findById(1L)).thenReturn(Optional.of(event));
         when(slotRepository.findByEventIdAndStartTime(request.getEventId(), slot.getStartTime()))
                 .thenReturn(Optional.of(slot));
@@ -398,10 +405,10 @@ public class SlotServiceTest {
 
         SlotRequest request = SlotRequest.builder()
                 .eventId(1L)
-                .startTime(ZonedDateTime.now(EVENT_ZONE).plusHours(1).toLocalDateTime())
+                .startTime(ZonedDateTime.now(EVENT_ZONE).plusHours(1).toOffsetDateTime())
                 .build();
 
-        when(timeZoneConverter.toUtc(any(LocalDateTime.class), anyString())).thenReturn(startTime);
+        when(timeZoneConverter.toUtc(any(OffsetDateTime.class), anyString())).thenReturn(startTime);
         when(eventRepository.findById(1L)).thenReturn(Optional.of(event));
         when(slotRepository.findByEventIdAndStartTime(request.getEventId(), startTime))
                 .thenReturn(Optional.of(slot));
@@ -479,10 +486,10 @@ public class SlotServiceTest {
         CancelBookingRequest request = CancelBookingRequest.builder()
                 .eventId(slot.getEvent().getId())
                 .attendeeEmail(slot.getBookedByEmail())
-                .startTime(ZonedDateTime.ofInstant(slotStartTime.toInstant(), EVENT_ZONE).toLocalDateTime())
+                .startTime(ZonedDateTime.ofInstant(slotStartTime.toInstant(), EVENT_ZONE).toOffsetDateTime())
                 .build();
 
-        when(timeZoneConverter.toUtc(any(LocalDateTime.class), anyString())).thenReturn(slotStartTime);
+        when(timeZoneConverter.toUtc(any(OffsetDateTime.class), anyString())).thenReturn(slotStartTime);
         when(eventRepository.findById(slot.getEvent().getId())).thenReturn(Optional.of(slot.getEvent()));
         when(slotRepository.findByEventIdAndStartTime(request.getEventId(), slotStartTime))
                 .thenReturn(Optional.of(slot));
@@ -501,7 +508,7 @@ public class SlotServiceTest {
 
     @Test
     void shouldThrowSlotNotFoundExceptionWhenCancellingNonExistentSlot() {
-        LocalDateTime requestStartTime = ZonedDateTime.now(EVENT_ZONE).plusHours(1).toLocalDateTime();
+        OffsetDateTime requestStartTime = ZonedDateTime.now(EVENT_ZONE).plusHours(1).toOffsetDateTime();
         OffsetDateTime utcTime = ZonedDateTime.now(EVENT_ZONE).plusHours(1).toOffsetDateTime();
 
         CancelBookingRequest request = CancelBookingRequest.builder()
@@ -513,7 +520,7 @@ public class SlotServiceTest {
         mockEvent.setId(1L);
         mockEvent.setTimeZone("Europe/Berlin");
 
-        when(timeZoneConverter.toUtc(any(LocalDateTime.class), eq("Europe/Berlin"))).thenReturn(utcTime);
+        when(timeZoneConverter.toUtc(any(OffsetDateTime.class), eq("Europe/Berlin"))).thenReturn(utcTime);
         when(eventRepository.findById(1L)).thenReturn(Optional.of(mockEvent));
         when(slotRepository.findByEventIdAndStartTime(1L, utcTime))
                 .thenReturn(Optional.empty());
@@ -531,10 +538,10 @@ public class SlotServiceTest {
         CancelBookingRequest request = CancelBookingRequest.builder()
                 .eventId(slot.getEvent().getId())
                 .attendeeEmail(slot.getBookedByEmail())
-                .startTime(ZonedDateTime.ofInstant(slotStartTime.toInstant(), EVENT_ZONE).toLocalDateTime())
+                .startTime(ZonedDateTime.ofInstant(slotStartTime.toInstant(), EVENT_ZONE).toOffsetDateTime())
                 .build();
 
-        when(timeZoneConverter.toUtc(any(LocalDateTime.class), anyString())).thenReturn(slotStartTime);
+        when(timeZoneConverter.toUtc(any(OffsetDateTime.class), anyString())).thenReturn(slotStartTime);
         when(eventRepository.findById(slot.getEvent().getId())).thenReturn(Optional.of(slot.getEvent()));
         when(slotRepository.findByEventIdAndStartTime(request.getEventId(), slotStartTime))
                 .thenReturn(Optional.of(slot));
@@ -553,10 +560,10 @@ public class SlotServiceTest {
         CancelBookingRequest request = CancelBookingRequest.builder()
                 .eventId(slot.getEvent().getId())
                 .attendeeEmail("test@example.com")
-                .startTime(ZonedDateTime.ofInstant(slotStartTime.toInstant(), EVENT_ZONE).toLocalDateTime())
+                .startTime(ZonedDateTime.ofInstant(slotStartTime.toInstant(), EVENT_ZONE).toOffsetDateTime())
                 .build();
 
-        when(timeZoneConverter.toUtc(any(LocalDateTime.class), anyString())).thenReturn(slotStartTime);
+        when(timeZoneConverter.toUtc(any(OffsetDateTime.class), anyString())).thenReturn(slotStartTime);
         when(eventRepository.findById(slot.getEvent().getId())).thenReturn(Optional.of(slot.getEvent()));
         when(slotRepository.findByEventIdAndStartTime(request.getEventId(), slotStartTime))
                 .thenReturn(Optional.of(slot));
@@ -574,10 +581,10 @@ public class SlotServiceTest {
         CancelBookingRequest request = CancelBookingRequest.builder()
                 .eventId(slot.getEvent().getId())
                 .attendeeEmail("other@example.com")
-                .startTime(ZonedDateTime.ofInstant(slotStartTime.toInstant(), EVENT_ZONE).toLocalDateTime())
+                .startTime(ZonedDateTime.ofInstant(slotStartTime.toInstant(), EVENT_ZONE).toOffsetDateTime())
                 .build();
 
-        when(timeZoneConverter.toUtc(any(LocalDateTime.class), anyString())).thenReturn(slotStartTime);
+        when(timeZoneConverter.toUtc(any(OffsetDateTime.class), anyString())).thenReturn(slotStartTime);
         when(eventRepository.findById(slot.getEvent().getId())).thenReturn(Optional.of(slot.getEvent()));
         when(slotRepository.findByEventIdAndStartTime(request.getEventId(), slotStartTime))
                 .thenReturn(Optional.of(slot));
@@ -605,10 +612,10 @@ public class SlotServiceTest {
         CancelBookingRequest request = CancelBookingRequest.builder()
                 .eventId(slot.getEvent().getId())
                 .attendeeEmail(slot.getBookedByEmail())
-                .startTime(ZonedDateTime.ofInstant(slotStartTime.toInstant(), EVENT_ZONE).toLocalDateTime())
+                .startTime(ZonedDateTime.ofInstant(slotStartTime.toInstant(), EVENT_ZONE).toOffsetDateTime())
                 .build();
 
-        when(timeZoneConverter.toUtc(any(LocalDateTime.class), eq("Europe/Berlin"))).thenReturn(slotStartTime);
+        when(timeZoneConverter.toUtc(any(OffsetDateTime.class), eq("Europe/Berlin"))).thenReturn(slotStartTime);
         when(eventRepository.findById(slot.getEvent().getId())).thenReturn(Optional.of(event));
         when(slotRepository.findByEventIdAndStartTime(request.getEventId(), slotStartTime))
                 .thenReturn(Optional.of(slot));

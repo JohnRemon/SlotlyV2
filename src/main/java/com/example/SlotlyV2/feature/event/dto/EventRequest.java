@@ -1,6 +1,6 @@
 package com.example.SlotlyV2.feature.event.dto;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 import com.example.SlotlyV2.feature.availability.AvailabilityRulesDTO;
 
@@ -8,12 +8,12 @@ import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 @Data
-@Builder
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
 public class EventRequest {
@@ -24,11 +24,11 @@ public class EventRequest {
 
     @NotNull(message = "Event start time is required")
     @Future(message = "Event must be in the future")
-    private LocalDateTime eventStart;
+    private OffsetDateTime eventStart;
 
     @NotNull(message = "Event end time is required")
     @Future(message = "Event must be in the future")
-    private LocalDateTime eventEnd;
+    private OffsetDateTime eventEnd;
 
     @NotBlank(message = "Timezone is required")
     private String timeZone;

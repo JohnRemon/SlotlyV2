@@ -21,5 +21,4 @@ public interface EventRepository extends JpaRepository<Event, Long> {
 
     // Check if shareableId exists
     boolean existsByShareableId(String shareableId);
-
 }

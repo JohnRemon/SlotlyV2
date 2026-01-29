@@ -1,6 +1,6 @@
 package com.example.SlotlyV2.feature.slot.dto;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 import com.example.SlotlyV2.common.util.TimeZoneConverter;
 import com.example.SlotlyV2.feature.event.dto.EventResponse;
@@ -13,11 +13,11 @@ import lombok.Value;
 @RequiredArgsConstructor
 public class SlotResponse {
     private EventResponse eventResponse;
-    private LocalDateTime startTime;
-    private LocalDateTime endTime;
+    private OffsetDateTime startTime;
+    private OffsetDateTime endTime;
     private String bookedByName;
     private String bookedByEmail;
-    private LocalDateTime bookedAt;
+    private OffsetDateTime bookedAt;
 
     public SlotResponse(Slot slot, String userTimezone, TimeZoneConverter timeZoneConverter) {
         this.eventResponse = new EventResponse(slot.getEvent(), userTimezone, timeZoneConverter);

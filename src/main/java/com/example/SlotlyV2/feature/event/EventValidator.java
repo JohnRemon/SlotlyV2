@@ -1,0 +1,49 @@
+package com.example.SlotlyV2.feature.event;
+
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+
+import org.springframework.stereotype.Component;
+
+import com.example.SlotlyV2.common.exception.event.InvalidEventException;
+import com.example.SlotlyV2.feature.event.dto.RecurringEventRequest;
+import com.example.SlotlyV2.feature.event.enums.RecurrenceFrequency;
+
+import lombok.RequiredArgsConstructor;
+
+@Component
+@RequiredArgsConstructor
+public class EventValidator {
+
+    public void validateEventDates(OffsetDateTime start, OffsetDateTime end, String timeZone) {
+        if (!end.isAfter(start)) {
+            throw new InvalidEventException("Event end must be after start");
+        }
+
+        OffsetDateTime now = OffsetDateTime.now(ZoneId.of(timeZone));
+
+        if (start.isBefore(now)) {
+            throw new InvalidEventException("Event must start in the future");
+        }
+    }
+
+    public void validateRecurringEventRules(RecurringEventRequest request) {
+        if (request.getRecurringRulesDTO().getRecurrenceEndDate() != null
+                && !request.getRecurringRulesDTO().getRecurrenceEndDate()
+                        .isAfter(request.getEventStart())) {
+            throw new InvalidEventException("Recurrence end date must be after event start");
+        }
+
+        if (request.getRecurringRulesDTO().getRecurrenceFrequency() == RecurrenceFrequency.WEEKLY
+                && request.getRecurringRulesDTO().getRecurrenceDayOfWeek() == null) {
+            throw new InvalidEventException("Day of week is required for weekly recurrence");
+        }
+    }
+
+    public void validateNewCapacity(Integer newCapacity, Integer bookedSlots) {
+        if (newCapacity != null && bookedSlots > newCapacity) {
+            throw new InvalidEventException(
+                    "Cannot reduce capacity below current bookings");
+        }
+    }
+}
