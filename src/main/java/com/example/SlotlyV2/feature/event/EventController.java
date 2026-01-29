@@ -20,7 +20,6 @@ import com.example.SlotlyV2.common.dto.PagedResponse;
 import com.example.SlotlyV2.common.util.TimeZoneConverter;
 import com.example.SlotlyV2.feature.event.dto.EventRequest;
 import com.example.SlotlyV2.feature.event.dto.EventResponse;
-import com.example.SlotlyV2.feature.event.dto.RecurringEventRequest;
 import com.example.SlotlyV2.feature.user.UserService;
 
 import jakarta.validation.Valid;
@@ -82,7 +81,7 @@ public class EventController {
 
     @PostMapping("/recurring")
     @ResponseStatus(HttpStatus.CREATED)
-    public ApiResponse<EventResponse> createRecurringEvent(@Valid @RequestBody RecurringEventRequest request) {
+    public ApiResponse<EventResponse> createRecurringEvent(@Valid @RequestBody EventRequest request) {
         Event event = eventService.createRecurringEvent(request);
         String userTimezone = userService.getCurrentUser().getTimeZone();
         return new ApiResponse<>("Event created successfully",

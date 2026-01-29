@@ -23,17 +23,6 @@ public class AvailabilityRules {
     @Builder.Default
     private Integer maxSlotsPerUser = 1;
 
-    @Column(name = "allow_cancellation")
-    @Builder.Default
-    private boolean allowsCancellations = true;
-
-    @Column(name = "is_public")
-    @Builder.Default
-    private boolean isPublic = true;
-
-    @Column(name = "max_capacity")
-    private Integer maxCapacity;
-
     @Column(name = "buffer_minutes")
     @Builder.Default
     private Integer bufferMinutes = 0;
@@ -46,4 +35,14 @@ public class AvailabilityRules {
     @Builder.Default
     private Integer maximumAdvanceDays = 90;
 
+    @Column(name = "max_capacity")
+    private Integer maxCapacity;
+
+    @Column(name = "allows_cancellations")
+    @Builder.Default
+    private Boolean allowsCancellations = true;
+
+    @Column(name = "is_public")
+    @Builder.Default
+    private Boolean isPublic = true;
 }

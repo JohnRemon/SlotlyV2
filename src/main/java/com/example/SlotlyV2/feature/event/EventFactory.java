@@ -8,7 +8,6 @@ import com.example.SlotlyV2.common.util.TimeZoneConverter;
 import com.example.SlotlyV2.feature.availability.AvailabilityRules;
 import com.example.SlotlyV2.feature.availability.dto.AvailabilityRulesDTO;
 import com.example.SlotlyV2.feature.event.dto.EventRequest;
-import com.example.SlotlyV2.feature.event.dto.RecurringEventRequest;
 import com.example.SlotlyV2.feature.recurrence.RecurrenceRules;
 import com.example.SlotlyV2.feature.recurrence.dto.RecurrenceRulesDTO;
 import com.example.SlotlyV2.feature.user.UserService;
@@ -22,43 +21,46 @@ public class EventFactory {
     private final TimeZoneConverter timeZoneConverter;
 
     public Event createFrom(EventRequest request) {
-        AvailabilityRules availabilityRules = buildAvailabilityRules(request.getAvailabilityRulesDTO());
+        AvailabilityRules availabilityRules = buildAvailabilityRules(
+                request.getAvailabilityRulesDTO());
+
         OffsetDateTime utcStart = timeZoneConverter.toUtc(request.getEventStart(), request.getTimeZone());
         OffsetDateTime utcEnd = timeZoneConverter.toUtc(request.getEventEnd(), request.getTimeZone());
 
-        return Event.builder()
+        Event.EventBuilder builder = Event.builder()
                 .eventName(request.getEventName())
                 .description(request.getDescription())
                 .host(userService.getCurrentUser())
                 .eventStart(utcStart)
                 .eventEnd(utcEnd)
                 .timeZone(request.getTimeZone())
-                .availabilityRules(availabilityRules)
-                .build();
+                .availabilityRules(availabilityRules);
 
-    }
+        if (request.getRecurrenceRulesDTO() != null) {
+            RecurrenceRules recurrenceRules = buildRecurrenceRules(request.getRecurrenceRulesDTO(),
+                    request.getTimeZone());
 
-    public Event createRecurringFrom(RecurringEventRequest request) {
-        Event event = createFrom(request);
+            builder.isRecurring(true)
+                    .recurrenceRules(recurrenceRules);
+        }
 
-        RecurrenceRules recurrenceRules = buildRecurrenceRules(request.getRecurringRulesDTO(), request.getTimeZone());
-
-        event.setRecurring(true);
-        event.setRecurringRules(recurrenceRules);
-
-        return event;
+        return builder.build();
     }
 
     public AvailabilityRules buildAvailabilityRules(AvailabilityRulesDTO dto) {
+        if (dto == null) {
+            dto = new AvailabilityRulesDTO();
+        }
+
         return AvailabilityRules.builder()
-                .slotDurationMinutes(dto.getSlotDurationMinutes())
-                .maxSlotsPerUser(dto.getMaxSlotsPerUser())
-                .allowsCancellations(dto.isAllowCancellations())
-                .isPublic(dto.isPublic())
+                .slotDurationMinutes(orDefault(dto.getSlotDurationMinutes(), 30))
+                .maxSlotsPerUser(orDefault(dto.getMaxSlotsPerUser(), 1))
+                .bufferMinutes(orDefault(dto.getBufferMinutes(), 0))
+                .minimumNoticeHours(orDefault(dto.getMinimumNoticeHours(), 0))
+                .maximumAdvanceDays(orDefault(dto.getMaximumAdvanceDays(), 90))
                 .maxCapacity(dto.getMaxCapacity())
-                .bufferMinutes(dto.getBufferMinutes())
-                .minimumNoticeHours(dto.getMinimumNoticeHours())
-                .maximumAdvanceDays(dto.getMaximumAdvanceDays())
+                .allowsCancellations(orDefault(dto.getAllowCancellations(), true))
+                .isPublic(orDefault(dto.getIsPublic(), true))
                 .build();
     }
 
@@ -72,5 +74,9 @@ public class EventFactory {
                         ? timeZoneConverter.toUtc(dto.getRecurrenceEndDate(), timeZone)
                         : null)
                 .build();
+    }
+
+    private <T> T orDefault(T value, T defaultValue) {
+        return value != null ? value : defaultValue;
     }
 }

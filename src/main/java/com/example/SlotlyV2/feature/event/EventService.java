@@ -17,7 +17,6 @@ import com.example.SlotlyV2.feature.email.dto.EventCancelledEmailDTO;
 import com.example.SlotlyV2.feature.email.event.EventCancelledEvent;
 import com.example.SlotlyV2.feature.event.dto.EventRequest;
 import com.example.SlotlyV2.feature.event.dto.EventResponse;
-import com.example.SlotlyV2.feature.event.dto.RecurringEventRequest;
 import com.example.SlotlyV2.feature.slot.Slot;
 import com.example.SlotlyV2.feature.slot.SlotRepository;
 import com.example.SlotlyV2.feature.slot.SlotService;
@@ -58,13 +57,13 @@ public class EventService {
     }
 
     @Transactional(rollbackOn = Exception.class)
-    public Event createRecurringEvent(RecurringEventRequest request) {
+    public Event createRecurringEvent(EventRequest request) {
         // Validate the Event
         eventValidator.validateEventDates(request.getEventStart(), request.getEventEnd(), request.getTimeZone());
         eventValidator.validateRecurringEventRules(request);
 
         // Create the event
-        Event event = eventFactory.createRecurringFrom(request);
+        Event event = eventFactory.createFrom(request);
         event = eventRepository.save(event);
 
         // Generate slots

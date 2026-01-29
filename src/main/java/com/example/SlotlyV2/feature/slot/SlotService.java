@@ -47,8 +47,8 @@ public class SlotService {
 
     @Transactional(rollbackOn = Exception.class)
     public void generateSlotsRecurring(Event event) {
-        String strategyType = event.getRecurringRules().getRecurrenceFrequency() + "_"
-                + event.getRecurringRules().getRecurrenceEndType();
+        String strategyType = event.getRecurrenceRules().getRecurrenceFrequency() + "_"
+                + event.getRecurrenceRules().getRecurrenceEndType();
         RecurrenceStrategy recurrenceStrategy = recurrenceStrategyFactory.getStrategy(strategyType);
 
         slotRepository.saveAll(recurrenceStrategy.generateSlots(event));
@@ -97,7 +97,7 @@ public class SlotService {
         Event event = eventRepository.findByShareableId(shareableId)
                 .orElseThrow(() -> new EventNotFoundException("Event Not Found"));
 
-        if (!event.getAvailabilityRules().isPublic()) {
+        if (!event.getAvailabilityRules().getIsPublic()) {
             throw new UnauthorizedAccessException("Event is private");
         }
 

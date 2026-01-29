@@ -6,7 +6,7 @@ import java.time.ZoneId;
 import org.springframework.stereotype.Component;
 
 import com.example.SlotlyV2.common.exception.event.InvalidEventException;
-import com.example.SlotlyV2.feature.event.dto.RecurringEventRequest;
+import com.example.SlotlyV2.feature.event.dto.EventRequest;
 import com.example.SlotlyV2.feature.event.enums.RecurrenceFrequency;
 
 import lombok.RequiredArgsConstructor;
@@ -27,15 +27,15 @@ public class EventValidator {
         }
     }
 
-    public void validateRecurringEventRules(RecurringEventRequest request) {
-        if (request.getRecurringRulesDTO().getRecurrenceEndDate() != null
-                && !request.getRecurringRulesDTO().getRecurrenceEndDate()
+    public void validateRecurringEventRules(EventRequest request) {
+        if (request.getRecurrenceRulesDTO().getRecurrenceEndDate() != null
+                && !request.getRecurrenceRulesDTO().getRecurrenceEndDate()
                         .isAfter(request.getEventStart())) {
             throw new InvalidEventException("Recurrence end date must be after event start");
         }
 
-        if (request.getRecurringRulesDTO().getRecurrenceFrequency() == RecurrenceFrequency.WEEKLY
-                && request.getRecurringRulesDTO().getRecurrenceDayOfWeek() == null) {
+        if (request.getRecurrenceRulesDTO().getRecurrenceFrequency() == RecurrenceFrequency.WEEKLY
+                && request.getRecurrenceRulesDTO().getRecurrenceDayOfWeek() == null) {
             throw new InvalidEventException("Day of week is required for weekly recurrence");
         }
     }

@@ -57,7 +57,7 @@ public class SlotValidator {
     }
 
     private void validateCancellationsAllowed(Slot slot) {
-        if (!slot.getEvent().getAvailabilityRules().isAllowsCancellations()) {
+        if (!slot.getEvent().getAvailabilityRules().getAllowsCancellations()) {
             throw new InvalidSlotException("Cancellations are not allowed for this event");
         }
     }

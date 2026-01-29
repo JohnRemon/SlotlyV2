@@ -54,7 +54,7 @@ public class SlotUtils {
 
         Duration eventDuration = Duration.between(event.getEventStart(), event.getEventEnd());
 
-        RecurrenceRules rules = event.getRecurringRules();
+        RecurrenceRules rules = event.getRecurrenceRules();
 
         OffsetDateTime end = rules.getRecurrenceEndDate();
 
@@ -84,7 +84,7 @@ public class SlotUtils {
 
         Duration eventDuration = Duration.between(event.getEventStart(), event.getEventEnd());
 
-        RecurrenceRules rules = event.getRecurringRules();
+        RecurrenceRules rules = event.getRecurrenceRules();
 
         if (rules.getRecurrenceOccurrences() == null) {
             throw new InvalidEventException("Occurrences count is required");

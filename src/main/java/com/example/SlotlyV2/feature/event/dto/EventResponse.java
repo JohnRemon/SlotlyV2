@@ -40,21 +40,21 @@ public class EventResponse {
         this.availabilityRulesDTO = AvailabilityRulesDTO.builder()
                 .slotDurationMinutes(event.getAvailabilityRules().getSlotDurationMinutes())
                 .maxSlotsPerUser(event.getAvailabilityRules().getMaxSlotsPerUser())
-                .allowCancellations(event.getAvailabilityRules().isAllowsCancellations())
-                .isPublic(event.getAvailabilityRules().isPublic())
+                .allowCancellations(event.getAvailabilityRules().getAllowsCancellations())
+                .isPublic(event.getAvailabilityRules().getIsPublic())
                 .build();
 
         this.isRecurring = event.isRecurring();
-        this.recurringRulesDTO = event.getRecurringRules() != null
+        this.recurringRulesDTO = event.getRecurrenceRules() != null
                 ? RecurrenceRulesDTO.builder()
-                        .recurrenceDayOfWeek(event.getRecurringRules().getRecurrenceDayOfWeek())
-                        .recurrenceEndDate(event.getRecurringRules().getRecurrenceEndDate() != null
-                                ? timeZoneConverter.toUserTimezone(event.getRecurringRules().getRecurrenceEndDate(),
+                        .recurrenceDayOfWeek(event.getRecurrenceRules().getRecurrenceDayOfWeek())
+                        .recurrenceEndDate(event.getRecurrenceRules().getRecurrenceEndDate() != null
+                                ? timeZoneConverter.toUserTimezone(event.getRecurrenceRules().getRecurrenceEndDate(),
                                         userTimezone)
                                 : null)
-                        .recurrenceFrequency(event.getRecurringRules().getRecurrenceFrequency())
-                        .recurrenceOccurrences(event.getRecurringRules().getRecurrenceOccurrences())
-                        .recurrenceEndType(event.getRecurringRules().getRecurrenceEndType())
+                        .recurrenceFrequency(event.getRecurrenceRules().getRecurrenceFrequency())
+                        .recurrenceOccurrences(event.getRecurrenceRules().getRecurrenceOccurrences())
+                        .recurrenceEndType(event.getRecurrenceRules().getRecurrenceEndType())
                         .build()
                 : null;
 

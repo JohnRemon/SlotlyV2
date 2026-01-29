@@ -3,7 +3,9 @@ package com.example.SlotlyV2.feature.event.dto;
 import java.time.OffsetDateTime;
 
 import com.example.SlotlyV2.feature.availability.dto.AvailabilityRulesDTO;
+import com.example.SlotlyV2.feature.recurrence.dto.RecurrenceRulesDTO;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -33,6 +35,9 @@ public class EventRequest {
     @NotBlank(message = "Timezone is required")
     private String timeZone;
 
-    @NotNull(message = "Rules are required")
+    @Valid
     private AvailabilityRulesDTO availabilityRulesDTO;
+
+    @Valid
+    private RecurrenceRulesDTO recurrenceRulesDTO;
 }

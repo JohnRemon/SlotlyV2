@@ -129,7 +129,7 @@ public class CalendarServiceTest {
         rules.setSlotDurationMinutes(60);
         rules.setMaxSlotsPerUser(2);
         rules.setAllowsCancellations(true);
-        rules.setPublic(true);
+        rules.setIsPublic(true);
 
         Event event = new Event();
         event.setId(1L);
@@ -141,8 +141,10 @@ public class CalendarServiceTest {
         Slot slot = new Slot();
         slot.setId(1L);
         slot.setEvent(event);
-        slot.setStartTime(OffsetDateTime.of(2024, 1, 15, 10, 0, 0, 0, ZoneId.of("Europe/Berlin").getRules().getOffset(OffsetDateTime.now().toInstant())));
-        slot.setEndTime(OffsetDateTime.of(2024, 1, 15, 11, 0, 0, 0, ZoneId.of("Europe/Berlin").getRules().getOffset(OffsetDateTime.now().toInstant())));
+        slot.setStartTime(OffsetDateTime.of(2024, 1, 15, 10, 0, 0, 0,
+                ZoneId.of("Europe/Berlin").getRules().getOffset(OffsetDateTime.now().toInstant())));
+        slot.setEndTime(OffsetDateTime.of(2024, 1, 15, 11, 0, 0, 0,
+                ZoneId.of("Europe/Berlin").getRules().getOffset(OffsetDateTime.now().toInstant())));
         slot.setBookedByName("Jane Smith");
         slot.setBookedByEmail("jane@example.com");
 
