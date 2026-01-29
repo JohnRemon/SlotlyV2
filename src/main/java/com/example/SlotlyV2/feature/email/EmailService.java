@@ -14,7 +14,7 @@ import com.example.SlotlyV2.feature.email.dto.BookingEmailDTO;
 import com.example.SlotlyV2.feature.email.dto.EventCancelledEmailDTO;
 import com.example.SlotlyV2.feature.slot.dto.SlotCancelledEmailDTO;
 import com.example.SlotlyV2.feature.user.dto.PasswordResetDTO;
-import com.example.SlotlyV2.feature.user.dto.UserVerificationDTO;
+import com.example.SlotlyV2.feature.user.dto.UserEmailVerificationDTO;
 import com.resend.Resend;
 import com.resend.core.exception.ResendException;
 import com.resend.services.emails.model.CreateEmailOptions;
@@ -93,7 +93,7 @@ public class EmailService {
     }
 
     @Async("emailTaskExecutor")
-    public void sendUserRegistrationVerification(UserVerificationDTO data) {
+    public void sendUserRegistrationVerification(UserEmailVerificationDTO data) {
         log.info("Sending registration verification to: {}", data.getEmail());
 
         try {

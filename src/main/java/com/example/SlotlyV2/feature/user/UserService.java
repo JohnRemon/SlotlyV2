@@ -11,30 +11,23 @@ import org.springframework.stereotype.Service;
 
 import com.example.SlotlyV2.common.exception.auth.AccountNotVerifiedException;
 import com.example.SlotlyV2.common.exception.auth.InvalidCredentialsException;
-import com.example.SlotlyV2.common.exception.auth.PasswordMismatchException;
 import com.example.SlotlyV2.common.exception.auth.UnauthorizedAccessException;
 import com.example.SlotlyV2.common.exception.user.UserAlreadyExistsException;
 import com.example.SlotlyV2.common.exception.user.UsernameAlreadyExistsException;
 import com.example.SlotlyV2.feature.auth.VerificationTokenService;
 import com.example.SlotlyV2.feature.email.event.EmailVerificationEvent;
-import com.example.SlotlyV2.feature.email.event.PasswordResetEvent;
 import com.example.SlotlyV2.feature.schedule.ScheduleService;
 import com.example.SlotlyV2.feature.user.dto.LoginRequest;
-import com.example.SlotlyV2.feature.user.dto.PasswordResetConfirmRequest;
-import com.example.SlotlyV2.feature.user.dto.PasswordResetDTO;
-import com.example.SlotlyV2.feature.user.dto.PasswordResetRequest;
 import com.example.SlotlyV2.feature.user.dto.RegisterRequest;
-import com.example.SlotlyV2.feature.user.dto.UserVerificationDTO;
+import com.example.SlotlyV2.feature.user.dto.UserEmailVerificationDTO;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -45,45 +38,14 @@ public class UserService {
 
     @Transactional(rollbackOn = Exception.class)
     public User registerUser(RegisterRequest request) {
-        // Check if email already exists
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new UserAlreadyExistsException("User Already Exists. Please Login");
-        }
+        validateUniqueEmailAndUsername(request);
 
-        // Check if username already exists
-        if (userRepository.existsByDisplayName(request.getDisplayName())) {
-            throw new UsernameAlreadyExistsException("Username Already Exists. Please Choose Another One");
-        }
+        User user = buildAndSaveUser(request);
 
-        // Create the user
-        User user = User.builder()
-                .email(request.getEmail())
-                .displayName(request.getDisplayName())
-                .password(passwordEncoder.encode(request.getPassword()))
-                .firstName(request.getFirstName())
-                .lastName(request.getLastName())
-                .timeZone(request.getTimeZone())
-                .isVerified(false)
-                .build();
-
-        user = userRepository.save(user);
-
-        // Create the default schedule
         scheduleService.createDefaultSchedule(user);
 
-        // generate email verification token
-        String token = verificationTokenService.generateEmailVerificationToken(user);
+        sendVerificationEmail(user);
 
-        // generate the needed verification data
-        UserVerificationDTO data = new UserVerificationDTO(
-                user.getDisplayName(),
-                user.getEmail(),
-                token);
-
-        // Publish Verification Email Event
-        eventPublisher.publishEvent(new EmailVerificationEvent(data));
-
-        log.info("Registered new user: {}", user.getEmail());
         return user;
     }
 
@@ -106,42 +68,15 @@ public class UserService {
         }
     }
 
-    public void resetPasswordRequest(PasswordResetRequest request) {
-        // Find user by email (throw null if not found)
-        User user = userRepository.findByEmail(request.getEmail())
-                .orElse(null);
+    public void logout(HttpServletRequest request) {
+        getCurrentUser();
 
-        // return successfully
-        if (user == null) {
-            log.info("Password reset requested for non-existing email: {}", request.getEmail());
-            return;
+        SecurityContextHolder.clearContext();
+
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+            session.invalidate();
         }
-
-        // generate password token
-        String token = verificationTokenService.generatePasswordResetToken(user);
-
-        // generate needed password reset data
-        PasswordResetDTO data = new PasswordResetDTO(
-                user.getDisplayName(),
-                user.getEmail(),
-                token);
-
-        // publish password reset event
-        eventPublisher.publishEvent(new PasswordResetEvent(data));
-    }
-
-    @Transactional(rollbackOn = Exception.class)
-    public void resetPassword(String token, PasswordResetConfirmRequest request) {
-        User user = verificationTokenService.verifyPasswordResetToken(token);
-
-        if (!request.getPassword().equals(request.getConfirmPassword())) {
-            throw new PasswordMismatchException("Passwords don't match");
-        }
-
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
-        userRepository.save(user);
-
-        log.info("Password reset successfully for user: {}", user.getEmail());
     }
 
     public User getCurrentUser() {
@@ -158,16 +93,45 @@ public class UserService {
         throw new UnauthorizedAccessException("User not authenticated");
     }
 
-    public void logout(HttpServletRequest request) {
-        if (getCurrentUser() == null) {
-            throw new UnauthorizedAccessException("User not authenticated");
-        }
+    private void validateUniqueEmailAndUsername(RegisterRequest request) {
+        validateEmailNotTaken(request.getEmail());
+        validateUsernameNotTaken(request.getDisplayName());
+    }
 
-        SecurityContextHolder.clearContext();
-
-        HttpSession session = request.getSession(false);
-        if (session != null) {
-            session.invalidate();
+    private void validateEmailNotTaken(String email) {
+        if (userRepository.existsByEmail(email)) {
+            throw new UserAlreadyExistsException("User already exists. Please login");
         }
+    }
+
+    private void validateUsernameNotTaken(String displayName) {
+        if (userRepository.existsByDisplayName(displayName)) {
+            throw new UsernameAlreadyExistsException("Username already exists. Please choose another one");
+        }
+    }
+
+    private void sendVerificationEmail(User user) {
+        String token = verificationTokenService.generateEmailVerificationToken(user);
+
+        UserEmailVerificationDTO data = new UserEmailVerificationDTO(
+                user.getDisplayName(),
+                user.getEmail(),
+                token);
+
+        eventPublisher.publishEvent(new EmailVerificationEvent(data));
+    }
+
+    private User buildAndSaveUser(RegisterRequest request) {
+        User user = User.builder()
+                .email(request.getEmail())
+                .displayName(request.getDisplayName())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .firstName(request.getFirstName())
+                .lastName(request.getLastName())
+                .timeZone(request.getTimeZone())
+                .isVerified(false)
+                .build();
+
+        return userRepository.save(user);
     }
 }

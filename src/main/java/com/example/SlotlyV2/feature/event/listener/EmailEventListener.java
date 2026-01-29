@@ -16,7 +16,7 @@ import com.example.SlotlyV2.feature.email.event.SlotBookedEvent;
 import com.example.SlotlyV2.feature.email.event.SlotCancelledEvent;
 import com.example.SlotlyV2.feature.slot.dto.SlotCancelledEmailDTO;
 import com.example.SlotlyV2.feature.user.dto.PasswordResetDTO;
-import com.example.SlotlyV2.feature.user.dto.UserVerificationDTO;
+import com.example.SlotlyV2.feature.user.dto.UserEmailVerificationDTO;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -78,7 +78,7 @@ public class EmailEventListener {
     @EventListener
     @Async("emailTaskExecutor")
     public void handleEmailVerification(EmailVerificationEvent event) {
-        UserVerificationDTO data = event.getUserVerificationDTO();
+        UserEmailVerificationDTO data = event.getUserEmailVerificationDTO();
 
         log.debug("Received EmailVerificationEvent for email: {}", data.getEmail());
 

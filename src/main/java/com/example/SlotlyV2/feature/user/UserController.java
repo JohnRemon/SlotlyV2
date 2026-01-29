@@ -13,8 +13,6 @@ import com.example.SlotlyV2.common.dto.ApiResponse;
 import com.example.SlotlyV2.common.rate_limiting.RateLimitHelper;
 import com.example.SlotlyV2.feature.auth.VerificationTokenService;
 import com.example.SlotlyV2.feature.user.dto.LoginRequest;
-import com.example.SlotlyV2.feature.user.dto.PasswordResetConfirmRequest;
-import com.example.SlotlyV2.feature.user.dto.PasswordResetRequest;
 import com.example.SlotlyV2.feature.user.dto.RegisterRequest;
 import com.example.SlotlyV2.feature.user.dto.UserResponse;
 
@@ -68,19 +66,4 @@ public class UserController {
         return new ApiResponse<>("Account verified successfully. Please login into your account", null);
     }
 
-    @PostMapping("/password-reset/request")
-    public ApiResponse<Void> resetPassword(@RequestBody @Valid PasswordResetRequest request) {
-        rateLimitHelper.checkPasswordResetRateLimit(request.getEmail());
-
-        userService.resetPasswordRequest(request);
-        return new ApiResponse<>("An email has been sent to your inbox", null);
-    }
-
-    @PostMapping("/password-reset/confirm")
-    public ApiResponse<Void> verifyPassword(@RequestParam String token,
-            @RequestBody @Valid PasswordResetConfirmRequest request, HttpServletRequest httpServletRequest) {
-        userService.resetPassword(token, request);
-        userService.logout(httpServletRequest);
-        return new ApiResponse<>("Password changed successfully. Please login", null);
-    }
 }
