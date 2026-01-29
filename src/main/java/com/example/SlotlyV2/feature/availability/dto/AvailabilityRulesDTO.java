@@ -30,7 +30,10 @@ public class AvailabilityRulesDTO {
     @Builder.Default
     private boolean isPublic = true;
 
-    @NotNull
     @Min(value = 1, message = "Max capacity must be greater than 1")
     private Integer maxCapacity;
+
+    @Min(value = 0, message = "Buffer time can't be negative")
+    @Builder.Default
+    private Integer bufferMinutes = 0;
 }

@@ -39,3 +39,5 @@ public class RecurrenceRules {
     @Column(name = "recurrence_end_date")
     private OffsetDateTime recurrenceEndDate;
 }
+
+// TODO: Add Interval

@@ -22,18 +22,24 @@ public class SlotUtils {
     public List<Slot> buildSlotsByTime(Event event, OffsetDateTime start, OffsetDateTime end) {
         List<Slot> slots = new ArrayList<>();
         OffsetDateTime currentStart = start;
-        int slotDuration = event.getAvailabilityRules().getSlotDurationMinutes();
 
-        while (currentStart.isBefore(end) && !currentStart.plusMinutes(slotDuration).isAfter(end)) {
+        Integer slotDuration = event.getAvailabilityRules().getSlotDurationMinutes();
+        Integer buffer = event.getAvailabilityRules().getBufferMinutes();
+
+        while (currentStart.plusMinutes(slotDuration).isBefore(end)
+                || currentStart.plusMinutes(slotDuration).equals(end)) {
+
+            OffsetDateTime slotEnd = currentStart.plusMinutes(slotDuration);
+
             if (scheduleService.isValidSlot(event.getHost(), currentStart, slotDuration)) {
                 Slot slot = Slot.builder()
                         .event(event)
                         .startTime(currentStart)
-                        .endTime(currentStart.plusMinutes(slotDuration))
+                        .endTime(slotEnd)
                         .build();
                 slots.add(slot);
             }
-            currentStart = currentStart.plusMinutes(slotDuration);
+            currentStart = slotEnd.plusMinutes(buffer);
         }
         return slots;
     }

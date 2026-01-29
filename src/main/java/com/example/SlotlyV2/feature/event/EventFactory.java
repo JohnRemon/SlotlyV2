@@ -56,6 +56,7 @@ public class EventFactory {
                 .allowsCancellations(dto.isAllowCancellations())
                 .isPublic(dto.isPublic())
                 .maxCapacity(dto.getMaxCapacity())
+                .bufferMinutes(dto.getBufferMinutes())
                 .build();
     }
 
