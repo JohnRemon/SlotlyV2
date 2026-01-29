@@ -36,4 +36,12 @@ public class AvailabilityRulesDTO {
     @Min(value = 0, message = "Buffer time can't be negative")
     @Builder.Default
     private Integer bufferMinutes = 0;
+
+    @Min(value = 0, message = "minimum notice hours can't be negative")
+    @Builder.Default
+    private Integer minimumNoticeHours = 0;
+
+    @Min(value = 1, message = "maximum advance days must be at least 1")
+    @Builder.Default
+    private Integer maximumAdvanceDays = 90;
 }

@@ -1,11 +1,12 @@
 package com.example.SlotlyV2.feature.slot;
 
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 
 import org.springframework.stereotype.Component;
 
 import com.example.SlotlyV2.common.exception.auth.UnauthorizedAccessException;
+import com.example.SlotlyV2.common.exception.event.InvalidBookingException;
 import com.example.SlotlyV2.common.exception.event.MaxCapacityExceededException;
 import com.example.SlotlyV2.common.exception.slot.InvalidSlotException;
 import com.example.SlotlyV2.common.exception.slot.SlotAlreadyBookedException;
@@ -21,6 +22,8 @@ public class SlotValidator {
         validateSlotIsAvailable(slot);
         validateSlotIsNotInPast(slot);
         validateEventMaxCapacity(slot);
+        validateMinimumNoticeHours(slot);
+        validateMaximumAdvanceDays(slot);
     }
 
     public void validateSlotForCancellation(Slot slot, String attendeeEmail) {
@@ -42,8 +45,7 @@ public class SlotValidator {
     }
 
     private void validateSlotIsNotInPast(Slot slot) {
-        ZoneId zone = ZoneId.of(slot.getEvent().getTimeZone());
-        if (slot.getStartTime().toZonedDateTime().isBefore(ZonedDateTime.now(zone))) {
+        if (slot.getStartTime().isBefore(OffsetDateTime.now(ZoneOffset.UTC))) {
             throw new InvalidSlotException("This slot is in the past");
         }
     }
@@ -72,4 +74,22 @@ public class SlotValidator {
         }
     }
 
+    private void validateMinimumNoticeHours(Slot slot) {
+        OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
+        OffsetDateTime startTime = slot.getStartTime();
+        Integer minimumNoticeHours = slot.getEvent().getAvailabilityRules().getMinimumNoticeHours();
+        if (startTime.isBefore(now.plusHours(minimumNoticeHours))) {
+            throw new InvalidBookingException("Bookings require at least " + minimumNoticeHours + " hours notice");
+        }
+    }
+
+    private void validateMaximumAdvanceDays(Slot slot) {
+        OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
+        OffsetDateTime startTime = slot.getStartTime();
+        Integer maximumAdvanceDays = slot.getEvent().getAvailabilityRules().getMaximumAdvanceDays();
+        if (startTime.isAfter(now.plusDays(maximumAdvanceDays))) {
+            throw new InvalidBookingException(
+                    "Bookings can't be made more than " + maximumAdvanceDays + " days in advance");
+        }
+    }
 }

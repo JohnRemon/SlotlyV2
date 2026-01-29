@@ -37,4 +37,13 @@ public class AvailabilityRules {
     @Column(name = "buffer_minutes")
     @Builder.Default
     private Integer bufferMinutes = 0;
+
+    @Column(name = "minimum_notice_hours")
+    @Builder.Default
+    private Integer minimumNoticeHours = 0;
+
+    @Column(name = "maximum_advance_days")
+    @Builder.Default
+    private Integer maximumAdvanceDays = 90;
+
 }

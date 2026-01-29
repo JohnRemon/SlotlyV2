@@ -57,6 +57,8 @@ public class EventFactory {
                 .isPublic(dto.isPublic())
                 .maxCapacity(dto.getMaxCapacity())
                 .bufferMinutes(dto.getBufferMinutes())
+                .minimumNoticeHours(dto.getMinimumNoticeHours())
+                .maximumAdvanceDays(dto.getMaximumAdvanceDays())
                 .build();
     }
 
