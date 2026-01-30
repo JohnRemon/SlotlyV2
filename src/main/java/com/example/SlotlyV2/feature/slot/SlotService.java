@@ -86,6 +86,10 @@ public class SlotService {
     }
 
     public List<Slot> getSlots(Long eventId) {
+        if (!eventRepository.existsById(eventId)) {
+            throw new EventNotFoundException("Event Not Found");
+        }
+
         return slotRepository.findByEventId(eventId);
     }
 

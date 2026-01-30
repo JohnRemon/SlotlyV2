@@ -2,18 +2,21 @@ package com.example.SlotlyV2.feature.schedule;
 
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
 
 import com.example.SlotlyV2.common.exception.schedule.InvalidScheduleException;
 import com.example.SlotlyV2.common.exception.schedule.ScheduleNotFoundException;
+import com.example.SlotlyV2.feature.calendar.GoogleCalendarService;
 import com.example.SlotlyV2.feature.schedule.dto.BlockedPeriodRequest;
 import com.example.SlotlyV2.feature.schedule.dto.BlockedPeriodResponse;
 import com.example.SlotlyV2.feature.schedule.dto.DailyScheduleRequest;
 import com.example.SlotlyV2.feature.schedule.dto.DailyScheduleResponse;
 import com.example.SlotlyV2.feature.schedule.dto.ScheduleRequest;
 import com.example.SlotlyV2.feature.user.User;
+import com.google.api.services.calendar.model.Event;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +26,7 @@ import lombok.RequiredArgsConstructor;
 public class ScheduleService {
     private final DailyScheduleRepository dailyScheduleRepository;
     private final BlockedPeriodRepository blockedPeriodRepository;
+    private final GoogleCalendarService googleCalendarService;
 
     @Transactional(rollbackOn = Exception.class)
     public void updateSchedule(User user, ScheduleRequest request) {
@@ -86,29 +90,39 @@ public class ScheduleService {
     }
 
     public boolean isValidSlot(User user, OffsetDateTime start, Integer slotDuration) {
-        Integer dayOfWeek = start.getDayOfWeek().getValue();
+        ZoneId userZone = ZoneId.of(user.getTimeZone());
+        Integer dayOfWeek = start.atZoneSameInstant(userZone).getDayOfWeek().getValue();
+
         DailySchedule day = dailyScheduleRepository.findByUserIdAndDayOfWeek(user.getId(), dayOfWeek)
                 .orElseThrow(() -> new ScheduleNotFoundException("Schedule not found"));
-
-        OffsetDateTime end = start.plusMinutes(slotDuration);
 
         if (!day.isAvailable()) {
             return false;
         }
 
-        if (end.toLocalTime().isBefore(start.toLocalTime())) {
+        OffsetDateTime end = start.plusMinutes(slotDuration);
+
+        LocalTime startTime = start.atZoneSameInstant(userZone).toLocalTime();
+        LocalTime endTime = end.atZoneSameInstant(userZone).toLocalTime();
+
+        if (startTime.isBefore(day.getStartTime()) || endTime.isAfter(day.getEndTime())) {
             return false;
         }
 
-        if (start.toLocalTime().isBefore(day.getStartTime()) || end.toLocalTime().isAfter(day.getEndTime())) {
+        if (endTime.isBefore(startTime)) {
             return false;
         }
 
-        List<BlockedPeriod> blocks = blockedPeriodRepository.findByUserId(user.getId());
-        for (BlockedPeriod block : blocks) {
-            if (start.isBefore(block.getEndTime()) && end.isAfter(block.getStartTime())) {
-                return false;
-            }
+        List<BlockedPeriod> blocks = blockedPeriodRepository
+                .findByUserIdAndEndTimeAfterAndStartTimeBefore(user.getId(), start, end);
+
+        if (!blocks.isEmpty()) {
+            return false;
+        }
+
+        List<Event> events = googleCalendarService.getUpcomingEvents(user, start, end);
+        if (!events.isEmpty()) {
+            return false;
         }
 
         return true;

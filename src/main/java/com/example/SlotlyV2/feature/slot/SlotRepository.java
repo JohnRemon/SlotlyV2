@@ -12,6 +12,7 @@ import com.example.SlotlyV2.feature.event.Event;
 
 @Repository
 public interface SlotRepository extends JpaRepository<Slot, Long> {
+    @EntityGraph(attributePaths = { "event", "event.host" })
     List<Slot> findByEvent(Event event);
 
     @EntityGraph(attributePaths = { "event", "event.host" })

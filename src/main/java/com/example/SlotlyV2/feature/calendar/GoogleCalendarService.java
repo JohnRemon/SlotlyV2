@@ -2,6 +2,7 @@ package com.example.SlotlyV2.feature.calendar;
 
 import java.io.IOException;
 import java.time.OffsetDateTime;
+import java.util.Date;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -92,16 +93,19 @@ public class GoogleCalendarService {
         }
     }
 
-    public List<Event> getUpcomingEvents(User user, int maxResults) {
+    public List<Event> getUpcomingEvents(User user, OffsetDateTime start, OffsetDateTime end) {
         try {
             Calendar service = getCalendarService(user);
-            DateTime now = new DateTime(OffsetDateTime.now().toInstant().toEpochMilli());
+
+            DateTime startDateTime = new DateTime(Date.from(start.toInstant()));
+            DateTime endDateTime = new DateTime(Date.from(end.toInstant()));
 
             Events events = service.events()
                     .list(PRIMARY_CALENDAR)
-                    .setMaxResults(maxResults)
-                    .setTimeMin(now)
+                    .setTimeMin(startDateTime)
+                    .setTimeMax(endDateTime)
                     .setOrderBy("startTime")
+                    .setTimeZone("UTC")
                     .setSingleEvents(true)
                     .execute();
 
