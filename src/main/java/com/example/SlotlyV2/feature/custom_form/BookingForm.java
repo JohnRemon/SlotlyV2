@@ -1,63 +1,54 @@
-package com.example.SlotlyV2.feature.calendar;
+package com.example.SlotlyV2.feature.custom_form;
 
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import com.example.SlotlyV2.feature.user.User;
+import com.example.SlotlyV2.feature.event.Event;
 
-import jakarta.persistence.Column;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
-@Data
-@Builder
+@Table(name = "booking_forms")
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "google_calendar_tokens")
-public class GoogleCalendarToken {
+@Builder
+public class BookingForm {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @OneToOne
-    @JoinColumn(name = "user_id", nullable = false, unique = true)
-    private User user;
+    @JoinColumn(name = "event_id", nullable = false)
+    private Event event;
 
-    @Column(name = "access_token", nullable = false)
-    private String accessToken;
-
-    @Column(name = "refresh_token", nullable = false)
-    private String refreshToken;
-
-    @Column(nullable = false)
-    private OffsetDateTime expiresAt;
-
-    @Column
-    private String scope;
+    @OneToMany(mappedBy = "bookingForm", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<FormField> fields = new ArrayList<>();
 
     @CreationTimestamp
-    @Column(nullable = false)
     private OffsetDateTime createdAt;
 
     @UpdateTimestamp
-    @Column(nullable = false)
     private OffsetDateTime updatedAt;
-
-    public boolean isExpired() {
-        return OffsetDateTime.now().isAfter(expiresAt);
-    }
 }

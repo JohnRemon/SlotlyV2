@@ -1,10 +1,10 @@
 package com.example.SlotlyV2.feature.event.dto;
 
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 
 import com.example.SlotlyV2.common.util.TimeZoneConverter;
 import com.example.SlotlyV2.feature.availability.dto.AvailabilityRulesDTO;
+import com.example.SlotlyV2.feature.custom_form.dto.BookingFormResponse;
 import com.example.SlotlyV2.feature.event.Event;
 import com.example.SlotlyV2.feature.recurrence.dto.RecurrenceRulesDTO;
 import com.example.SlotlyV2.feature.user.dto.UserResponse;
@@ -22,11 +22,12 @@ public class EventResponse {
     private OffsetDateTime eventStart;
     private OffsetDateTime eventEnd;
     private String timeZone;
-    private LocalDateTime createdAt;
+    private OffsetDateTime createdAt;
     private AvailabilityRulesDTO availabilityRulesDTO;
     private boolean isRecurring;
     private RecurrenceRulesDTO recurringRulesDTO;
     private String shareableId;
+    private BookingFormResponse bookingForm;
 
     public EventResponse(Event event, String userTimezone, TimeZoneConverter timeZoneConverter) {
         this.id = event.getId();
@@ -59,5 +60,6 @@ public class EventResponse {
                 : null;
 
         this.shareableId = event.getShareableId();
+        this.bookingForm = event.getBookingForm() != null ? new BookingFormResponse(event.getBookingForm()) : null;
     }
 }

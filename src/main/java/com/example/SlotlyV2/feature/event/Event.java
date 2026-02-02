@@ -1,15 +1,15 @@
 package com.example.SlotlyV2.feature.event;
 
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import org.springframework.data.annotation.CreatedDate;
+import org.hibernate.annotations.CreationTimestamp;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import com.example.SlotlyV2.feature.availability.AvailabilityRules;
+import com.example.SlotlyV2.feature.custom_form.BookingForm;
 import com.example.SlotlyV2.feature.recurrence.RecurrenceRules;
 import com.example.SlotlyV2.feature.slot.Slot;
 import com.example.SlotlyV2.feature.user.User;
@@ -26,6 +26,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -57,9 +58,9 @@ public class Event {
     @JoinColumn(name = "host_id", nullable = false)
     private User host;
 
-    @CreatedDate
+    @CreationTimestamp
     @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
+    private OffsetDateTime createdAt;
 
     @Column(name = "event_start")
     private OffsetDateTime eventStart;
@@ -70,27 +71,28 @@ public class Event {
     @Column(name = "time_zone")
     private String timeZone;
 
-    @Embedded
-    private AvailabilityRules availabilityRules;
-
     @Column(unique = true)
     private String shareableId;
-
-    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @Builder.Default
-    private List<Slot> slots = new ArrayList<>();
 
     @Column(name = "isRecurring")
     @Builder.Default
     private boolean isRecurring = false;
 
     @Embedded
+    private AvailabilityRules availabilityRules;
+
+    @Embedded
     private RecurrenceRules recurrenceRules;
+
+    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Builder.Default
+    private List<Slot> slots = new ArrayList<>();
+
+    @OneToOne(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
+    private BookingForm bookingForm;
 
     @PrePersist
     private void onCreate() {
-        createdAt = LocalDateTime.now();
-
         if (shareableId == null) {
             shareableId = generateShareableId();
         }
