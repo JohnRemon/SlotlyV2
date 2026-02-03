@@ -1,4 +1,4 @@
-package com.example.SlotlyV2.feature.custom_form;
+package com.example.SlotlyV2.feature.booking_form;
 
 import java.util.UUID;
 
@@ -19,13 +19,13 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "form_responses")
+@Table(name = "form_answers")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class FormResponse {
+public class FormAnswer {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
@@ -36,8 +36,8 @@ public class FormResponse {
 
     @ManyToOne
     @JoinColumn(name = "form_field_id", nullable = false)
-    private FormField formField;
+    private FormQuestion formField;
 
     @Column(columnDefinition = "TEXT")
-    private String responseValue;
+    private String answer;
 }

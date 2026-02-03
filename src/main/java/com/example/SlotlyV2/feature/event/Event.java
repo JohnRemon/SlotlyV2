@@ -9,7 +9,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import com.example.SlotlyV2.feature.availability.AvailabilityRules;
-import com.example.SlotlyV2.feature.custom_form.BookingForm;
+import com.example.SlotlyV2.feature.booking_form.BookingForm;
 import com.example.SlotlyV2.feature.recurrence.RecurrenceRules;
 import com.example.SlotlyV2.feature.slot.Slot;
 import com.example.SlotlyV2.feature.user.User;

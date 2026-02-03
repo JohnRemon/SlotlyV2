@@ -1,9 +1,7 @@
-package com.example.SlotlyV2.feature.custom_form.dto;
+package com.example.SlotlyV2.feature.booking_form.dto;
 
-import java.util.UUID;
-
-import com.example.SlotlyV2.feature.custom_form.FormField;
-import com.example.SlotlyV2.feature.custom_form.enums.FieldType;
+import com.example.SlotlyV2.feature.booking_form.FormQuestion;
+import com.example.SlotlyV2.feature.booking_form.enums.FieldType;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -16,9 +14,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class FormFieldDTO {
-    private UUID id;
-
+public class FormQuestionDTO {
     @NotBlank(message = "label is required")
     private String label;
 
@@ -31,8 +27,7 @@ public class FormFieldDTO {
     @Builder.Default
     private Integer displayOrder = 0;
 
-    public FormFieldDTO(FormField formField) {
-        this.id = formField.getId();
+    public FormQuestionDTO(FormQuestion formField) {
         this.label = formField.getLabel();
         this.fieldType = formField.getFieldType();
         this.required = formField.isRequired();

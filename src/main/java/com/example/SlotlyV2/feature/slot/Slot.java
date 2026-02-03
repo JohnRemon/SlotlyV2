@@ -3,7 +3,7 @@ package com.example.SlotlyV2.feature.slot;
 import java.time.OffsetDateTime;
 import java.util.List;
 
-import com.example.SlotlyV2.feature.custom_form.FormResponse;
+import com.example.SlotlyV2.feature.booking_form.FormAnswer;
 import com.example.SlotlyV2.feature.event.Event;
 
 import jakarta.persistence.CascadeType;
@@ -57,7 +57,7 @@ public class Slot {
     private String bookedByEmail;
 
     @OneToMany(mappedBy = "slot", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<FormResponse> formResponses;
+    private List<FormAnswer> formAnswers;
 
     private OffsetDateTime bookedAt;
 

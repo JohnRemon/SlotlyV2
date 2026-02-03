@@ -2,7 +2,7 @@ package com.example.SlotlyV2.feature.slot.dto;
 
 import java.time.OffsetDateTime;
 
-import com.example.SlotlyV2.feature.custom_form.dto.FormResponseDTO;
+import com.example.SlotlyV2.feature.booking_form.dto.SubmitFormAnswers;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Future;
@@ -36,5 +36,5 @@ public class SlotRequest {
     @Size(max = 500, message = "Notes cannot exceed 500 characters")
     private String notes;
 
-    private FormResponseDTO bookingFormAnswerDTO;
+    private SubmitFormAnswers formSubmission;
 }

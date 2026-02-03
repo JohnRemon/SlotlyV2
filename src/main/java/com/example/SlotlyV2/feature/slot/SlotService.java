@@ -10,6 +10,7 @@ import com.example.SlotlyV2.common.exception.event.EventNotFoundException;
 import com.example.SlotlyV2.common.exception.slot.SlotNotFoundException;
 import com.example.SlotlyV2.common.util.SlotUtils;
 import com.example.SlotlyV2.common.util.TimeZoneConverter;
+import com.example.SlotlyV2.feature.booking_form.BookingFormService;
 import com.example.SlotlyV2.feature.event.Event;
 import com.example.SlotlyV2.feature.event.EventRepository;
 import com.example.SlotlyV2.feature.event.strategy.RecurrenceStrategy;
@@ -34,6 +35,7 @@ public class SlotService {
 
     private final SlotValidator slotValidator;
     private final BookingEventPublisher bookingEventPublisher;
+    private final BookingFormService bookingFormService;
 
     @Transactional(rollbackOn = Exception.class)
     public void generateSlots(Event event) {
@@ -117,6 +119,10 @@ public class SlotService {
         slot.setBookedByName(request.getAttendeeName());
         slot.setBookedByEmail(request.getAttendeeEmail());
         slot.setBookedAt(OffsetDateTime.now());
+
+        if (request.getFormSubmission() != null) {
+            bookingFormService.submitAnswers(slot, request.getFormSubmission());
+        }
     }
 
     private void performCancellation(Slot slot) {

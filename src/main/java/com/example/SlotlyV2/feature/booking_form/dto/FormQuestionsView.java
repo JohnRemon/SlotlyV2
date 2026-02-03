@@ -1,9 +1,9 @@
-package com.example.SlotlyV2.feature.custom_form.dto;
+package com.example.SlotlyV2.feature.booking_form.dto;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.example.SlotlyV2.feature.custom_form.BookingForm;
+import com.example.SlotlyV2.feature.booking_form.BookingForm;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -14,12 +14,12 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class BookingFormResponse {
-    private List<FormFieldDTO> fields;
+public class FormQuestionsView {
+    private List<FormQuestionDTO> fields;
 
-    public BookingFormResponse(BookingForm bookingForm) {
+    public FormQuestionsView(BookingForm bookingForm) {
         this.fields = bookingForm.getFields().stream()
-                .map(formField -> FormFieldDTO.builder()
+                .map(formField -> FormQuestionDTO.builder()
                         .label(formField.getLabel())
                         .fieldType(formField.getFieldType())
                         .required(formField.isRequired())

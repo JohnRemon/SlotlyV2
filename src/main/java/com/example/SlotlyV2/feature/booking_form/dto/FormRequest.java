@@ -1,4 +1,4 @@
-package com.example.SlotlyV2.feature.custom_form.dto.request;
+package com.example.SlotlyV2.feature.booking_form.dto;
 
 import java.util.List;
 
@@ -13,7 +13,8 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class SubmitAnswersRequest {
+public class FormRequest {
     @Valid
-    private List<FormAnswerDTO> answers;
+    @NotEmpty(message = "form fields are required")
+    private List<FormQuestionDTO> formFields;
 }

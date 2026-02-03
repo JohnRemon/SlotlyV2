@@ -1,8 +1,8 @@
-package com.example.SlotlyV2.feature.custom_form;
+package com.example.SlotlyV2.feature.booking_form;
 
 import java.util.UUID;
 
-import com.example.SlotlyV2.feature.custom_form.enums.FieldType;
+import com.example.SlotlyV2.feature.booking_form.enums.FieldType;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -27,7 +27,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class FormField {
+public class FormQuestion {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
@@ -51,11 +51,3 @@ public class FormField {
     @Builder.Default
     private Integer displayOrder = 0;
 }
-
-// So we want a user to determine some questions for the slot so he sends a
-// request (hmm with the EventRequest or without)
-// so we want to define a request for the creating of questions and another
-// request for answering the questions that will
-// be with the SlotRequest
-// we also need responses to show questions and answers
-// an answer response can be like

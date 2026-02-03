@@ -1,4 +1,4 @@
-package com.example.SlotlyV2.feature.custom_form;
+package com.example.SlotlyV2.feature.booking_form;
 
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
@@ -44,7 +44,7 @@ public class BookingForm {
 
     @OneToMany(mappedBy = "bookingForm", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
-    private List<FormField> fields = new ArrayList<>();
+    private List<FormQuestion> fields = new ArrayList<>();
 
     @CreationTimestamp
     private OffsetDateTime createdAt;

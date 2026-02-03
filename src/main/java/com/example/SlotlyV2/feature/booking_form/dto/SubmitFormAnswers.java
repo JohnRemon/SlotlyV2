@@ -1,6 +1,6 @@
-package com.example.SlotlyV2.feature.custom_form.dto;
+package com.example.SlotlyV2.feature.booking_form.dto;
 
-import java.util.UUID;
+import java.util.List;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,7 +11,6 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class FieldResponseDTO {
-    private UUID fieldId;
-    private String fieldResponse;
+public class SubmitFormAnswers {
+    private List<FieldAnswerDTO> answers;
 }
