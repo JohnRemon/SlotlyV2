@@ -85,15 +85,17 @@ public class BookingFormService {
     public List<FormAnswer> submitAnswers(Slot slot, SubmitFormAnswers request) {
         bookingFormValidator.validateAnswers(slot, slot.getEvent().getBookingForm().getFields(), request.getAnswers());
 
-        List<FormAnswer> answers = request.getAnswers().stream()
+        return request.getAnswers().stream()
                 .map(q -> buildAnswer(q, slot))
                 .collect(Collectors.toList());
-
-        return answers;
     }
 
-    public List<FormAnswer> getAnswers(Long slotId) {
-        return formAnswerRepository.findBySlotId(slotId);
+    public List<FieldAnswerDTO> getAnswers(Long slotId) {
+        List<FormAnswer> answers = formAnswerRepository.findBySlotId(slotId);
+
+        return answers.stream()
+                .map(this::buildAnswerDTO)
+                .collect(Collectors.toList());
     }
 
     private FormQuestion buildField(FormQuestionDTO dto, BookingForm form) {
@@ -114,6 +116,13 @@ public class BookingFormService {
                 .build();
 
         return formAnswerRepository.save(formAnswer);
+    }
+
+    private FieldAnswerDTO buildAnswerDTO(FormAnswer answer) {
+        return FieldAnswerDTO.builder()
+                .fieldId(answer.getId())
+                .fieldResponse(answer.getAnswer())
+                .build();
     }
 
     private FormQuestion findQuestionById(UUID questionId) {

@@ -24,8 +24,7 @@ public class GoogleCalendarSyncService {
 
     @Transactional
     public void syncSlot(Slot slot, User user) {
-
-        if (!googleOAuth2Service.isConnected(user.getId())) {
+        if (!googleOAuth2Service.isConnectedAndValid(user.getId())) {
             log.debug("Google calendar not connected for user {}, skipping sync", user.getId());
             return;
         }
@@ -70,7 +69,7 @@ public class GoogleCalendarSyncService {
             return;
         }
 
-        if (!googleOAuth2Service.isConnected(user.getId())) {
+        if (!googleOAuth2Service.isConnectedAndValid(user.getId())) {
             log.warn("Google calendar not connected for user {}, marking slot {} for deletion",
                     user.getId(), slot.getId());
             mapping.setSyncStatus(SyncStatus.PENDING_DELETION);

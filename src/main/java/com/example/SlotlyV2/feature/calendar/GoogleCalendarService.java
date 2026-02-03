@@ -94,6 +94,11 @@ public class GoogleCalendarService {
     }
 
     public List<Event> getUpcomingEvents(User user, OffsetDateTime start, OffsetDateTime end) {
+        if (!oAuth2Service.isConnectedAndValid(user.getId())) {
+            log.debug("Google calendar not connected for user {}, skipping sync", user.getId());
+            return List.of();
+        }
+
         try {
             Calendar service = getCalendarService(user);
 

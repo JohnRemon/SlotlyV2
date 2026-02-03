@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
@@ -14,6 +15,7 @@ import com.example.SlotlyV2.feature.user.User;
 import com.google.api.client.auth.oauth2.BearerToken;
 import com.google.api.client.auth.oauth2.ClientParametersAuthentication;
 import com.google.api.client.auth.oauth2.Credential;
+import com.google.api.client.auth.oauth2.TokenResponseException;
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeRequestUrl;
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeTokenRequest;
 import com.google.api.client.googleapis.auth.oauth2.GoogleRefreshTokenRequest;
@@ -46,7 +48,7 @@ public class GoogleOAuth2Service {
                 config.getRedirectUri(),
                 SCOPES)
                 .setAccessType("offline")
-                .setApprovalPrompt("force")
+                .set("prompt", "consent")
                 .setState(state)
                 .build();
     }
@@ -101,6 +103,20 @@ public class GoogleOAuth2Service {
 
             return updateTokens(token, tokenResponse);
 
+        } catch (TokenResponseException e) {
+            if (e.getDetails() != null && "invalid_grant".equals(e.getDetails().getError())) {
+                log.warn("Refresh token revoked or expired for user {}. Deleting stored token.",
+                        token.getUser().getId());
+
+                tokenRepository.delete(token);
+
+                throw new GoogleCalendarNotConnectedException(
+                        "Your Google Calendar connection has expired. Please reconnect your account.");
+            }
+
+            log.error("Token error for user {}: {}", token.getUser().getId(), e.getMessage());
+            throw new GoogleCalendarException("Failed to refresh access token: " + e.getMessage());
+
         } catch (IOException e) {
             log.error("Failed to refresh token for user {}", token.getUser().getId(), e);
             throw new GoogleCalendarException("Failed to refresh access token");
@@ -115,6 +131,28 @@ public class GoogleOAuth2Service {
 
     public boolean isConnected(Long userId) {
         return tokenRepository.findByUserId(userId).isPresent();
+    }
+
+    public boolean isConnectedAndValid(Long userId) {
+        Optional<GoogleCalendarToken> tokenOpt = tokenRepository.findByUserId(userId);
+        if (tokenOpt.isEmpty()) {
+            return false;
+        }
+
+        GoogleCalendarToken token = tokenOpt.get();
+
+        if (token.isExpired()) {
+            if (token.getRefreshToken() == null) {
+                return false;
+            }
+            try {
+                refreshAccessToken(token);
+            } catch (Exception e) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private GoogleCalendarToken saveTokens(User user, GoogleTokenResponse tokenResponse) {

@@ -20,6 +20,7 @@ public class FormQuestionsView {
     public FormQuestionsView(BookingForm bookingForm) {
         this.fields = bookingForm.getFields().stream()
                 .map(formField -> FormQuestionDTO.builder()
+                        .id(formField.getId())
                         .label(formField.getLabel())
                         .fieldType(formField.getFieldType())
                         .required(formField.isRequired())

@@ -3,6 +3,7 @@ package com.example.SlotlyV2.feature.booking_form;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Component;
 import com.example.SlotlyV2.common.exception.booking_form.AnswerAlreadyExistsException;
 import com.example.SlotlyV2.common.exception.booking_form.InvalidFormResponseException;
 import com.example.SlotlyV2.feature.booking_form.dto.FieldAnswerDTO;
+import com.example.SlotlyV2.feature.booking_form.enums.FieldType;
 import com.example.SlotlyV2.feature.slot.Slot;
 
 import lombok.RequiredArgsConstructor;
@@ -18,10 +20,13 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class BookingFormValidator {
 
+    private static final Pattern PHONE_PATTERN = Pattern.compile("^[+]?[0-9\\s\\-()]{7,20}$");
+
     public void validateAnswers(Slot slot, List<FormQuestion> fields, List<FieldAnswerDTO> answers) {
+        validateAnswersExist(slot);
         validateRequiredQuestions(fields, answers);
         validateQuestionsExist(fields, answers);
-        validateAnswersExist(slot);
+        validateFieldTypes(fields, answers);
     }
 
     private void validateRequiredQuestions(List<FormQuestion> fields, List<FieldAnswerDTO> answers) {
@@ -46,9 +51,31 @@ public class BookingFormValidator {
         }
     }
 
+    private void validateFieldTypes(List<FormQuestion> fields, List<FieldAnswerDTO> answers) {
+        Map<UUID, FormQuestion> fieldMap = fields.stream()
+                .collect(Collectors.toMap(FormQuestion::getId, f -> f));
+
+        for (FieldAnswerDTO answer : answers) {
+            FormQuestion field = fieldMap.get(answer.getFieldId());
+            if (field == null)
+                continue;
+
+            String response = answer.getFieldResponse();
+            if (response == null || response.trim().isEmpty())
+                continue;
+
+            if (field.getFieldType() == FieldType.PHONE) {
+                if (!PHONE_PATTERN.matcher(response.trim()).matches()) {
+                    throw new InvalidFormResponseException(
+                            "Invalid phone number format for field '" + field.getLabel() + "'");
+                }
+            }
+        }
+    }
+
     public void validateAnswersExist(Slot slot) {
-        if (slot.getFormAnswers() != null) {
-            throw new AnswerAlreadyExistsException("Cant add answers to already booked slot");
+        if (slot.getFormAnswers() != null && !slot.getFormAnswers().isEmpty()) {
+            throw new AnswerAlreadyExistsException("Cannot add answers to already booked slot");
         }
     }
 

@@ -2,6 +2,8 @@ package com.example.SlotlyV2.feature.booking_form.dto;
 
 import java.util.List;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -12,5 +14,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class SubmitFormAnswers {
+    @Valid
+    @NotEmpty(message = "answers are required")
     private List<FieldAnswerDTO> answers;
 }

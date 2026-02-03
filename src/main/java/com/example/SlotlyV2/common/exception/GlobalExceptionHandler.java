@@ -18,6 +18,8 @@ import com.example.SlotlyV2.common.exception.auth.PasswordMismatchException;
 import com.example.SlotlyV2.common.exception.auth.RateLimitExceededException;
 import com.example.SlotlyV2.common.exception.auth.TokenAlreadyExpiredException;
 import com.example.SlotlyV2.common.exception.auth.UnauthorizedAccessException;
+import com.example.SlotlyV2.common.exception.calendar.GoogleCalendarException;
+import com.example.SlotlyV2.common.exception.calendar.GoogleCalendarNotConnectedException;
 import com.example.SlotlyV2.common.exception.event.EventNotFoundException;
 import com.example.SlotlyV2.common.exception.event.InvalidEventException;
 import com.example.SlotlyV2.common.exception.event.MaxCapacityExceededException;
@@ -83,8 +85,11 @@ public class GlobalExceptionHandler {
             TokenAlreadyExpiredException.class,
             PasswordMismatchException.class,
             InvalidSlotException.class,
-            InvalidScheduleException.class
+            InvalidScheduleException.class,
+            GoogleCalendarNotConnectedException.class,
+            GoogleCalendarException.class
     })
+
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiResponse<Void> handleBadRequestExceptions(RuntimeException ex) {
         return new ApiResponse<>(ex.getMessage(), null);
