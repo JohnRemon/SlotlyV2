@@ -7,6 +7,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface FormAnswerRepository extends JpaRepository<FormAnswer, UUID> {
-    List<FormAnswer> findBySlotId(Long slotId);
+public interface FormAnswerRepository extends JpaRepository<FieldAnswer, UUID> {
+    List<FieldAnswer> findByBookingId(Long id);
 }

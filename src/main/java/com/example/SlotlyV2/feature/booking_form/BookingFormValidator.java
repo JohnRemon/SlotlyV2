@@ -8,11 +8,9 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
 
-import com.example.SlotlyV2.common.exception.booking_form.AnswerAlreadyExistsException;
 import com.example.SlotlyV2.common.exception.booking_form.InvalidFormResponseException;
 import com.example.SlotlyV2.feature.booking_form.dto.FieldAnswerDTO;
 import com.example.SlotlyV2.feature.booking_form.enums.FieldType;
-import com.example.SlotlyV2.feature.slot.Slot;
 
 import lombok.RequiredArgsConstructor;
 
@@ -22,8 +20,7 @@ public class BookingFormValidator {
 
     private static final Pattern PHONE_PATTERN = Pattern.compile("^[+]?[0-9\\s\\-()]{7,20}$");
 
-    public void validateAnswers(Slot slot, List<FormQuestion> fields, List<FieldAnswerDTO> answers) {
-        validateAnswersExist(slot);
+    public void validateAnswers(List<FormQuestion> fields, List<FieldAnswerDTO> answers) {
         validateRequiredQuestions(fields, answers);
         validateQuestionsExist(fields, answers);
         validateFieldTypes(fields, answers);
@@ -70,12 +67,6 @@ public class BookingFormValidator {
                             "Invalid phone number format for field '" + field.getLabel() + "'");
                 }
             }
-        }
-    }
-
-    public void validateAnswersExist(Slot slot) {
-        if (slot.getFormAnswers() != null && !slot.getFormAnswers().isEmpty()) {
-            throw new AnswerAlreadyExistsException("Cannot add answers to already booked slot");
         }
     }
 

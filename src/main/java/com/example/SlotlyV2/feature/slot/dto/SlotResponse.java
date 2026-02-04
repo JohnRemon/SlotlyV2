@@ -3,30 +3,23 @@ package com.example.SlotlyV2.feature.slot.dto;
 import java.time.OffsetDateTime;
 
 import com.example.SlotlyV2.common.util.TimeZoneConverter;
-import com.example.SlotlyV2.feature.event.dto.EventResponse;
 import com.example.SlotlyV2.feature.slot.Slot;
 
-import lombok.RequiredArgsConstructor;
-import lombok.Value;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@Value
-@RequiredArgsConstructor
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class SlotResponse {
-    private EventResponse eventResponse;
     private OffsetDateTime startTime;
     private OffsetDateTime endTime;
-    private String bookedByName;
-    private String bookedByEmail;
-    private OffsetDateTime bookedAt;
 
     public SlotResponse(Slot slot, String userTimezone, TimeZoneConverter timeZoneConverter) {
-        this.eventResponse = new EventResponse(slot.getEvent(), userTimezone, timeZoneConverter);
         this.startTime = timeZoneConverter.toUserTimezone(slot.getStartTime(), userTimezone);
         this.endTime = timeZoneConverter.toUserTimezone(slot.getEndTime(), userTimezone);
-        this.bookedByName = slot.getBookedByName();
-        this.bookedByEmail = slot.getBookedByEmail();
-        this.bookedAt = slot.getBookedAt() != null
-                ? timeZoneConverter.toUserTimezone(slot.getBookedAt(), userTimezone)
-                : null;
     }
 }

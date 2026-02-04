@@ -3,8 +3,8 @@ package com.example.SlotlyV2.feature.calendar;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
+import com.example.SlotlyV2.feature.booking.Booking;
 import com.example.SlotlyV2.feature.calendar.enums.SyncStatus;
-import com.example.SlotlyV2.feature.slot.Slot;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -30,15 +30,15 @@ import lombok.Setter;
 @Getter
 @Setter
 @Builder
-public class SlotGoogleEvent {
+public class BookingGoogleEvent {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @OneToOne
-    @JoinColumn(name = "slot_id", nullable = false)
-    private Slot slot;
+    @JoinColumn(name = "booking_id", nullable = false)
+    private Booking booking;
 
     @Column(nullable = false)
     private String googleEventId;

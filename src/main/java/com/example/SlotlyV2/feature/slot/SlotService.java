@@ -9,15 +9,10 @@ import com.example.SlotlyV2.common.exception.auth.UnauthorizedAccessException;
 import com.example.SlotlyV2.common.exception.event.EventNotFoundException;
 import com.example.SlotlyV2.common.exception.slot.SlotNotFoundException;
 import com.example.SlotlyV2.common.util.SlotUtils;
-import com.example.SlotlyV2.common.util.TimeZoneConverter;
-import com.example.SlotlyV2.feature.booking_form.BookingFormService;
 import com.example.SlotlyV2.feature.event.Event;
 import com.example.SlotlyV2.feature.event.EventRepository;
 import com.example.SlotlyV2.feature.event.strategy.RecurrenceStrategy;
 import com.example.SlotlyV2.feature.event.strategy.RecurrenceStrategyFactory;
-import com.example.SlotlyV2.feature.slot.dto.CancelBookingRequest;
-import com.example.SlotlyV2.feature.slot.dto.SlotRequest;
-import com.example.SlotlyV2.feature.user.User;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -31,11 +26,6 @@ public class SlotService {
     private final EventRepository eventRepository;
     private final SlotUtils slotUtils;
     private final RecurrenceStrategyFactory recurrenceStrategyFactory;
-    private final TimeZoneConverter timeZoneConverter;
-
-    private final SlotValidator slotValidator;
-    private final BookingEventPublisher bookingEventPublisher;
-    private final BookingFormService bookingFormService;
 
     @Transactional(rollbackOn = Exception.class)
     public void generateSlots(Event event) {
@@ -56,47 +46,12 @@ public class SlotService {
         slotRepository.saveAll(recurrenceStrategy.generateSlots(event));
     }
 
-    @Transactional(rollbackOn = Exception.class)
-    public Slot bookSlot(SlotRequest request) {
-        Slot slot = findSlot(request.getEventId(), request.getStartTime());
-
-        slotValidator.validateSlotForBooking(slot);
-
-        performBooking(request, slot);
-        Slot savedSlot = slotRepository.save(slot);
-
-        bookingEventPublisher.publishBookingEvents(savedSlot);
-
-        return savedSlot;
-    }
-
-    @Transactional(rollbackOn = Exception.class)
-    public Slot cancelBooking(CancelBookingRequest request) {
-        Slot slot = findSlot(request.getEventId(), request.getStartTime());
-
-        slotValidator.validateSlotForCancellation(slot, request.getAttendeeEmail());
-
-        String attendeeName = slot.getBookedByName();
-        String attendeeEmail = slot.getBookedByEmail();
-
-        performCancellation(slot);
-        Slot savedSlot = slotRepository.save(slot);
-
-        bookingEventPublisher.publishCancellationEvents(slot, attendeeName, attendeeEmail);
-
-        return savedSlot;
-    }
-
     public List<Slot> getSlots(Long eventId) {
         if (!eventRepository.existsById(eventId)) {
             throw new EventNotFoundException("Event Not Found");
         }
 
         return slotRepository.findByEventId(eventId);
-    }
-
-    public List<Slot> getBookedSlots(User user) {
-        return slotRepository.findByBookedByEmail(user.getEmail());
     }
 
     public List<Slot> getAvailableSlotsByShareableId(String shareableId) {
@@ -107,36 +62,13 @@ public class SlotService {
             throw new UnauthorizedAccessException("Event is private");
         }
 
-        return slotRepository.findByEventAndBookedByEmailIsNullAndBookedByNameIsNull(event);
+        return slotRepository.findByEvent(event).stream()
+                .filter(slot -> slot.isAvailable())
+                .toList();
     }
 
     public Slot getSlotById(Long slotId) {
         return slotRepository.findById(slotId)
                 .orElseThrow(() -> new SlotNotFoundException("Slot not found with ID: " + slotId));
-    }
-
-    private void performBooking(SlotRequest request, Slot slot) {
-        slot.setBookedByName(request.getAttendeeName());
-        slot.setBookedByEmail(request.getAttendeeEmail());
-        slot.setBookedAt(OffsetDateTime.now());
-
-        if (request.getFormSubmission() != null) {
-            bookingFormService.submitAnswers(slot, request.getFormSubmission());
-        }
-    }
-
-    private void performCancellation(Slot slot) {
-        slot.setBookedByEmail(null);
-        slot.setBookedByName(null);
-    }
-
-    private Slot findSlot(Long eventId, OffsetDateTime startTime) {
-        Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new EventNotFoundException("Event Not Found"));
-
-        OffsetDateTime utcStartTime = timeZoneConverter.toUtc(startTime, event.getTimeZone());
-
-        return slotRepository.findByEventIdAndStartTime(eventId, utcStartTime)
-                .orElseThrow(() -> new SlotNotFoundException("Slot Not Found"));
     }
 }

@@ -29,7 +29,7 @@ public class FormQuestionDTO {
     @Builder.Default
     private boolean required = false;
 
-    @Min(value = 0, message = "display order must be greater than 0")
+    @Min(value = 0, message = "display order must be non-negative")
     @Builder.Default
     private Integer displayOrder = 0;
 

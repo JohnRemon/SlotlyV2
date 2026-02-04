@@ -2,7 +2,7 @@ package com.example.SlotlyV2.feature.booking_form;
 
 import java.util.UUID;
 
-import com.example.SlotlyV2.feature.slot.Slot;
+import com.example.SlotlyV2.feature.booking.Booking;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -25,14 +25,14 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class FormAnswer {
+public class FieldAnswer {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @ManyToOne
-    @JoinColumn(name = "slot_id", nullable = false)
-    private Slot slot;
+    @JoinColumn(name = "booking_id", nullable = false)
+    private Booking booking;
 
     @ManyToOne
     @JoinColumn(name = "form_field_id", nullable = false)

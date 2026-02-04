@@ -11,5 +11,5 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class CalendarSyncDataDTO {
     private Long userId;
-    private Long slotId;
+    private Long bookingId;
 }

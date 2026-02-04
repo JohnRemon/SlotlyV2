@@ -10,13 +10,16 @@ import com.example.SlotlyV2.common.exception.event.InvalidBookingException;
 import com.example.SlotlyV2.common.exception.event.MaxCapacityExceededException;
 import com.example.SlotlyV2.common.exception.slot.InvalidSlotException;
 import com.example.SlotlyV2.common.exception.slot.SlotAlreadyBookedException;
+import com.example.SlotlyV2.feature.booking.Booking;
+import com.example.SlotlyV2.feature.booking.BookingRepository;
+import com.example.SlotlyV2.feature.booking.BookingStatus;
 
 import lombok.RequiredArgsConstructor;
 
 @Component
 @RequiredArgsConstructor
 public class SlotValidator {
-    private final SlotRepository slotRepository;
+    private final BookingRepository bookingRepository;
 
     public void validateSlotForBooking(Slot slot) {
         validateSlotIsAvailable(slot);
@@ -26,18 +29,17 @@ public class SlotValidator {
         validateMaximumAdvanceDays(slot);
     }
 
-    public void validateSlotForCancellation(Slot slot, String attendeeEmail) {
-        validateSlotIsNotInPast(slot);
-        validateSlotIsBooked(slot);
-        validateCancellationsAllowed(slot);
-        validateAttendeeEmail(slot, attendeeEmail);
+    public void validateSlotForCancellation(Booking booking, String attendeeEmail) {
+        validateSlotIsNotInPast(booking.getSlot());
+        validateSlotIsBooked(booking.getSlot());
+        validateCancellationsAllowed(booking.getSlot());
+        validateAttendeeEmail(booking, attendeeEmail);
     }
 
     private void validateEventMaxCapacity(Slot slot) {
         Integer maxCapacity = slot.getEvent().getAvailabilityRules().getMaxCapacity();
         if (maxCapacity != null) {
-            Integer currentCapacity = slotRepository
-                    .countByEventAndBookedByEmailIsNotNullAndBookedByNameIsNotNull(slot.getEvent());
+            Integer currentCapacity = bookingRepository.countByEventAndStatus(slot.getEvent(), BookingStatus.CONFIRMED);
             if (currentCapacity >= maxCapacity) {
                 throw new MaxCapacityExceededException("This event has reached maximum capacity");
             }
@@ -62,8 +64,8 @@ public class SlotValidator {
         }
     }
 
-    private void validateAttendeeEmail(Slot slot, String attendeeEmail) {
-        if (!slot.getBookedByEmail().equals(attendeeEmail)) {
+    private void validateAttendeeEmail(Booking booking, String attendeeEmail) {
+        if (!booking.getAttendeeEmail().equals(attendeeEmail)) {
             throw new UnauthorizedAccessException("This email is not associated with the booked slot");
         }
     }

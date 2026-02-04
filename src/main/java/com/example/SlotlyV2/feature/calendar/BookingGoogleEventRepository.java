@@ -13,14 +13,14 @@ import com.example.SlotlyV2.feature.calendar.enums.SyncStatus;
 import jakarta.transaction.Transactional;
 
 @Repository
-public interface SlotGoogleEventRepository extends JpaRepository<SlotGoogleEvent, UUID> {
-    Optional<SlotGoogleEvent> findBySlotId(Long id);
+public interface BookingGoogleEventRepository extends JpaRepository<BookingGoogleEvent, UUID> {
+    Optional<BookingGoogleEvent> findByBookingId(Long id);
 
-    Optional<SlotGoogleEvent> findByGoogleEventId(String id);
+    Optional<BookingGoogleEvent> findByGoogleEventId(String id);
 
-    List<SlotGoogleEvent> findBySyncStatus(SyncStatus status);
+    List<BookingGoogleEvent> findBySyncStatus(SyncStatus status);
 
     @Transactional
     @Modifying
-    void deleteBySlotId(Long id);
+    void deleteByBookingId(Long id);
 }

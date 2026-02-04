@@ -10,9 +10,9 @@ import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import com.example.SlotlyV2.common.config.EmailConfig;
+import com.example.SlotlyV2.feature.booking.dto.BookingCancelledEmailDTO;
 import com.example.SlotlyV2.feature.email.dto.BookingEmailDTO;
 import com.example.SlotlyV2.feature.email.dto.EventCancelledEmailDTO;
-import com.example.SlotlyV2.feature.slot.dto.SlotCancelledEmailDTO;
 import com.example.SlotlyV2.feature.user.dto.PasswordResetDTO;
 import com.example.SlotlyV2.feature.user.dto.UserEmailVerificationDTO;
 import com.resend.Resend;
@@ -36,7 +36,7 @@ public class EmailService {
     @Async("emailTaskExecutor")
     public void sendBookingConfirmation(BookingEmailDTO data) {
         try {
-            log.info("Sending booking confirmation to: {}", data.getToEmail());
+            log.info("Sending booking confirmation to: {}", data.getAttendeeName());
 
             Map<String, Object> fields = new HashMap<>();
             fields.put("hostName", data.getHostDisplayName());
@@ -47,18 +47,16 @@ public class EmailService {
             fields.put("endTime", data.getEndTime());
             fields.put("date", data.getStartTime());
             fields.put("timeZone", data.getTimeZone());
-            fields.put("calendarLink", appBaseUrl + "/api/v1/calendar/" + data.getSlotId());
 
             String htmlContent = renderTemplate("email/booking-confirmation", fields);
 
-            sendEmail(data.getToEmail(),
+            sendEmail(data.getAttendeeEmail(),
                     "Booking Confirmed: " + data.getEventName(),
                     htmlContent);
 
-            log.info("Booking confirmation sent successfully to: {}", data.getToEmail());
+            log.info("Booking confirmation sent successfully to: {}", data.getAttendeeEmail());
         } catch (Exception e) {
-            log.error("Failed to send booking confirmation for slot {}: {}",
-                    data.getSlotId(), e.getMessage(), e);
+            log.error("Failed to send booking confirmation: {}", e.getMessage(), e);
         }
     }
 
@@ -84,10 +82,8 @@ public class EmailService {
                     "New Booking: " + data.getAttendeeName(),
                     htmlContent);
 
-            log.info("Host notification sent successfully for slot {}", data.getSlotId());
         } catch (Exception e) {
-            log.error("Failed to send host notification for slot {}: {}",
-                    data.getSlotId(), e.getMessage(), e);
+            log.error("Failed to send host notification email: {}", e.getMessage(), e);
         }
 
     }
@@ -138,13 +134,13 @@ public class EmailService {
     }
 
     @Async("emailTaskExecutor")
-    public void sendCancellationConfirmation(SlotCancelledEmailDTO data) {
-        log.info("Sending cancellation confirmation to: {}", data.getBookedByEmail());
+    public void sendCancellationConfirmation(BookingCancelledEmailDTO data) {
+        log.info("Sending cancellation confirmation to: {}", data.getAttendeeEmail());
 
         try {
             Map<String, Object> fields = new HashMap<>();
             fields.put("hostName", data.getHostName());
-            fields.put("attendeeName", data.getBookedByName());
+            fields.put("attendeeName", data.getAttendeeName());
             fields.put("eventName", data.getEventName());
             fields.put("startTime", data.getSlotStartTime());
             fields.put("endTime", data.getSlotEndTime());
@@ -152,26 +148,25 @@ public class EmailService {
             String htmlContent = renderTemplate("email/cancellation-confirmation", fields);
 
             sendEmail(
-                    data.getBookedByEmail(),
+                    data.getAttendeeEmail(),
                     "Booking Cancelled: " + data.getEventName(),
                     htmlContent);
 
-            log.info("Cancellation confirmation sent successfully to: {}", data.getBookedByEmail());
+            log.info("Cancellation confirmation sent successfully to: {}", data.getAttendeeEmail());
         } catch (Exception e) {
-            log.error("Failed to send cancellation confirmation for slot {}: {}",
-                    data.getSlotId(), e.getMessage(), e);
+            log.error("Failed to send cancellation confirmation emails: {}", e.getMessage(), e);
         }
     }
 
     @Async("emailTaskExecutor")
-    public void sendHostCancellationNotification(SlotCancelledEmailDTO data) {
+    public void sendHostCancellationNotification(BookingCancelledEmailDTO data) {
         log.info("Sending cancellation notification to: {}", data.getHostEmail());
 
         try {
             Map<String, Object> fields = new HashMap<>();
             fields.put("hostName", data.getHostName());
-            fields.put("attendeeName", data.getBookedByName());
-            fields.put("attendeeEmail", data.getBookedByEmail());
+            fields.put("attendeeName", data.getAttendeeName());
+            fields.put("attendeeEmail", data.getAttendeeEmail());
             fields.put("eventName", data.getEventName());
             fields.put("startTime", data.getSlotStartTime());
             fields.put("endTime", data.getSlotEndTime());
@@ -180,13 +175,11 @@ public class EmailService {
 
             sendEmail(
                     data.getHostEmail(),
-                    "Booking Cancelled: " + data.getBookedByName(),
+                    "Booking Cancelled: " + data.getAttendeeName(),
                     htmlContent);
 
-            log.info("Host cancellation notification sent successfully for slot {}", data.getSlotId());
         } catch (Exception e) {
-            log.error("Failed to send host cancellation notification for slot {}: {}",
-                    data.getSlotId(), e.getMessage(), e);
+            log.error("Failed to send host cancellation notification email: {}", e.getMessage(), e);
         }
     }
 

@@ -2,6 +2,7 @@ package com.example.SlotlyV2.common.util;
 
 import org.springframework.stereotype.Component;
 
+import com.example.SlotlyV2.feature.booking.Booking;
 import com.example.SlotlyV2.feature.event.Event;
 import com.example.SlotlyV2.feature.slot.Slot;
 import com.example.SlotlyV2.feature.user.User;
@@ -30,5 +31,9 @@ public class NameUtils {
 
     public String getUserDisplayName(Slot slot) {
         return getUserDisplayName(slot.getEvent().getHost());
+    }
+
+    public String getUserDisplayName(Booking booking) {
+        return getUserDisplayName(booking.getSlot().getEvent().getHost());
     }
 }

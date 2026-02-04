@@ -18,6 +18,7 @@ import com.example.SlotlyV2.common.exception.auth.PasswordMismatchException;
 import com.example.SlotlyV2.common.exception.auth.RateLimitExceededException;
 import com.example.SlotlyV2.common.exception.auth.TokenAlreadyExpiredException;
 import com.example.SlotlyV2.common.exception.auth.UnauthorizedAccessException;
+import com.example.SlotlyV2.common.exception.booking.BookingNotFoundException;
 import com.example.SlotlyV2.common.exception.calendar.GoogleCalendarException;
 import com.example.SlotlyV2.common.exception.calendar.GoogleCalendarNotConnectedException;
 import com.example.SlotlyV2.common.exception.event.EventNotFoundException;
@@ -58,7 +59,8 @@ public class GlobalExceptionHandler {
             UserNotFoundException.class,
             EventNotFoundException.class,
             SlotNotFoundException.class,
-            ScheduleNotFoundException.class
+            ScheduleNotFoundException.class,
+            BookingNotFoundException.class
     })
 
     @ResponseStatus(HttpStatus.NOT_FOUND)

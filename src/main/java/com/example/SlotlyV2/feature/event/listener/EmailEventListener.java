@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
+import com.example.SlotlyV2.feature.booking.dto.BookingCancelledEmailDTO;
 import com.example.SlotlyV2.feature.email.EmailService;
 import com.example.SlotlyV2.feature.email.dto.BookingEmailDTO;
 import com.example.SlotlyV2.feature.email.dto.EventCancelledEmailDTO;
@@ -14,7 +15,6 @@ import com.example.SlotlyV2.feature.email.event.EventCancelledEvent;
 import com.example.SlotlyV2.feature.email.event.PasswordResetEvent;
 import com.example.SlotlyV2.feature.email.event.SlotBookedEvent;
 import com.example.SlotlyV2.feature.email.event.SlotCancelledEvent;
-import com.example.SlotlyV2.feature.slot.dto.SlotCancelledEmailDTO;
 import com.example.SlotlyV2.feature.user.dto.PasswordResetDTO;
 import com.example.SlotlyV2.feature.user.dto.UserEmailVerificationDTO;
 
@@ -32,30 +32,24 @@ public class EmailEventListener {
     public void handleSlotBooked(SlotBookedEvent event) {
         BookingEmailDTO data = event.getBookingEmailDTO();
 
-        log.debug("Received SlotBookedEvent for slot: {}", data.getSlotId());
-
         try {
             emailService.sendBookingConfirmation(data);
             emailService.sendHostNotification(data);
-            log.info("Emails sent successfully for slot: {}", data.getSlotId());
         } catch (Exception e) {
-            log.error("Failed to send emails for slot {}: {}", data.getSlotId(), e.getMessage(), e);
+            log.error("Failed to send emails: {}", e.getMessage(), e);
         }
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Async("emailTaskExecutor")
     public void handleSlotCancelled(SlotCancelledEvent event) {
-        SlotCancelledEmailDTO data = event.getSlotCancelledEmailDTO();
-
-        log.debug("Received SlotCancelledEvent for slot: {}", data.getSlotId());
+        BookingCancelledEmailDTO data = event.getSlotCancelledEmailDTO();
 
         try {
             emailService.sendCancellationConfirmation(data);
             emailService.sendHostCancellationNotification(data);
-            log.info("Cancellation emails sent successfully for slot: {}", data.getSlotId());
         } catch (Exception e) {
-            log.error("Failed to send cancellation emails for slot {}: {}", data.getSlotId(), e.getMessage(), e);
+            log.error("Failed to send cancellation emails: {}", e.getMessage(), e);
         }
     }
 

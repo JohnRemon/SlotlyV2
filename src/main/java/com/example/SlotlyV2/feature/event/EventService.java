@@ -13,6 +13,8 @@ import org.springframework.stereotype.Service;
 import com.example.SlotlyV2.common.exception.auth.UnauthorizedAccessException;
 import com.example.SlotlyV2.common.exception.event.EventNotFoundException;
 import com.example.SlotlyV2.common.util.TimeZoneConverter;
+import com.example.SlotlyV2.feature.booking.BookingRepository;
+import com.example.SlotlyV2.feature.booking.BookingStatus;
 import com.example.SlotlyV2.feature.email.dto.EventCancelledEmailDTO;
 import com.example.SlotlyV2.feature.email.event.EventCancelledEvent;
 import com.example.SlotlyV2.feature.event.dto.EventRequest;
@@ -32,6 +34,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class EventService {
     private final EventRepository eventRepository;
+    private final BookingRepository bookingRepository;
     private final SlotRepository slotRepository;
     private final SlotService slotService;
     private final UserService userService;
@@ -116,7 +119,7 @@ public class EventService {
                 event.getId(),
                 event.getEventName(),
                 event.getSlots().stream()
-                        .map(slot -> slot.getBookedByEmail())
+                        .map(slot -> slot.getBooking().getAttendeeEmail())
                         .toList());
 
         eventRepository.delete(event);
@@ -138,7 +141,7 @@ public class EventService {
     }
 
     private void validateNewCapacity(EventRequest request, Event event) {
-        Integer booked = slotRepository.countByEventAndBookedByEmailIsNotNullAndBookedByNameIsNotNull(event);
+        Integer booked = bookingRepository.countByEventAndStatus(event, BookingStatus.CONFIRMED);
         eventValidator.validateNewCapacity(request.getAvailabilityRulesDTO().getMaxCapacity(), booked);
     }
 
@@ -151,9 +154,12 @@ public class EventService {
     }
 
     private void deleteUnbookedSlots(Event event, OffsetDateTime effectiveStart) {
-        List<Slot> unbookedSlots = slotRepository
-                .findByEventAndBookedByEmailIsNullAndBookedByNameIsNullAndStartTimeAfter(
-                        event, effectiveStart);
+        List<Slot> slots = slotRepository.findByEvent(event);
+
+        List<Slot> unbookedSlots = slots.stream()
+                .filter(slot -> slot.getStartTime().isAfter(effectiveStart))
+                .filter(slot -> slot.getBooking() == null || !slot.getBooking().isActive())
+                .toList();
 
         slotRepository.deleteAll(unbookedSlots);
     }

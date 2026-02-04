@@ -1,4 +1,4 @@
-package com.example.SlotlyV2.feature.email.dto;
+package com.example.SlotlyV2.feature.booking.dto;
 
 import java.time.OffsetDateTime;
 
@@ -11,13 +11,12 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class BookingEmailDTO {
-    private String hostDisplayName;
-    private String hostEmail;
+public class BookingCancelledEmailDTO {
+    private OffsetDateTime slotStartTime;
+    private OffsetDateTime slotEndTime;
     private String attendeeName;
     private String attendeeEmail;
     private String eventName;
-    private OffsetDateTime startTime;
-    private OffsetDateTime endTime;
-    private String timeZone;
+    private String hostName;
+    private String hostEmail;
 }

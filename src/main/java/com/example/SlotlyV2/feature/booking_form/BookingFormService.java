@@ -1,7 +1,6 @@
 package com.example.SlotlyV2.feature.booking_form;
 
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -10,15 +9,11 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.SlotlyV2.common.exception.auth.UnauthorizedAccessException;
 import com.example.SlotlyV2.common.exception.booking_form.BookingFormAlreadyExists;
 import com.example.SlotlyV2.common.exception.booking_form.BookingFormNotFoundException;
-import com.example.SlotlyV2.common.exception.booking_form.QuestionNotFoundException;
 import com.example.SlotlyV2.common.exception.event.EventNotFoundException;
-import com.example.SlotlyV2.feature.booking_form.dto.FieldAnswerDTO;
 import com.example.SlotlyV2.feature.booking_form.dto.FormQuestionDTO;
 import com.example.SlotlyV2.feature.booking_form.dto.FormRequest;
-import com.example.SlotlyV2.feature.booking_form.dto.SubmitFormAnswers;
 import com.example.SlotlyV2.feature.event.Event;
 import com.example.SlotlyV2.feature.event.EventRepository;
-import com.example.SlotlyV2.feature.slot.Slot;
 import com.example.SlotlyV2.feature.user.UserService;
 
 import lombok.RequiredArgsConstructor;
@@ -28,9 +23,6 @@ import lombok.RequiredArgsConstructor;
 public class BookingFormService {
     private final BookingFormRepository bookingFormRepository;
     private final EventRepository eventRepository;
-    private final FormAnswerRepository formAnswerRepository;
-    private final FormQuestionRepository formQuestionRepository;
-    private final BookingFormValidator bookingFormValidator;
     private final UserService userService;
 
     @Transactional
@@ -81,23 +73,6 @@ public class BookingFormService {
                 .orElseThrow(() -> new BookingFormNotFoundException("Booking form not found"));
     }
 
-    @Transactional
-    public List<FormAnswer> submitAnswers(Slot slot, SubmitFormAnswers request) {
-        bookingFormValidator.validateAnswers(slot, slot.getEvent().getBookingForm().getFields(), request.getAnswers());
-
-        return request.getAnswers().stream()
-                .map(q -> buildAnswer(q, slot))
-                .collect(Collectors.toList());
-    }
-
-    public List<FieldAnswerDTO> getAnswers(Long slotId) {
-        List<FormAnswer> answers = formAnswerRepository.findBySlotId(slotId);
-
-        return answers.stream()
-                .map(this::buildAnswerDTO)
-                .collect(Collectors.toList());
-    }
-
     private FormQuestion buildField(FormQuestionDTO dto, BookingForm form) {
         return FormQuestion.builder()
                 .bookingForm(form)
@@ -106,28 +81,6 @@ public class BookingFormService {
                 .required(dto.isRequired())
                 .displayOrder(dto.getDisplayOrder())
                 .build();
-    }
-
-    private FormAnswer buildAnswer(FieldAnswerDTO dto, Slot slot) {
-        FormAnswer formAnswer = FormAnswer.builder()
-                .slot(slot)
-                .formField(findQuestionById(dto.getFieldId()))
-                .answer(dto.getFieldResponse())
-                .build();
-
-        return formAnswerRepository.save(formAnswer);
-    }
-
-    private FieldAnswerDTO buildAnswerDTO(FormAnswer answer) {
-        return FieldAnswerDTO.builder()
-                .fieldId(answer.getId())
-                .fieldResponse(answer.getAnswer())
-                .build();
-    }
-
-    private FormQuestion findQuestionById(UUID questionId) {
-        return formQuestionRepository.findById(questionId)
-                .orElseThrow(() -> new QuestionNotFoundException("Field not found"));
     }
 
     private void validateHost(Event event) {

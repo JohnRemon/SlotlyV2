@@ -5,6 +5,6 @@ import com.example.SlotlyV2.feature.calendar.dto.CalendarSyncDataDTO;
 import lombok.Data;
 
 @Data
-public class SlotBookedSyncEvent {
+public class BookingSyncEvent {
     private final CalendarSyncDataDTO calendarSyncDataDTO;
 }

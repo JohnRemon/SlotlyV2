@@ -1,7 +1,5 @@
 package com.example.SlotlyV2.feature.booking_form;
 
-import java.util.List;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -13,8 +11,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.SlotlyV2.common.dto.ApiResponse;
-import com.example.SlotlyV2.feature.booking_form.dto.FieldAnswerDTO;
-import com.example.SlotlyV2.feature.booking_form.dto.FormAnswersView;
 import com.example.SlotlyV2.feature.booking_form.dto.FormQuestionsView;
 import com.example.SlotlyV2.feature.booking_form.dto.FormRequest;
 
@@ -48,11 +44,5 @@ public class BookingFormController {
     public ApiResponse<FormQuestionsView> getBookingForm(@PathVariable Long eventId) {
         BookingForm bookingForm = bookingFormService.getForm(eventId);
         return new ApiResponse<>("Booking form retrieved successfully", new FormQuestionsView(bookingForm));
-    }
-
-    @GetMapping("/{eventId}/booking-form/{slotId}")
-    public ApiResponse<FormAnswersView> getFormAnswers(@PathVariable Long slotId) {
-        List<FieldAnswerDTO> answers = bookingFormService.getAnswers(slotId);
-        return new ApiResponse<>("answers fetched successfully", new FormAnswersView(answers));
     }
 }
