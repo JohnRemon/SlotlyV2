@@ -1,0 +1,35 @@
+# Maven/Java build
+HELP.md
+target/
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# IntelliJ IDEA
+*.iws
+*.iml
+*.ipr
+
+# Eclipse/STS
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+# NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+# Build
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# Application specific
+src/main/resources/credentials.json
+tokens/
