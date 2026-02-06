@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import com.example.SlotlyV2.common.exception.auth.UnauthorizedAccessException;
 import com.example.SlotlyV2.common.exception.user.UserAlreadyExistsException;
 import com.example.SlotlyV2.common.exception.user.UsernameAlreadyExistsException;
+import com.example.SlotlyV2.common.util.NameUtils;
 import com.example.SlotlyV2.feature.auth.VerificationTokenService;
 import com.example.SlotlyV2.feature.email.event.EmailVerificationEvent;
 import com.example.SlotlyV2.feature.schedule.ScheduleService;
@@ -28,6 +29,7 @@ public class UserService {
     private final ApplicationEventPublisher eventPublisher;
     private final VerificationTokenService verificationTokenService;
     private final ScheduleService scheduleService;
+    private final NameUtils nameUtils;
 
     @Transactional(rollbackOn = Exception.class)
     public User registerUser(RegisterRequest request) {
@@ -88,7 +90,7 @@ public class UserService {
         String token = verificationTokenService.generateEmailVerificationToken(user);
 
         UserEmailVerificationDTO data = new UserEmailVerificationDTO(
-                user.getDisplayName(),
+                nameUtils.getUserFullName(user),
                 user.getEmail(),
                 token);
 
@@ -98,7 +100,6 @@ public class UserService {
     private User buildAndSaveUser(RegisterRequest request) {
         User user = User.builder()
                 .email(request.getEmail())
-                .displayName(request.getDisplayName())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())

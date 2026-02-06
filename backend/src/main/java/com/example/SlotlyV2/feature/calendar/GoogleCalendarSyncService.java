@@ -4,6 +4,7 @@ import java.time.OffsetDateTime;
 
 import org.springframework.stereotype.Service;
 
+import com.example.SlotlyV2.common.util.NameUtils;
 import com.example.SlotlyV2.feature.booking.Booking;
 import com.example.SlotlyV2.feature.calendar.dto.GoogleEventRequest;
 import com.example.SlotlyV2.feature.calendar.enums.SyncStatus;
@@ -21,6 +22,7 @@ public class GoogleCalendarSyncService {
     private final GoogleCalendarService googleCalendarService;
     private final GoogleOAuth2Service googleOAuth2Service;
     private final BookingGoogleEventRepository bookingGoogleEventRepository;
+    private final NameUtils nameUtils;
 
     @Transactional
     public void syncSlot(Booking booking, User user) {
@@ -93,7 +95,7 @@ public class GoogleCalendarSyncService {
         String summary = new StringBuilder()
                 .append(booking.getEvent().getEventName())
                 .append(" with ")
-                .append(booking.getEvent().getHost().getDisplayName())
+                .append(nameUtils.getUserFullName(booking))
                 .toString();
 
         String description = new StringBuilder()

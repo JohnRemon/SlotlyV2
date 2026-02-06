@@ -13,7 +13,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class NameUtils {
 
-    public String getUserDisplayName(User user) {
+    public String getUserFullName(User user) {
         String displayName = "";
         if (user.getFirstName() != null) {
             displayName += user.getFirstName();
@@ -25,15 +25,15 @@ public class NameUtils {
         return displayName.trim();
     }
 
-    public String getUserDisplayName(Event event) {
-        return getUserDisplayName(event.getHost());
+    public String getUserFullName(Event event) {
+        return getUserFullName(event.getHost());
     }
 
-    public String getUserDisplayName(Slot slot) {
-        return getUserDisplayName(slot.getEvent().getHost());
+    public String getUserFullName(Slot slot) {
+        return getUserFullName(slot.getEvent().getHost());
     }
 
-    public String getUserDisplayName(Booking booking) {
-        return getUserDisplayName(booking.getSlot().getEvent().getHost());
+    public String getUserFullName(Booking booking) {
+        return getUserFullName(booking.getSlot().getEvent().getHost());
     }
 }

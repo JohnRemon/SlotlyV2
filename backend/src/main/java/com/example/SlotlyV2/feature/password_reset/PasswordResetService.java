@@ -5,6 +5,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.example.SlotlyV2.common.exception.auth.PasswordMismatchException;
+import com.example.SlotlyV2.common.util.NameUtils;
 import com.example.SlotlyV2.feature.auth.VerificationTokenService;
 import com.example.SlotlyV2.feature.email.event.PasswordResetEvent;
 import com.example.SlotlyV2.feature.user.User;
@@ -25,6 +26,7 @@ public class PasswordResetService {
     private final VerificationTokenService verificationTokenService;
     private final PasswordEncoder passwordEncoder;
     private final ApplicationEventPublisher eventPublisher;
+    private final NameUtils nameUtils;
 
     public void resetPasswordRequest(PasswordResetRequest request) {
         // Find user by email (return null if not found)
@@ -42,7 +44,7 @@ public class PasswordResetService {
 
         // generate needed password reset data
         PasswordResetDTO data = new PasswordResetDTO(
-                user.getDisplayName(),
+                nameUtils.getUserFullName(user),
                 user.getEmail(),
                 token);
 

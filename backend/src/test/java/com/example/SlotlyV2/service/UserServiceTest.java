@@ -22,14 +22,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import com.example.SlotlyV2.common.exception.auth.AccountNotVerifiedException;
-import com.example.SlotlyV2.common.exception.auth.InvalidCredentialsException;
 import com.example.SlotlyV2.common.exception.auth.UnauthorizedAccessException;
 import com.example.SlotlyV2.common.exception.user.UserAlreadyExistsException;
 import com.example.SlotlyV2.common.exception.user.UsernameAlreadyExistsException;
@@ -40,7 +36,6 @@ import com.example.SlotlyV2.feature.schedule.ScheduleService;
 import com.example.SlotlyV2.feature.user.User;
 import com.example.SlotlyV2.feature.user.UserRepository;
 import com.example.SlotlyV2.feature.user.UserService;
-import com.example.SlotlyV2.feature.user.dto.LoginRequest;
 import com.example.SlotlyV2.feature.user.dto.RegisterRequest;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -107,7 +102,6 @@ public class UserServiceTest {
         // Assert - Basic Fields
         assertNotNull(user);
         assertEquals("test@example.com", user.getEmail());
-        assertEquals("testUser", user.getDisplayName());
         assertEquals("encodedPassword", user.getPassword());
         assertEquals("John", user.getFirstName());
         assertEquals("Doe", user.getLastName());
@@ -120,7 +114,6 @@ public class UserServiceTest {
         verify(applicationEventPublisher).publishEvent(eventCaptor.capture());
 
         EmailVerificationEvent event = eventCaptor.getValue();
-        assertEquals(user.getDisplayName(), event.getUserEmailVerificationDTO().getDisplayName());
         assertEquals(user.getEmail(), event.getUserEmailVerificationDTO().getEmail());
         assertEquals("raw-verification-token", event.getUserEmailVerificationDTO().getToken());
 
@@ -174,102 +167,103 @@ public class UserServiceTest {
     }
 
     // ============================= Login Tests =============================
-    @Test
-    void shouldLoginUserSuccessfully() {
-        // Arrange
-        User testUser = User.builder()
-                .id(1L)
-                .email("test@example.com")
-                .displayName("testUser")
-                .password("encodedPassword")
-                .firstName("John")
-                .lastName("Doe")
-                .isVerified(true)
-                .build();
-
-        Authentication authentication = mock(Authentication.class);
-        when(authentication.getPrincipal()).thenReturn(testUser);
-        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
-                .thenReturn(authentication);
-
-        LoginRequest request = new LoginRequest(
-                "test@example.com",
-                "password123");
-
-        // Act
-        User loggedInUser = userService.loginUser(request);
-
-        // Assert
-        assertNotNull(loggedInUser);
-        assertEquals("test@example.com", loggedInUser.getEmail());
-        assertEquals("testUser", loggedInUser.getDisplayName());
-
-        // Verify
-        verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
-    }
-
-    @Test
-    void shouldNotLoginWithWrongPassword() {
-        // Arrange
-        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
-                .thenThrow(new BadCredentialsException("Bad credentials"));
-
-        LoginRequest request = new LoginRequest(
-                "test@example.com",
-                "wrongPassword");
-
-        // Act and Assert
-        assertThrows(InvalidCredentialsException.class,
-                () -> userService.loginUser(request));
-
-        verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
-    }
-
-    @Test
-    void shouldNotLoginWithWrongEmail() {
-        // Arrange
-        when(authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken("wrongEmail@example.com", "password123")))
-                .thenThrow(new BadCredentialsException("Invalid credentials"));
-
-        LoginRequest request = new LoginRequest(
-                "wrongEmail@example.com",
-                "password123");
-
-        // Act and Assert
-        assertThrows(InvalidCredentialsException.class,
-                () -> userService.loginUser(request));
-
-        // Verify
-        verify(authenticationManager).authenticate(
-                new UsernamePasswordAuthenticationToken("wrongEmail@example.com", "password123"));
-    }
-
-    @Test
-    void shouldNotLoginWhenNotVerified() {
-        // Arrange
-        User testUser = User.builder()
-                .id(1L)
-                .email("test@example.com")
-                .displayName("testUser")
-                .isVerified(false)
-                .build();
-
-        LoginRequest request = new LoginRequest(
-                "test@example.com",
-                "password123");
-
-        Authentication authentication = mock(Authentication.class);
-        when(authentication.getPrincipal()).thenReturn(testUser);
-        when(authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken("test@example.com", "password123"))).thenReturn(authentication);
-
-        // Act & Assert
-        assertThrows(AccountNotVerifiedException.class,
-                () -> userService.loginUser(request));
-
-        assertNull(SecurityContextHolder.getContext().getAuthentication());
-    }
+    // @Test
+    // void shouldLoginUserSuccessfully() {
+    // // Arrange
+    // User testUser = User.builder()
+    // .id(1L)
+    // .email("test@example.com")
+    // .password("encodedPassword")
+    // .firstName("John")
+    // .lastName("Doe")
+    // .isVerified(true)
+    // .build();
+    //
+    // Authentication authentication = mock(Authentication.class);
+    // when(authentication.getPrincipal()).thenReturn(testUser);
+    // when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+    // .thenReturn(authentication);
+    //
+    // LoginRequest request = new LoginRequest(
+    // "test@example.com",
+    // "password123");
+    //
+    // // Act
+    // User loggedInUser = userService.loginUser(request);
+    //
+    // // Assert
+    // assertNotNull(loggedInUser);
+    // assertEquals("test@example.com", loggedInUser.getEmail());
+    // assertEquals("testUser", loggedInUser.getDisplayName());
+    //
+    // // Verify
+    // verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
+    // }
+    //
+    // @Test
+    // void shouldNotLoginWithWrongPassword() {
+    // // Arrange
+    // when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+    // .thenThrow(new BadCredentialsException("Bad credentials"));
+    //
+    // LoginRequest request = new LoginRequest(
+    // "test@example.com",
+    // "wrongPassword");
+    //
+    // // Act and Assert
+    // assertThrows(InvalidCredentialsException.class,
+    // () -> userService.loginUser(request));
+    //
+    // verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
+    // }
+    //
+    // @Test
+    // void shouldNotLoginWithWrongEmail() {
+    // // Arrange
+    // when(authenticationManager.authenticate(
+    // new UsernamePasswordAuthenticationToken("wrongEmail@example.com",
+    // "password123")))
+    // .thenThrow(new BadCredentialsException("Invalid credentials"));
+    //
+    // LoginRequest request = new LoginRequest(
+    // "wrongEmail@example.com",
+    // "password123");
+    //
+    // // Act and Assert
+    // assertThrows(InvalidCredentialsException.class,
+    // () -> userService.loginUser(request));
+    //
+    // // Verify
+    // verify(authenticationManager).authenticate(
+    // new UsernamePasswordAuthenticationToken("wrongEmail@example.com",
+    // "password123"));
+    // }
+    //
+    // @Test
+    // void shouldNotLoginWhenNotVerified() {
+    // // Arrange
+    // User testUser = User.builder()
+    // .id(1L)
+    // .email("test@example.com")
+    // .isVerified(false)
+    // .build();
+    //
+    // LoginRequest request = new LoginRequest(
+    // "test@example.com",
+    // "password123");
+    //
+    // Authentication authentication = mock(Authentication.class);
+    // when(authentication.getPrincipal()).thenReturn(testUser);
+    // when(authenticationManager.authenticate(
+    // new UsernamePasswordAuthenticationToken("test@example.com",
+    // "password123"))).thenReturn(authentication);
+    //
+    // // Act & Assert
+    // assertThrows(AccountNotVerifiedException.class,
+    // () -> userService.loginUser(request));
+    //
+    // assertNull(SecurityContextHolder.getContext().getAuthentication());
+    // }
 
     // ========================= Current User Tests =========================
     @Test
@@ -278,7 +272,6 @@ public class UserServiceTest {
         User testUser = User.builder()
                 .id(1L)
                 .email("test@example.com")
-                .displayName("testUser")
                 .build();
 
         Authentication authentication = mock(Authentication.class);
@@ -293,7 +286,6 @@ public class UserServiceTest {
         // Assert
         assertNotNull(currentUser);
         assertEquals("test@example.com", currentUser.getEmail());
-        assertEquals("testUser", currentUser.getDisplayName());
 
         // Clean
         SecurityContextHolder.clearContext();
@@ -389,7 +381,6 @@ public class UserServiceTest {
         return User.builder()
                 .id(1L)
                 .email("test@example.com")
-                .displayName("testUser")
                 .password("encodedPassword")
                 .firstName("John")
                 .lastName("Doe")

@@ -29,7 +29,7 @@ public class BookingEventPublisher {
                 .startTime(booking.getSlot().getStartTime())
                 .endTime(booking.getSlot().getEndTime())
                 .timeZone(booking.getEvent().getTimeZone())
-                .hostDisplayName(nameUtils.getUserDisplayName(booking))
+                .hostDisplayName(nameUtils.getUserFullName(booking))
                 .build();
 
         CalendarSyncDataDTO calendarSyncDataDTO = CalendarSyncDataDTO.builder()
@@ -42,7 +42,7 @@ public class BookingEventPublisher {
     }
 
     public void publishCancellationEvents(Booking booking) {
-        String hostDisplayName = nameUtils.getUserDisplayName(booking);
+        String hostDisplayName = nameUtils.getUserFullName(booking);
 
         BookingCancelledEmailDTO cancellationData = BookingCancelledEmailDTO.builder()
                 .slotStartTime(booking.getSlot().getStartTime())

@@ -42,9 +42,6 @@ public class User implements UserDetails {
     @Column(unique = true, nullable = false)
     private String email;
 
-    @Column(name = "display_name", unique = true, nullable = false)
-    private String displayName;
-
     @Column(nullable = false)
     @JsonIgnore
     private String password;

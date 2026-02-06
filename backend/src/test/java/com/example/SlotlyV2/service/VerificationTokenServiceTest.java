@@ -64,7 +64,6 @@ class VerificationTokenServiceTest {
         testUser = User.builder()
                 .id(1L)
                 .email("test@example.com")
-                .displayName("testuser")
                 .password("encodedPassword")
                 .isVerified(false)
                 .build();

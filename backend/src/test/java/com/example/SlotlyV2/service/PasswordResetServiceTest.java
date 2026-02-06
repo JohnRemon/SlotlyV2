@@ -153,7 +153,6 @@ public class PasswordResetServiceTest {
         return User.builder()
                 .id(1L)
                 .email("test@example.com")
-                .displayName("testUser")
                 .password("encodedPassword")
                 .firstName("John")
                 .lastName("Doe")

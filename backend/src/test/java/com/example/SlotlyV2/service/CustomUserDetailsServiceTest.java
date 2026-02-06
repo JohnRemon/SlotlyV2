@@ -55,7 +55,6 @@ public class CustomUserDetailsServiceTest {
     User createTestUser() {
         User testUser = new User();
         testUser.setEmail("test@example.com");
-        testUser.setDisplayName("testUser");
         testUser.setPassword("encodedPassword");
         testUser.setFirstName("John");
         testUser.setLastName("Doe");
