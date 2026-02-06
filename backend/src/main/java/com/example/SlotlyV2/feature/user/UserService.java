@@ -8,7 +8,6 @@ import org.springframework.stereotype.Service;
 
 import com.example.SlotlyV2.common.exception.auth.UnauthorizedAccessException;
 import com.example.SlotlyV2.common.exception.user.UserAlreadyExistsException;
-import com.example.SlotlyV2.common.exception.user.UsernameAlreadyExistsException;
 import com.example.SlotlyV2.common.util.NameUtils;
 import com.example.SlotlyV2.feature.auth.VerificationTokenService;
 import com.example.SlotlyV2.feature.email.event.EmailVerificationEvent;
@@ -71,18 +70,11 @@ public class UserService {
 
     private void validateUniqueEmailAndUsername(RegisterRequest request) {
         validateEmailNotTaken(request.getEmail());
-        validateUsernameNotTaken(request.getDisplayName());
     }
 
     private void validateEmailNotTaken(String email) {
         if (userRepository.existsByEmail(email)) {
             throw new UserAlreadyExistsException("User already exists. Please login");
-        }
-    }
-
-    private void validateUsernameNotTaken(String displayName) {
-        if (userRepository.existsByDisplayName(displayName)) {
-            throw new UsernameAlreadyExistsException("Username already exists. Please choose another one");
         }
     }
 

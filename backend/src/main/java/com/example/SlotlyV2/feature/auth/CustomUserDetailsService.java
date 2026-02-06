@@ -6,6 +6,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import com.example.SlotlyV2.common.exception.auth.AccountNotVerifiedException;
+import com.example.SlotlyV2.common.exception.user.UserNotFoundException;
 import com.example.SlotlyV2.feature.user.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -19,6 +20,6 @@ public class CustomUserDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException, AccountNotVerifiedException {
         return userRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("User Not Found"));
+                .orElseThrow(() -> new UserNotFoundException("User Not Found"));
     }
 }

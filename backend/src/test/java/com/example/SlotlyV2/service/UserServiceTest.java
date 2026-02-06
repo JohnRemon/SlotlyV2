@@ -78,7 +78,6 @@ public class UserServiceTest {
     void shouldRegisterUserSuccessfully() {
         // Arrange
         when(userRepository.existsByEmail(anyString())).thenReturn(false);
-        when(userRepository.existsByDisplayName(anyString())).thenReturn(false);
         when(passwordEncoder.encode(anyString())).thenReturn("encodedPassword");
         when(userRepository.save(any(User.class))).thenAnswer(i -> {
             User user = i.getArgument(0);
@@ -119,7 +118,6 @@ public class UserServiceTest {
 
         // Verify Repository Interactions
         verify(userRepository).existsByEmail(request.getEmail());
-        verify(userRepository).existsByDisplayName(request.getDisplayName());
         verify(passwordEncoder).encode(request.getPassword());
         verify(userRepository).save(any(User.class));
         verify(verificationTokenService).generateEmailVerificationToken(any(User.class));
@@ -149,7 +147,6 @@ public class UserServiceTest {
     void shouldThrowUsernameAlreadyExistsException() {
         // Arrange
         when(userRepository.existsByEmail(anyString())).thenReturn(false);
-        when(userRepository.existsByDisplayName("testUser")).thenReturn(true);
         RegisterRequest request = new RegisterRequest(
                 "test@example.com",
                 "testUser",

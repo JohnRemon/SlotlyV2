@@ -28,7 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class GoogleCalendarService {
 
-    private final GoogleOAuth2Service oAuth2Service;
+    private final GoogleCalendarTokenService googleCalendarTokenService;
     private final HttpTransport netHttpTransport;
     private final JsonFactory jsonFactory;
     private final GoogleCalendarConfig config;
@@ -94,7 +94,7 @@ public class GoogleCalendarService {
     }
 
     public List<Event> getUpcomingEvents(User user, OffsetDateTime start, OffsetDateTime end) {
-        if (!oAuth2Service.isConnectedAndValid(user.getId())) {
+        if (!googleCalendarTokenService.isConnectedAndValid(user.getId())) {
             log.debug("Google calendar not connected for user {}, skipping sync", user.getId());
             return List.of();
         }
@@ -123,7 +123,7 @@ public class GoogleCalendarService {
     }
 
     private Calendar getCalendarService(User user) throws IOException {
-        Credential credential = oAuth2Service.getCredentials(user.getId());
+        Credential credential = googleCalendarTokenService.getCredentials(user.getId());
 
         return new Calendar.Builder(netHttpTransport, jsonFactory, credential)
                 .setApplicationName(config.getApplicationName())

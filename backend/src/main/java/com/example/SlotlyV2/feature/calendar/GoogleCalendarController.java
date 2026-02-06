@@ -34,7 +34,7 @@ public class GoogleCalendarController {
     private static final String OAUTH_STATE_KEY = "google_oauth_state";
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
-    private final GoogleOAuth2Service googleOAuth2Service;
+    private final GoogleCalendarTokenService googleOAuth2Service;
     private final UserService userService;
 
     @GetMapping("/connect")
@@ -48,7 +48,7 @@ public class GoogleCalendarController {
         HttpSession session = request.getSession(true);
         session.setAttribute(OAUTH_STATE_KEY, state);
 
-        String authorizationUrl = googleOAuth2Service.generateAuthorizationUrl(state);
+        String authorizationUrl = googleOAuth2Service.generateCalendarAuthorizationUrl(state);
 
         log.info("Generated Google OAuth URL for user {}", user.getId());
 
@@ -86,7 +86,7 @@ public class GoogleCalendarController {
 
         try {
             // Exchange authorization code for tokens
-            googleOAuth2Service.exchangeCodeForToken(request.getCode(), user);
+            googleOAuth2Service.connectCalendar(request.getCode(), user);
 
             log.info("Successfully connected Google Calendar for user {}", user.getId());
 

@@ -20,7 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class GoogleCalendarSyncService {
     private final GoogleCalendarService googleCalendarService;
-    private final GoogleOAuth2Service googleOAuth2Service;
+    private final GoogleCalendarTokenService googleOAuth2Service;
     private final BookingGoogleEventRepository bookingGoogleEventRepository;
     private final NameUtils nameUtils;
 

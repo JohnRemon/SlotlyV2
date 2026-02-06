@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.example.SlotlyV2.common.config.GoogleCalendarConfig;
 import com.example.SlotlyV2.common.exception.calendar.GoogleCalendarException;
@@ -24,25 +25,25 @@ import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.services.calendar.CalendarScopes;
 
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class GoogleOAuth2Service {
+public class GoogleCalendarTokenService {
     private final GoogleCalendarConfig config;
-    private final GoogleCalendarTokenRepository tokenRepository;
     private final NetHttpTransport httpTransport;
     private final JsonFactory jsonFactory;
+    private final GoogleCalendarTokenRepository tokenRepository;
 
     private static final String TOKEN_URL = "https://oauth2.googleapis.com/token";
+
     private static final Collection<String> SCOPES = List.of(
             CalendarScopes.CALENDAR,
             CalendarScopes.CALENDAR_EVENTS);
 
-    public String generateAuthorizationUrl(String state) {
+    public String generateCalendarAuthorizationUrl(String state) {
         return new GoogleAuthorizationCodeRequestUrl(
                 config.getClientId(),
                 config.getRedirectUri(),
@@ -54,7 +55,7 @@ public class GoogleOAuth2Service {
     }
 
     @Transactional
-    public GoogleCalendarToken exchangeCodeForToken(String code, User user) {
+    public GoogleCalendarToken connectCalendar(String code, User user) {
         try {
             GoogleTokenResponse tokenResponse = new GoogleAuthorizationCodeTokenRequest(
                     httpTransport,
@@ -69,7 +70,7 @@ public class GoogleOAuth2Service {
             return saveTokens(user, tokenResponse);
 
         } catch (IOException e) {
-            log.error("Failed to exchange authorization coede for user {}", user.getId(), e);
+            log.error("Failed to connect to calendar for user {}", user.getId(), e);
             throw new GoogleCalendarException("Failed to connect to google calendar");
         }
     }
