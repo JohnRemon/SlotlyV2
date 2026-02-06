@@ -9,6 +9,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.example.SlotlyV2.common.exception.auth.UnauthorizedAccessException;
 import com.example.SlotlyV2.common.exception.event.EventNotFoundException;
@@ -25,7 +26,6 @@ import com.example.SlotlyV2.feature.slot.SlotService;
 import com.example.SlotlyV2.feature.user.User;
 import com.example.SlotlyV2.feature.user.UserService;
 
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -44,7 +44,7 @@ public class EventService {
     private final EventValidator eventValidator;
     private final EventFactory eventFactory;
 
-    @Transactional(rollbackOn = Exception.class)
+    @Transactional
     public Event createEvent(EventRequest request) {
         // Verify Start and End Dates
         eventValidator.validateEventDates(request.getEventStart(), request.getEventEnd(), request.getTimeZone());
@@ -59,7 +59,7 @@ public class EventService {
         return event;
     }
 
-    @Transactional(rollbackOn = Exception.class)
+    @Transactional
     public Event createRecurringEvent(EventRequest request) {
         // Validate the Event
         eventValidator.validateEventDates(request.getEventStart(), request.getEventEnd(), request.getTimeZone());
@@ -97,7 +97,7 @@ public class EventService {
         return event;
     }
 
-    @Transactional(rollbackOn = Exception.class)
+    @Transactional
     public Event editEvent(EventRequest request, Long id) {
         Event event = findAndAuthorizeEvent(id);
 
@@ -110,7 +110,7 @@ public class EventService {
         return eventRepository.save(event);
     }
 
-    @Transactional(rollbackOn = Exception.class)
+    @Transactional
     public void deleteEventById(Long id) {
         Event event = findAndAuthorizeEvent(id);
 

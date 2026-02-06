@@ -2,15 +2,18 @@ package com.example.SlotlyV2.feature.booking;
 
 import java.util.List;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.SlotlyV2.common.dto.ApiResponse;
+import com.example.SlotlyV2.common.rate_limiting.RateLimitHelper;
 import com.example.SlotlyV2.common.util.TimeZoneConverter;
 import com.example.SlotlyV2.feature.booking.dto.BookingRequest;
 import com.example.SlotlyV2.feature.booking.dto.BookingResponse;
@@ -28,9 +31,12 @@ public class BookingController {
     private final BookingService bookingService;
     private final UserService userService;
     private final TimeZoneConverter timeZoneConverter;
+    private final RateLimitHelper rateLimitHelper;
 
     @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
     public ApiResponse<BookingResponse> book(@Valid @RequestBody BookingRequest request) {
+        rateLimitHelper.checkBookingRateLimit(request.getAttendeeEmail());
         Booking booking = bookingService.book(request);
         return new ApiResponse<>("booking created successfully",
                 new BookingResponse(booking, booking.getEvent().getTimeZone(), timeZoneConverter));

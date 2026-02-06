@@ -10,7 +10,7 @@ import org.springframework.stereotype.Repository;
 
 import com.example.SlotlyV2.feature.calendar.enums.SyncStatus;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 
 @Repository
 public interface BookingGoogleEventRepository extends JpaRepository<BookingGoogleEvent, UUID> {

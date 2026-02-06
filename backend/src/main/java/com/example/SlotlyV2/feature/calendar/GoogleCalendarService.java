@@ -7,7 +7,7 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
-import com.example.SlotlyV2.common.config.GoogleCalendarConfig;
+import com.example.SlotlyV2.common.config.GoogleConfig;
 import com.example.SlotlyV2.common.exception.calendar.GoogleCalendarException;
 import com.example.SlotlyV2.feature.calendar.dto.GoogleEventRequest;
 import com.example.SlotlyV2.feature.user.User;
@@ -31,7 +31,7 @@ public class GoogleCalendarService {
     private final GoogleCalendarTokenService googleCalendarTokenService;
     private final HttpTransport netHttpTransport;
     private final JsonFactory jsonFactory;
-    private final GoogleCalendarConfig config;
+    private final GoogleConfig config;
 
     private static final String PRIMARY_CALENDAR = "primary";
 

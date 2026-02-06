@@ -17,7 +17,7 @@ import com.example.SlotlyV2.feature.user.dto.UserEmailVerificationDTO;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -30,7 +30,7 @@ public class UserService {
     private final ScheduleService scheduleService;
     private final NameUtils nameUtils;
 
-    @Transactional(rollbackOn = Exception.class)
+    @Transactional
     public User registerUser(RegisterRequest request) {
         validateUniqueEmailAndUsername(request);
 

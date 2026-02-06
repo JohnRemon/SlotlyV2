@@ -18,7 +18,7 @@ import com.example.SlotlyV2.feature.schedule.dto.ScheduleRequest;
 import com.example.SlotlyV2.feature.user.User;
 import com.google.api.services.calendar.model.Event;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -28,7 +28,7 @@ public class ScheduleService {
     private final BlockedPeriodRepository blockedPeriodRepository;
     private final GoogleCalendarService googleCalendarService;
 
-    @Transactional(rollbackOn = Exception.class)
+    @Transactional
     public void updateSchedule(User user, ScheduleRequest request) {
 
         for (DailyScheduleRequest day : request.getDays()) {
@@ -47,7 +47,7 @@ public class ScheduleService {
         }
     }
 
-    @Transactional(rollbackOn = Exception.class)
+    @Transactional
     public void createBlockedPeriod(User user, BlockedPeriodRequest request) {
         if (!validateTimeBlock(user, request.getStartTime(), request.getEndTime())) {
             throw new InvalidScheduleException("Time block overlaps with existing block");

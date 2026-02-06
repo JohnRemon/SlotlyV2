@@ -9,7 +9,7 @@ import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.example.SlotlyV2.common.config.GoogleCalendarConfig;
+import com.example.SlotlyV2.common.config.GoogleConfig;
 import com.example.SlotlyV2.common.exception.calendar.GoogleCalendarException;
 import com.example.SlotlyV2.common.exception.calendar.GoogleCalendarNotConnectedException;
 import com.example.SlotlyV2.feature.user.User;
@@ -32,7 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @Slf4j
 public class GoogleCalendarTokenService {
-    private final GoogleCalendarConfig config;
+    private final GoogleConfig config;
     private final NetHttpTransport httpTransport;
     private final JsonFactory jsonFactory;
     private final GoogleCalendarTokenRepository tokenRepository;

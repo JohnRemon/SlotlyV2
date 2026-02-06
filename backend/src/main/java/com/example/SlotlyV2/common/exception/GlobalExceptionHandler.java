@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import com.example.SlotlyV2.common.dto.ApiResponse;
 import com.example.SlotlyV2.common.exception.auth.AccountAlreadyVerifiedException;
 import com.example.SlotlyV2.common.exception.auth.AccountNotVerifiedException;
+import com.example.SlotlyV2.common.exception.auth.GoogleOAuth2Exception;
 import com.example.SlotlyV2.common.exception.auth.InvalidCredentialsException;
 import com.example.SlotlyV2.common.exception.auth.InvalidTokenException;
 import com.example.SlotlyV2.common.exception.auth.PasswordMismatchException;
@@ -19,6 +20,9 @@ import com.example.SlotlyV2.common.exception.auth.RateLimitExceededException;
 import com.example.SlotlyV2.common.exception.auth.TokenAlreadyExpiredException;
 import com.example.SlotlyV2.common.exception.auth.UnauthorizedAccessException;
 import com.example.SlotlyV2.common.exception.booking.BookingNotFoundException;
+import com.example.SlotlyV2.common.exception.booking_form.BookingFormNotFoundException;
+import com.example.SlotlyV2.common.exception.booking_form.InvalidFormResponseException;
+import com.example.SlotlyV2.common.exception.booking_form.QuestionNotFoundException;
 import com.example.SlotlyV2.common.exception.calendar.GoogleCalendarException;
 import com.example.SlotlyV2.common.exception.calendar.GoogleCalendarNotConnectedException;
 import com.example.SlotlyV2.common.exception.event.EventNotFoundException;
@@ -60,7 +64,9 @@ public class GlobalExceptionHandler {
             EventNotFoundException.class,
             SlotNotFoundException.class,
             ScheduleNotFoundException.class,
-            BookingNotFoundException.class
+            BookingNotFoundException.class,
+            BookingFormNotFoundException.class,
+            QuestionNotFoundException.class
     })
 
     @ResponseStatus(HttpStatus.NOT_FOUND)
@@ -70,7 +76,9 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler({
             InvalidCredentialsException.class,
-            UnauthorizedAccessException.class
+            UnauthorizedAccessException.class,
+            GoogleOAuth2Exception.class
+
     })
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public ApiResponse<Void> handleUnauthorizeExceptions(RuntimeException ex) {
@@ -88,6 +96,7 @@ public class GlobalExceptionHandler {
             PasswordMismatchException.class,
             InvalidSlotException.class,
             InvalidScheduleException.class,
+            InvalidFormResponseException.class,
             GoogleCalendarNotConnectedException.class,
             GoogleCalendarException.class
     })

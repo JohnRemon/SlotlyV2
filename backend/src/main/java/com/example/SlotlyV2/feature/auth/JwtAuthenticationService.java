@@ -36,6 +36,11 @@ public class JwtAuthenticationService {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new InvalidCredentialsException("Invalid Credentials"));
 
+        if (user.isOAuthUser()) {
+            throw new InvalidCredentialsException(
+                    "This account uses Google sign-in. Please log in with Google.");
+        }
+
         if (!user.isVerified()) {
             throw new AccountNotVerifiedException("Please verify your account first");
         }

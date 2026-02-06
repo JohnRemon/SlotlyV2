@@ -1,78 +1,105 @@
-import React from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useAuthStore } from "@/stores/authStore";
+import { authApi } from "@/services/authApi";
+
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID as string;
 
 interface GoogleSignInButtonProps {
-  onClick?: () => void;
-  loading?: boolean;
+  onSuccess?: () => void;
+  onError?: (error: string) => void;
 }
 
 export const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({
-  onClick,
-  loading = false,
+  onSuccess,
+  onError,
 }) => {
-  const handleClick = () => {
-    if (onClick) {
-      onClick();
-    } else {
-      window.location.href =
-        "http://localhost:8080/oauth2/authorization/google";
+  const setAuth = useAuthStore((state) => state.setAuth);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const buttonRef = useRef<HTMLDivElement>(null);
+  const initializedRef = useRef(false);
+
+  const handleCredentialResponse = useCallback(
+    async (response: google.accounts.id.CredentialResponse) => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const { data: apiResponse } = await authApi.loginWithGoogle(response.credential);
+        const authData = apiResponse.data;
+
+        setAuth(authData.accessToken, authData.refreshToken, authData.user);
+        onSuccess?.();
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : "Google sign-in failed";
+        setError(message);
+        onError?.(message);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [setAuth, onSuccess, onError],
+  );
+
+  useEffect(() => {
+    if (!window.google?.accounts?.id || initializedRef.current) return;
+
+    google.accounts.id.initialize({
+      client_id: GOOGLE_CLIENT_ID,
+      callback: handleCredentialResponse,
+      auto_select: false,
+      cancel_on_tap_outside: true,
+    });
+
+    if (buttonRef.current) {
+      google.accounts.id.renderButton(buttonRef.current, {
+        type: "standard",
+        theme: "outline",
+        size: "large",
+        text: "continue_with",
+        shape: "rectangular",
+        width: 300,
+      });
+      initializedRef.current = true;
     }
-  };
+  }, [handleCredentialResponse]);
 
   return (
-    <button
-      onClick={handleClick}
-      disabled={loading}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: "12px",
-        width: "100%",
-        padding: "12px 16px",
-        backgroundColor: "#ffffff",
-        border: "1px solid #dadce0",
-        borderRadius: "4px",
-        fontSize: "14px",
-        fontWeight: 500,
-        color: "#3c4043",
-        cursor: loading ? "not-allowed" : "pointer",
-        opacity: loading ? 0.7 : 1,
-      }}
-    >
-      {loading ? (
-        <span>Connecting...</span>
-      ) : (
-        <>
-          <GoogleIcon />
-          <span>Continue with Google</span>
-        </>
+    <div>
+      <div
+        ref={buttonRef}
+        style={{
+          opacity: loading ? 0.7 : 1,
+          pointerEvents: loading ? "none" : "auto",
+        }}
+      />
+
+      {loading && (
+        <p
+          style={{
+            textAlign: "center",
+            marginTop: "8px",
+            fontSize: "14px",
+            color: "#666",
+          }}
+        >
+          Signing in...
+        </p>
       )}
-    </button>
+
+      {error && (
+        <p
+          style={{
+            textAlign: "center",
+            marginTop: "8px",
+            fontSize: "14px",
+            color: "#dc2626",
+          }}
+        >
+          {error}
+        </p>
+      )}
+    </div>
   );
 };
-
-const GoogleIcon: React.FC = () => (
-  <svg
-    width="18"
-    height="18"
-    viewBox="0 0 18 18"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <path
-      d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"
-      fill="#4285F4"
-    />
-    <path
-      d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.481 18 9 18z"
-      fill="#34A853"
-    />
-    <path
-      d="M3.964 10.71c-.18-.54-.282-1.117-.282-1.71 0-.593.102-1.17.282-1.71V4.958H.957C.347 6.173 0 7.548 0 9s.348 2.827.957 4.042l3.007-2.332z"
-      fill="#FBBC05"
-    />
-    <path
-      d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.481 0 2.438 2.017.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"
-      fill="#EA4335"
-    />
-  </svg>
-);

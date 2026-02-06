@@ -1,15 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { useAuthStore } from "../stores/authStore";
+import { useAuthStore } from "@/stores/authStore";
+import { authApi } from "@/services/authApi";
 
 type Status = "processing" | "success" | "error";
-
-interface TokenPayload {
-  userId: number;
-  email: string;
-  exp: number;
-  iat: number;
-}
 
 export const OAuthCallback = () => {
   const [searchParams] = useSearchParams();
@@ -21,56 +15,28 @@ export const OAuthCallback = () => {
   useEffect(() => {
     const handleOAuthCallback = async () => {
       try {
-        // Get tokens from URL params (note: camelCase, not snake_case)
         const accessToken = searchParams.get("accessToken");
         const refreshToken = searchParams.get("refreshToken");
         const error = searchParams.get("error");
 
-        // Check for OAuth error from backend
         if (error) {
           setStatus("error");
           setErrorMessage(decodeURIComponent(error));
           return;
         }
 
-        // Validate tokens exist
         if (!accessToken || !refreshToken) {
           setStatus("error");
           setErrorMessage("Missing authentication tokens");
           return;
         }
 
-        // Decode and validate JWT payload
-        const payload = decodeJWT(accessToken);
-        if (!payload) {
-          setStatus("error");
-          setErrorMessage("Invalid token format");
-          return;
-        }
+        const { data: apiResponse } = await authApi.getProfile();
+        const user = apiResponse.data;
 
-        // Check if token is expired
-        if (isTokenExpired(payload)) {
-          setStatus("error");
-          setErrorMessage("Token has expired");
-          return;
-        }
-
-        // Validate required fields
-        if (!payload.userId || !payload.email) {
-          setStatus("error");
-          setErrorMessage("Invalid token data");
-          return;
-        }
-
-        // Store authentication
-        setAuth(accessToken, refreshToken, {
-          id: payload.userId,
-          email: payload.email,
-        });
-
+        setAuth(accessToken, refreshToken, user);
         setStatus("success");
 
-        // Redirect to intended destination or dashboard
         const returnTo = sessionStorage.getItem("returnTo") || "/dashboard";
         sessionStorage.removeItem("returnTo");
 
@@ -90,36 +56,54 @@ export const OAuthCallback = () => {
   }, [searchParams, navigate, setAuth]);
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center p-5">
+    <div
+      style={{
+        display: "flex",
+        minHeight: "100vh",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "20px",
+      }}
+    >
       {status === "processing" && (
-        <div className="text-center">
-          <div className="mb-4 h-12 w-12 animate-spin rounded-full border-4 border-gray-300 border-t-blue-600"></div>
-          <p className="text-lg text-gray-700">Processing authentication...</p>
+        <div style={{ textAlign: "center" }}>
+          <p style={{ fontSize: "18px", color: "#374151" }}>
+            Processing authentication...
+          </p>
         </div>
       )}
 
       {status === "success" && (
-        <div className="text-center">
-          <div className="mb-4 text-6xl">✓</div>
-          <h2 className="mb-2 text-2xl font-bold text-green-600">
+        <div style={{ textAlign: "center" }}>
+          <div style={{ fontSize: "48px", marginBottom: "16px" }}>&#10003;</div>
+          <h2 style={{ fontSize: "24px", fontWeight: 700, color: "#16a34a", marginBottom: "8px" }}>
             Authentication Successful!
           </h2>
-          <p className="text-gray-600">Redirecting to dashboard...</p>
+          <p style={{ color: "#6b7280" }}>Redirecting to dashboard...</p>
         </div>
       )}
 
       {status === "error" && (
-        <div className="max-w-md text-center">
-          <div className="mb-4 text-6xl">✗</div>
-          <h2 className="mb-2 text-2xl font-bold text-red-600">
+        <div style={{ textAlign: "center", maxWidth: "400px" }}>
+          <div style={{ fontSize: "48px", marginBottom: "16px" }}>&#10007;</div>
+          <h2 style={{ fontSize: "24px", fontWeight: 700, color: "#dc2626", marginBottom: "8px" }}>
             Authentication Failed
           </h2>
-          <p className="mb-6 text-gray-700">
+          <p style={{ color: "#374151", marginBottom: "24px" }}>
             {errorMessage || "An error occurred during authentication"}
           </p>
           <button
             onClick={() => navigate("/login", { replace: true })}
-            className="rounded-lg bg-blue-600 px-6 py-2 text-white hover:bg-blue-700"
+            style={{
+              padding: "8px 24px",
+              borderRadius: "6px",
+              border: "none",
+              backgroundColor: "#2563eb",
+              color: "white",
+              fontSize: "14px",
+              cursor: "pointer",
+            }}
           >
             Back to Login
           </button>
@@ -128,28 +112,3 @@ export const OAuthCallback = () => {
     </div>
   );
 };
-
-function decodeJWT(token: string): TokenPayload | null {
-  try {
-    const parts = token.split(".");
-    if (parts.length !== 3) {
-      return null;
-    }
-
-    const payload = parts[1];
-    const decoded = JSON.parse(atob(payload));
-    return decoded as TokenPayload;
-  } catch (err) {
-    console.error("Failed to decode JWT:", err);
-    return null;
-  }
-}
-
-function isTokenExpired(payload: TokenPayload): boolean {
-  if (!payload.exp) {
-    return false; // If no expiration, assume valid
-  }
-
-  const now = Math.floor(Date.now() / 1000);
-  return payload.exp < now;
-}

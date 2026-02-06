@@ -17,7 +17,7 @@ import lombok.Data;
 @Configuration
 @Data
 @ConfigurationProperties(prefix = "google.calendar")
-public class GoogleCalendarConfig {
+public class GoogleConfig {
     public static final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
 
     private String applicationName;

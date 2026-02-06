@@ -4,6 +4,7 @@ import java.time.OffsetDateTime;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.example.SlotlyV2.common.exception.auth.UnauthorizedAccessException;
 import com.example.SlotlyV2.common.exception.event.EventNotFoundException;
@@ -14,7 +15,6 @@ import com.example.SlotlyV2.feature.event.EventRepository;
 import com.example.SlotlyV2.feature.event.strategy.RecurrenceStrategy;
 import com.example.SlotlyV2.feature.event.strategy.RecurrenceStrategyFactory;
 
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -27,17 +27,17 @@ public class SlotService {
     private final SlotUtils slotUtils;
     private final RecurrenceStrategyFactory recurrenceStrategyFactory;
 
-    @Transactional(rollbackOn = Exception.class)
+    @Transactional
     public void generateSlots(Event event) {
         slotRepository.saveAll(slotUtils.buildSlotsByTime(event, event.getEventStart(), event.getEventEnd()));
     }
 
-    @Transactional(rollbackOn = Exception.class)
+    @Transactional
     public void generateSlots(Event event, OffsetDateTime start, OffsetDateTime end) {
         slotRepository.saveAll(slotUtils.buildSlotsByTime(event, start, end));
     }
 
-    @Transactional(rollbackOn = Exception.class)
+    @Transactional
     public void generateSlotsRecurring(Event event) {
         String strategyType = event.getRecurrenceRules().getRecurrenceFrequency() + "_"
                 + event.getRecurrenceRules().getRecurrenceEndType();

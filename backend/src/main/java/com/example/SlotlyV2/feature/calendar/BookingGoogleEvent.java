@@ -24,7 +24,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "slot_google_events", uniqueConstraints = @UniqueConstraint(columnNames = { "slot_id" }))
+@Table(name = "booking_google_events", uniqueConstraints = @UniqueConstraint(columnNames = { "booking_id" }))
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter

@@ -11,7 +11,7 @@ import com.example.SlotlyV2.feature.calendar.enums.SyncStatus;
 import com.example.SlotlyV2.feature.user.User;
 import com.google.api.services.calendar.model.Event;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 

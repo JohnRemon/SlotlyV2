@@ -3,6 +3,7 @@ package com.example.SlotlyV2.feature.password_reset;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.example.SlotlyV2.common.exception.auth.PasswordMismatchException;
 import com.example.SlotlyV2.common.util.NameUtils;
@@ -14,7 +15,6 @@ import com.example.SlotlyV2.feature.user.dto.PasswordResetConfirmRequest;
 import com.example.SlotlyV2.feature.user.dto.PasswordResetDTO;
 import com.example.SlotlyV2.feature.user.dto.PasswordResetRequest;
 
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -52,7 +52,7 @@ public class PasswordResetService {
         eventPublisher.publishEvent(new PasswordResetEvent(data));
     }
 
-    @Transactional(rollbackOn = Exception.class)
+    @Transactional
     public void resetPassword(String token, PasswordResetConfirmRequest request) {
         User user = verificationTokenService.verifyPasswordResetToken(token);
 

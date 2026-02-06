@@ -89,7 +89,6 @@ public class UserServiceTest {
 
         RegisterRequest request = new RegisterRequest(
                 "test@example.com",
-                "testUser",
                 "password123",
                 "John",
                 "Doe",
@@ -129,7 +128,6 @@ public class UserServiceTest {
         when(userRepository.existsByEmail("test@example.com")).thenReturn(true);
         RegisterRequest request = new RegisterRequest(
                 "test@example.com",
-                "testUser",
                 "password123",
                 "John",
                 "Doe",
@@ -149,7 +147,6 @@ public class UserServiceTest {
         when(userRepository.existsByEmail(anyString())).thenReturn(false);
         RegisterRequest request = new RegisterRequest(
                 "test@example.com",
-                "testUser",
                 "password123",
                 "John",
                 "Doe",
