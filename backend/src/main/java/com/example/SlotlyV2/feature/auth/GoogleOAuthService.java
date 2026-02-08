@@ -13,6 +13,7 @@ import com.example.SlotlyV2.common.exception.auth.GoogleOAuth2Exception;
 import com.example.SlotlyV2.common.security.JwtTokenProvider;
 import com.example.SlotlyV2.feature.auth.dto.JwtAuthenticationResponse;
 import com.example.SlotlyV2.feature.auth.enums.AuthProvider;
+import com.example.SlotlyV2.feature.schedule.ScheduleService;
 import com.example.SlotlyV2.feature.user.User;
 import com.example.SlotlyV2.feature.user.UserRepository;
 import com.example.SlotlyV2.feature.user.dto.UserResponse;
@@ -36,6 +37,7 @@ public class GoogleOAuthService {
     private final JwtTokenProvider jwtTokenProvider;
     private final JwtProperties jwtProperties;
     private final UserRepository userRepository;
+    private final ScheduleService scheduleService;
 
     @Transactional
     public JwtAuthenticationResponse login(String idTokenString) {
@@ -75,10 +77,15 @@ public class GoogleOAuthService {
                 .firstName(firstName)
                 .lastName(lastName)
                 .authProvider(AuthProvider.GOOGLE)
+                .timeZone("UTC")
                 .isVerified(true)
                 .build();
 
-        return userRepository.save(user);
+        user = userRepository.save(user);
+
+        scheduleService.createDefaultSchedule(user);
+
+        return user;
     }
 
     private User updateExistingUser(User user, String googleId) {

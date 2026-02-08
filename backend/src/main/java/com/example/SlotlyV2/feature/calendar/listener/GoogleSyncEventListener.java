@@ -31,14 +31,14 @@ public class GoogleSyncEventListener {
     public void handleSlotBooked(BookingSyncEvent event) {
         log.debug("Handling sync for booking {}", event.getCalendarSyncDataDTO().getBookingId());
         try {
-            Booking booking = bookingRepository.findById(event.getCalendarSyncDataDTO().getBookingId())
+            Booking booking = bookingRepository.findByIdWithEventAndSlot(event.getCalendarSyncDataDTO().getBookingId())
                     .orElseThrow(() -> new SlotNotFoundException("Slot not found"));
             User user = userRepository.findById(event.getCalendarSyncDataDTO().getUserId())
                     .orElseThrow(() -> new UserNotFoundException("User not found"));
 
             googleCalendarSyncService.syncSlot(booking, user);
         } catch (Exception e) {
-            log.error("Failed to handle sync for booking {}", event.getCalendarSyncDataDTO().getBookingId());
+            log.error("Failed to handle sync for booking {}, {}", event.getCalendarSyncDataDTO().getBookingId(), e);
         }
     }
 

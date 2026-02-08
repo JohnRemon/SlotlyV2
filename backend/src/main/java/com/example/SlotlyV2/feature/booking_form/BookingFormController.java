@@ -49,7 +49,7 @@ public class BookingFormController {
         return new ApiResponse<>("Booking form retrieved successfully", new FormQuestionsView(bookingForm));
     }
 
-    @GetMapping("/{shareableId}/booking-form")
+    @GetMapping("share/{shareableId}/booking-form")
     public ApiResponse<FormQuestionsView> getBookingForm(@PathVariable String shareableId) {
         Event event = eventService.getEventByShareableId(shareableId);
         BookingForm bookingForm = bookingFormService.getForm(event.getId());

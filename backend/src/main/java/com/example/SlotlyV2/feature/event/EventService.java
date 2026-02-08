@@ -47,7 +47,7 @@ public class EventService {
     @Transactional
     public Event createEvent(EventRequest request) {
         // Verify Start and End Dates
-        eventValidator.validateEventDates(request.getEventStart(), request.getEventEnd(), request.getTimeZone());
+        eventValidator.validateEventDates(request.getEventStart(), request.getEventEnd());
 
         // Create the Event
         Event event = eventFactory.createFrom(request);
@@ -62,7 +62,7 @@ public class EventService {
     @Transactional
     public Event createRecurringEvent(EventRequest request) {
         // Validate the Event
-        eventValidator.validateEventDates(request.getEventStart(), request.getEventEnd(), request.getTimeZone());
+        eventValidator.validateEventDates(request.getEventStart(), request.getEventEnd());
         eventValidator.validateRecurringEventRules(request);
 
         // Create the event

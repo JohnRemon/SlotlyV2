@@ -1,7 +1,6 @@
 package com.example.SlotlyV2.feature.event;
 
 import java.time.OffsetDateTime;
-import java.time.ZoneId;
 
 import org.springframework.stereotype.Component;
 
@@ -15,12 +14,12 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class EventValidator {
 
-    public void validateEventDates(OffsetDateTime start, OffsetDateTime end, String timeZone) {
+    public void validateEventDates(OffsetDateTime start, OffsetDateTime end) {
         if (!end.isAfter(start)) {
             throw new InvalidEventException("Event end must be after start");
         }
 
-        OffsetDateTime now = OffsetDateTime.now(ZoneId.of(timeZone));
+        OffsetDateTime now = OffsetDateTime.now();
 
         if (start.isBefore(now)) {
             throw new InvalidEventException("Event must start in the future");

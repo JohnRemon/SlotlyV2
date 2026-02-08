@@ -15,10 +15,12 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class SlotResponse {
+    private Long id;
     private OffsetDateTime startTime;
     private OffsetDateTime endTime;
 
     public SlotResponse(Slot slot, String userTimezone, TimeZoneConverter timeZoneConverter) {
+        this.id = slot.getId();
         this.startTime = timeZoneConverter.toUserTimezone(slot.getStartTime(), userTimezone);
         this.endTime = timeZoneConverter.toUserTimezone(slot.getEndTime(), userTimezone);
     }

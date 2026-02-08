@@ -80,7 +80,10 @@ public class BookingService {
                 .notes(request.getNotes())
                 .build();
 
-        buildAnswers(booking, request);
+        if (event.getBookingForm() != null) {
+            buildAnswers(booking, request);
+        }
+
         return booking;
 
     }
