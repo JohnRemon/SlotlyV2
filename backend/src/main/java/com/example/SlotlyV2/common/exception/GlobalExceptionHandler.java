@@ -122,7 +122,8 @@ public class GlobalExceptionHandler {
                 request.getRequestURI(),
                 ex.getMessage(),
                 ex);
-        return new ApiResponse<>("This is an error from our side, please try again later", null);
+        return new ApiResponse<>(
+                "This is an error from our side, please try again later \n Error message: " + ex.getMessage(), null);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

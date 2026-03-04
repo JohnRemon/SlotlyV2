@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.SlotlyV2.common.dto.ApiResponse;
 import com.example.SlotlyV2.common.rate_limiting.RateLimitHelper;
-import com.example.SlotlyV2.feature.user.UserService;
 import com.example.SlotlyV2.feature.user.dto.PasswordResetConfirmRequest;
 import com.example.SlotlyV2.feature.user.dto.PasswordResetRequest;
 
@@ -21,7 +20,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class PasswordResetController {
     private final PasswordResetService passwordResetService;
-    private final UserService userService;
     private final RateLimitHelper rateLimitHelper;
 
     @PostMapping("/request")
@@ -36,7 +34,6 @@ public class PasswordResetController {
     public ApiResponse<Void> verifyPassword(@RequestParam String token,
             @RequestBody @Valid PasswordResetConfirmRequest request, HttpServletRequest httpServletRequest) {
         passwordResetService.resetPassword(token, request);
-        userService.logout(httpServletRequest);
         return new ApiResponse<>("Password changed successfully. Please login", null);
     }
 }
