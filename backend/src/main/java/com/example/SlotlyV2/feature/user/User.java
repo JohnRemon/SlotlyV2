@@ -104,7 +104,7 @@ public class User implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return isVerified;
     }
 
     public boolean isOAuthUser() {

@@ -8,21 +8,19 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.SlotlyV2.common.config.GoogleConfig;
-import com.example.SlotlyV2.common.config.JwtProperties;
 import com.example.SlotlyV2.common.exception.auth.GoogleOAuth2Exception;
-import com.example.SlotlyV2.common.security.JwtTokenProvider;
-import com.example.SlotlyV2.feature.auth.dto.JwtAuthenticationResponse;
 import com.example.SlotlyV2.feature.auth.enums.AuthProvider;
 import com.example.SlotlyV2.feature.schedule.ScheduleService;
 import com.example.SlotlyV2.feature.user.User;
 import com.example.SlotlyV2.feature.user.UserRepository;
-import com.example.SlotlyV2.feature.user.dto.UserResponse;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken.Payload;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -34,13 +32,12 @@ public class GoogleOAuthService {
     private final GoogleConfig config;
     private final NetHttpTransport httpTransport;
     private final JsonFactory jsonFactory;
-    private final JwtTokenProvider jwtTokenProvider;
-    private final JwtProperties jwtProperties;
     private final UserRepository userRepository;
     private final ScheduleService scheduleService;
 
     @Transactional
-    public JwtAuthenticationResponse login(String idTokenString) {
+    public User login(String idTokenString, HttpServletRequest httpServletRequest,
+            HttpServletResponse httpServletResponse) {
         Payload payload = verifyGoogleToken(idTokenString);
 
         String email = payload.getEmail();
@@ -48,20 +45,7 @@ public class GoogleOAuthService {
         String firstName = (String) payload.get("given_name");
         String lastName = (String) payload.get("family_name");
 
-        User user = processOAuthUser(email, googleId, firstName, lastName);
-
-        String accessToken = jwtTokenProvider.generateAccessToken(user);
-        String refreshToken = jwtTokenProvider.generateRefreshToken(user);
-        Long expiresIn = jwtProperties.getAccessTokenExpiration() / 1000;
-
-        log.info("Google OAuth2 login successful for user: {} (id: {})", email, user.getId());
-
-        return JwtAuthenticationResponse.builder()
-                .accessToken(accessToken)
-                .refreshToken(refreshToken)
-                .expiresIn(expiresIn)
-                .user(new UserResponse(user))
-                .build();
+        return processOAuthUser(email, googleId, firstName, lastName);
     }
 
     private User processOAuthUser(String email, String googleId, String firstName, String lastName) {
