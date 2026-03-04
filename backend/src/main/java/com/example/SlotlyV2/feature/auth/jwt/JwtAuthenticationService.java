@@ -1,4 +1,4 @@
-package com.example.SlotlyV2.feature.auth;
+package com.example.SlotlyV2.feature.auth.jwt;
 
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;

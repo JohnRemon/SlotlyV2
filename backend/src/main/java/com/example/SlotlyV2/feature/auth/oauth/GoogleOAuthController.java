@@ -1,4 +1,4 @@
-package com.example.SlotlyV2.feature.auth;
+package com.example.SlotlyV2.feature.auth.oauth;
 
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;

@@ -1,4 +1,4 @@
-package com.example.SlotlyV2.feature.auth;
+package com.example.SlotlyV2.feature.auth.oauth;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
