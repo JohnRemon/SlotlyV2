@@ -1,15 +1,16 @@
 import {
     Calendar,
-    ChevronDown,
     Clock,
     Link2,
     LogOut,
+    Package,
+    Settings,
     User,
 } from "lucide-react";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-type ActiveLink = "Event Types" | "Bookings" | "Availability";
+type ActiveLink = "Scheduling" | "Bookings" | "Availability" | "Apps";
 
 interface NavLink {
     label: ActiveLink;
@@ -28,9 +29,9 @@ interface SidebarProps {
 
 const NAV_LINKS: NavLink[] = [
     {
-        label: "Event Types",
+        label: "Scheduling",
         icon: <Link2 className="w-4 h-4 shrink-0" />,
-        href: "/event-types",
+        href: "/scheduling",
     },
     {
         label: "Bookings",
@@ -42,14 +43,19 @@ const NAV_LINKS: NavLink[] = [
         icon: <Clock className="w-4 h-4 shrink-0" />,
         href: "/availability",
     },
+    {
+        label: "Apps",
+        icon: <Package className="w-4 h-4 shrink-0" />,
+        href: "/apps",
+    },
 ];
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
-export const Sidebar = ({
+const Sidebar = ({
     username = "User",
     avatarChar,
-    activeLink = "Event Types",
+    activeLink = "Scheduling",
     onLogout,
 }: SidebarProps) => {
     const initial = avatarChar ?? username[0].toUpperCase();
@@ -64,12 +70,6 @@ export const Sidebar = ({
                 <span className="font-semibold text-sm truncate flex-1 text-base-content">
                     {username}
                 </span>
-                <button
-                    className="btn btn-ghost btn-xs btn-circle text-base-content/50 hover:text-base-content"
-                    aria-label="Account options"
-                >
-                    <ChevronDown className="w-4 h-4" />
-                </button>
             </div>
 
             {/* ── Nav Links ── */}
@@ -81,7 +81,8 @@ export const Sidebar = ({
                             <li key={label}>
                                 <a
                                     href={href}
-                                    className={`flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                    className={`flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors 
+                                    ${
                                         isActive
                                             ? "bg-base-200 text-base-content"
                                             : "text-base-content/60 hover:bg-base-200 hover:text-base-content"
@@ -105,6 +106,13 @@ export const Sidebar = ({
                     <User className="w-4 h-4 shrink-0" />
                     Profile
                 </a>
+                <a
+                    href="/settings"
+                    className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium text-base-content/60 hover:bg-base-200 hover:text-base-content transition-colors"
+                >
+                    <Settings className="w-4 h-4 shrink-0" />
+                    Settings
+                </a>
                 <button
                     onClick={onLogout}
                     className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium text-error/70 hover:bg-error/10 hover:text-error transition-colors"
@@ -116,3 +124,5 @@ export const Sidebar = ({
         </aside>
     );
 };
+
+export default Sidebar;
