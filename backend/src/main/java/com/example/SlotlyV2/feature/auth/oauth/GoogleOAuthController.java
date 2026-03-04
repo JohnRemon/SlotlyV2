@@ -1,10 +1,5 @@
 package com.example.SlotlyV2.feature.auth.oauth;
 
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -27,26 +22,20 @@ import lombok.RequiredArgsConstructor;
 public class GoogleOAuthController {
     private final GoogleOAuthService googleOAuthService;
     private final RateLimitHelper rateLimitHelper;
-    private final SecurityContextRepository securityContextRepository;
 
     @PostMapping("/google")
-    public ApiResponse<UserResponse> login(@Valid @RequestBody GoogleLoginRequest request,
-            HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) {
+    public ApiResponse<UserResponse> login(
+            @Valid @RequestBody GoogleLoginRequest request,
+            HttpServletRequest httpServletRequest,
+            HttpServletResponse httpServletResponse) {
+
         rateLimitHelper.checkLoginRateLimit(httpServletRequest);
 
-        User user = googleOAuthService.login(request.getIdToken(), httpServletRequest, httpServletResponse);
+        User user = googleOAuthService.login(
+                request.getIdToken(),
+                httpServletRequest,
+                httpServletResponse);
 
-        Authentication auth = new UsernamePasswordAuthenticationToken(
-                user,
-                null,
-                user.getAuthorities());
-
-        SecurityContext context = SecurityContextHolder.createEmptyContext();
-        context.setAuthentication(auth);
-        SecurityContextHolder.setContext(context);
-        httpServletRequest.getSession(true);
-        securityContextRepository.saveContext(context, httpServletRequest, httpServletResponse);
-
-        return new ApiResponse<>("User logged in successfully via Google", new UserResponse(user));
+        return new ApiResponse<>("Logged in successfully via Google", new UserResponse(user));
     }
 }

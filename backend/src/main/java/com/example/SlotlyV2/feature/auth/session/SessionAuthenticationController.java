@@ -24,11 +24,21 @@ public class SessionAuthenticationController {
     private final RateLimitHelper rateLimitHelper;
 
     @PostMapping("/login")
-    public ApiResponse<UserResponse> login(@RequestBody @Valid SessionLoginRequest sessionLoginRequest,
-            HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) {
-        rateLimitHelper.checkLoginRateLimit(httpServletRequest);
-        User user = sessionAuthenticationService.login(sessionLoginRequest, httpServletRequest, httpServletResponse);
-        return new ApiResponse<>("Logged in successfully", new UserResponse(user));
+    public ApiResponse<UserResponse> login(
+            @Valid @RequestBody SessionLoginRequest request,
+            HttpServletRequest httpServletRequest,
+            HttpServletResponse httpServletResponse) {
 
+        rateLimitHelper.checkLoginRateLimit(httpServletRequest);
+
+        User user = sessionAuthenticationService.login(request, httpServletRequest, httpServletResponse);
+
+        return new ApiResponse<>("Logged in successfully", new UserResponse(user));
+    }
+
+    @PostMapping("/logout")
+    public ApiResponse<Void> logout(HttpServletRequest request, HttpServletResponse response) {
+        sessionAuthenticationService.logout(request, response);
+        return new ApiResponse<>("Logged out successfully", null);
     }
 }

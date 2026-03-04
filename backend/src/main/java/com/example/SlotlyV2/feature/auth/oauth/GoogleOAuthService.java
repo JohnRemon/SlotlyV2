@@ -4,6 +4,11 @@ import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.Collections;
 
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,16 +33,17 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @Slf4j
 public class GoogleOAuthService {
-
     private final GoogleConfig config;
     private final NetHttpTransport httpTransport;
     private final JsonFactory jsonFactory;
     private final UserRepository userRepository;
     private final ScheduleService scheduleService;
+    private final SecurityContextRepository securityContextRepository;
 
     @Transactional
-    public User login(String idTokenString, HttpServletRequest httpServletRequest,
-            HttpServletResponse httpServletResponse) {
+    public User login(String idTokenString, HttpServletRequest request,
+            HttpServletResponse response) {
+
         Payload payload = verifyGoogleToken(idTokenString);
 
         String email = payload.getEmail();
@@ -45,10 +51,13 @@ public class GoogleOAuthService {
         String firstName = (String) payload.get("given_name");
         String lastName = (String) payload.get("family_name");
 
-        return processOAuthUser(email, googleId, firstName, lastName);
+        User user = findOrCreateOAuthUser(email, googleId, firstName, lastName);
+        persistSession(user, request, response);
+
+        return user;
     }
 
-    private User processOAuthUser(String email, String googleId, String firstName, String lastName) {
+    private User findOrCreateOAuthUser(String email, String googleId, String firstName, String lastName) {
         return userRepository.findByEmail(email)
                 .map(existingUser -> updateExistingUser(existingUser, googleId))
                 .orElseGet(() -> createNewGoogleUser(email, googleId, firstName, lastName));
@@ -66,7 +75,6 @@ public class GoogleOAuthService {
                 .build();
 
         user = userRepository.save(user);
-
         scheduleService.createDefaultSchedule(user);
 
         return user;
@@ -77,19 +85,25 @@ public class GoogleOAuthService {
         if (user.getGoogleId() == null) {
             user.setGoogleId(googleId);
         }
-
         if (!user.isVerified()) {
             user.setVerified(true);
         }
-
         return userRepository.save(user);
+    }
 
+    private void persistSession(User user, HttpServletRequest request, HttpServletResponse response) {
+        Authentication auth = new UsernamePasswordAuthenticationToken(
+                user, null, user.getAuthorities());
+
+        SecurityContext context = SecurityContextHolder.createEmptyContext();
+        context.setAuthentication(auth);
+        SecurityContextHolder.setContext(context);
+        securityContextRepository.saveContext(context, request, response);
     }
 
     private Payload verifyGoogleToken(String idTokenString) {
         try {
-            GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(
-                    httpTransport, jsonFactory)
+            GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(httpTransport, jsonFactory)
                     .setAudience(Collections.singletonList(config.getClientId()))
                     .build();
 
@@ -108,8 +122,7 @@ public class GoogleOAuthService {
             return payload;
 
         } catch (GoogleOAuth2Exception | GeneralSecurityException | IOException e) {
-            throw new GoogleOAuth2Exception("Failed to verify Google ID token", e);
+            throw new GoogleOAuth2Exception("Failed to verify Google ID token: " + e.getMessage(), e);
         }
     }
-
 }

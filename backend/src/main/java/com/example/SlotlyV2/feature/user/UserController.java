@@ -38,12 +38,6 @@ public class UserController {
                 new UserResponse(user));
     }
 
-    @PostMapping("/logout")
-    public ApiResponse<Void> logoutUser(HttpServletRequest request) {
-        userService.logout(request);
-        return new ApiResponse<>("Logged out successfully", null);
-    }
-
     @GetMapping("/me")
     public ApiResponse<UserResponse> userProfile() {
         User user = userService.getCurrentUser();
