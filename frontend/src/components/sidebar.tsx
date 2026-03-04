@@ -1,47 +1,118 @@
-import { Calendar, ChevronDown, Clock, Link2, Search } from "lucide-react";
+import {
+    Calendar,
+    ChevronDown,
+    Clock,
+    Link2,
+    LogOut,
+    User,
+} from "lucide-react";
+
+// ─── Types ───────────────────────────────────────────────────────────────────
+
+type ActiveLink = "Event Types" | "Bookings" | "Availability";
+
+interface NavLink {
+    label: ActiveLink;
+    icon: React.ReactNode;
+    href: string;
+}
 
 interface SidebarProps {
     username?: string;
     avatarChar?: string;
-    activeLink?: "Event Types" | "Bookings" | "Availability";
+    activeLink?: ActiveLink;
+    onLogout?: () => void;
 }
 
-const navLinks: { label: "Event Types" | "Bookings" | "Availability"; icon: React.ReactNode }[] = [
-    { label: "Event Types", icon: <Link2 className="w-5 h-5" /> },
-    { label: "Bookings", icon: <Calendar className="w-5 h-5" /> },
-    { label: "Availability", icon: <Clock className="w-5 h-5" /> },
+// ─── Constants ───────────────────────────────────────────────────────────────
+
+const NAV_LINKS: NavLink[] = [
+    {
+        label: "Event Types",
+        icon: <Link2 className="w-4 h-4 shrink-0" />,
+        href: "/event-types",
+    },
+    {
+        label: "Bookings",
+        icon: <Calendar className="w-4 h-4 shrink-0" />,
+        href: "/bookings",
+    },
+    {
+        label: "Availability",
+        icon: <Clock className="w-4 h-4 shrink-0" />,
+        href: "/availability",
+    },
 ];
 
-export const Sidebar = ({ username = "User", avatarChar = "U", activeLink = "Event Types" }: SidebarProps) => {
+// ─── Component ───────────────────────────────────────────────────────────────
+
+export const Sidebar = ({
+    username = "User",
+    avatarChar,
+    activeLink = "Event Types",
+    onLogout,
+}: SidebarProps) => {
+    const initial = avatarChar ?? username[0].toUpperCase();
+
     return (
-        <aside className="h-screen w-56 bg-base-200 flex flex-col">
-            <div className="p-4 border-b border-base-300 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-primary text-primary-content flex items-center justify-center font-bold">
-                    {avatarChar}
+        <aside className="h-screen w-60 bg-base-100 border-r border-base-300 flex flex-col">
+            {/* ── Profile Header ── */}
+            <div className="flex items-center gap-3 px-4 py-4 border-b border-base-300">
+                <div className="w-8 h-8 rounded-full bg-primary text-primary-content flex items-center justify-center font-bold text-sm shrink-0">
+                    {initial}
                 </div>
-                <span className="font-medium truncate flex-1">{username}</span>
-                <button className="btn btn-ghost btn-xs btn-circle">
-                    <Search className="w-4 h-4" />
-                </button>
-                <button className="btn btn-ghost btn-xs btn-circle">
+                <span className="font-semibold text-sm truncate flex-1 text-base-content">
+                    {username}
+                </span>
+                <button
+                    className="btn btn-ghost btn-xs btn-circle text-base-content/50 hover:text-base-content"
+                    aria-label="Account options"
+                >
                     <ChevronDown className="w-4 h-4" />
                 </button>
             </div>
-            <nav className="flex-1 p-2">
-                <ul className="menu gap-1">
-                    {navLinks.map(({ label, icon }) => (
-                        <li key={label}>
-                            <a
-                                href={`/${label.toLowerCase().replace(" ", "-")}`}
-                                className={activeLink === label ? "bg-primary text-primary-content" : ""}
-                            >
-                                {icon}
-                                {label}
-                            </a>
-                        </li>
-                    ))}
+
+            {/* ── Nav Links ── */}
+            <nav className="flex-1 px-2 py-3">
+                <ul className="flex flex-col gap-0.5">
+                    {NAV_LINKS.map(({ label, icon, href }) => {
+                        const isActive = activeLink === label;
+                        return (
+                            <li key={label}>
+                                <a
+                                    href={href}
+                                    className={`flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                        isActive
+                                            ? "bg-base-200 text-base-content"
+                                            : "text-base-content/60 hover:bg-base-200 hover:text-base-content"
+                                    }`}
+                                >
+                                    {icon}
+                                    {label}
+                                </a>
+                            </li>
+                        );
+                    })}
                 </ul>
             </nav>
+
+            {/* ── Footer Actions ── */}
+            <div className="px-2 py-3 border-t border-base-300 flex flex-col gap-0.5">
+                <a
+                    href="/profile"
+                    className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium text-base-content/60 hover:bg-base-200 hover:text-base-content transition-colors"
+                >
+                    <User className="w-4 h-4 shrink-0" />
+                    Profile
+                </a>
+                <button
+                    onClick={onLogout}
+                    className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium text-error/70 hover:bg-error/10 hover:text-error transition-colors"
+                >
+                    <LogOut className="w-4 h-4 shrink-0" />
+                    Logout
+                </button>
+            </div>
         </aside>
     );
 };
