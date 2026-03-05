@@ -1,5 +1,5 @@
-const PasswordReset = () => {
+const PasswordResetPage = () => {
     return <div></div>;
 };
 
-export default PasswordReset;
+export default PasswordResetPage;

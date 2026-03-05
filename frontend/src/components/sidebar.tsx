@@ -100,7 +100,7 @@ const Sidebar = ({
             {/* ── Footer Actions ── */}
             <div className="px-2 py-3 border-t border-base-300 flex flex-col gap-0.5">
                 <a
-                    href="/profile"
+                    href="/me"
                     className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium text-base-content/60 hover:bg-base-200 hover:text-base-content transition-colors"
                 >
                     <User className="w-4 h-4 shrink-0" />

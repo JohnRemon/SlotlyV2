@@ -1,5 +1,5 @@
-const Availability = () => {
+const AvailabilityPage = () => {
     return <div></div>;
 };
 
-export default Availability;
+export default AvailabilityPage;

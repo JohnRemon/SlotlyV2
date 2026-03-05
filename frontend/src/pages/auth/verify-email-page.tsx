@@ -1,5 +1,5 @@
-const VerifyEmail = () => {
+const VerifyEmailPage = () => {
     return <div></div>;
 };
 
-export default VerifyEmail;
+export default VerifyEmailPage;
