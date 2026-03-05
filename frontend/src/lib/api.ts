@@ -8,8 +8,8 @@ const API = axios.create({
     headers: {
         "Content-Type": "application/json",
     },
-    xsrfCookieName: "XSRF_TOKEN",
-    xsrfHeaderName: "X-XSRF_TOKEN",
+    xsrfCookieName: "XSRF-TOKEN",
+    xsrfHeaderName: "X-XSRF-TOKEN",
 });
 
 export default API;

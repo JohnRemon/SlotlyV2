@@ -39,6 +39,7 @@ public class BookingFormService {
         BookingForm form = BookingForm.builder()
                 .event(event)
                 .build();
+        event.setBookingForm(form);
 
         List<FormQuestion> fields = request.getFormFields().stream()
                 .map(q -> buildField(q, form))
@@ -65,6 +66,7 @@ public class BookingFormService {
                 .collect(Collectors.toList());
 
         bookingForm.setFields(newFields);
+        event.setBookingForm(bookingForm);
         return bookingFormRepository.save(bookingForm);
     }
 

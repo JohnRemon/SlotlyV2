@@ -52,6 +52,6 @@ public class Slot {
     private Booking booking;
 
     public boolean isAvailable() {
-        return booking == null || booking.isActive();
+        return booking == null || !booking.isActive();
     }
 }

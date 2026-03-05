@@ -5,7 +5,7 @@ import App from "./App.tsx";
 import { Toaster } from "react-hot-toast";
 import { BrowserRouter } from "react-router";
 import { GoogleOAuthProvider } from "@react-oauth/google";
-import { AuthProvider } from "./lib/auth-provider.tsx";
+import { AuthProvider } from "./features/auth/providers/AuthProvider.tsx";
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 

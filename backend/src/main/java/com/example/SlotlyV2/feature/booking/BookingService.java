@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.SlotlyV2.common.exception.booking.BookingNotFoundException;
+import com.example.SlotlyV2.common.exception.booking_form.InvalidFormResponseException;
 import com.example.SlotlyV2.common.exception.booking_form.QuestionNotFoundException;
 import com.example.SlotlyV2.common.exception.event.EventNotFoundException;
 import com.example.SlotlyV2.common.exception.slot.SlotNotFoundException;
@@ -15,6 +16,7 @@ import com.example.SlotlyV2.feature.booking.dto.BookingRequest;
 import com.example.SlotlyV2.feature.booking.dto.CancelBookingRequest;
 import com.example.SlotlyV2.feature.booking_form.BookingFormValidator;
 import com.example.SlotlyV2.feature.booking_form.FieldAnswer;
+import com.example.SlotlyV2.feature.booking_form.BookingFormRepository;
 import com.example.SlotlyV2.feature.booking_form.FormQuestion;
 import com.example.SlotlyV2.feature.booking_form.FormQuestionRepository;
 import com.example.SlotlyV2.feature.booking_form.dto.FieldAnswerDTO;
@@ -33,6 +35,7 @@ public class BookingService {
     private final BookingRepository bookingRepository;
     private final SlotRepository slotRepository;
     private final EventRepository eventRepository;
+    private final BookingFormRepository bookingFormRepository;
     private final FormQuestionRepository formQuestionRepository;
     private final SlotValidator slotValidator;
     private final BookingEventPublisher bookingEventPublisher;
@@ -64,8 +67,21 @@ public class BookingService {
         bookingEventPublisher.publishCancellationEvents(booking);
     }
 
+    @Transactional
+    public void markNoShow(Long id) {
+        Booking booking = bookingRepository.findById(id)
+                .orElseThrow(() -> new BookingNotFoundException("Booking not found"));
+
+        booking.markAsNoShow();
+        bookingRepository.save(booking);
+    }
+
     public List<Booking> getBookings(User user) {
         return bookingRepository.findByAttendeeEmail(user.getEmail());
+    }
+
+    public Booking getBooking(Long id) {
+        return bookingRepository.findById(id).orElseThrow(() -> new BookingNotFoundException("Booking Not Found"));
     }
 
     private Booking buildBooking(BookingRequest request, Slot slot) {
@@ -80,17 +96,21 @@ public class BookingService {
                 .notes(request.getNotes())
                 .build();
 
-        if (event.getBookingForm() != null) {
-            buildAnswers(booking, request);
+        if (request.getFormSubmission() != null && request.getFormSubmission().getAnswers() != null
+                && !request.getFormSubmission().getAnswers().isEmpty()) {
+            List<FormQuestion> formFields = bookingFormRepository.findByEventId(event.getId())
+                    .orElseThrow(() -> new InvalidFormResponseException("No booking form exists for this event"))
+                    .getFields();
+
+            buildAnswers(booking, request, formFields);
         }
 
         return booking;
 
     }
 
-    public void buildAnswers(Booking booking, BookingRequest bookingRequest) {
-        bookingFormValidator.validateAnswers(booking.getEvent().getBookingForm().getFields(),
-                bookingRequest.getFormSubmission().getAnswers());
+    public void buildAnswers(Booking booking, BookingRequest bookingRequest, List<FormQuestion> formFields) {
+        bookingFormValidator.validateAnswers(formFields, bookingRequest.getFormSubmission().getAnswers());
 
         bookingRequest.getFormSubmission().getAnswers().stream()
                 .map(answer -> buildAndAddAnswer(booking, answer))

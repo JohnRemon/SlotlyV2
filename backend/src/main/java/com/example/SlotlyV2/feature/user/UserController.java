@@ -1,7 +1,6 @@
 package com.example.SlotlyV2.feature.user;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -36,12 +35,6 @@ public class UserController {
         User user = userService.registerUser(request);
         return new ApiResponse<>("User registered successfully. Please check your email to verify your account.",
                 new UserResponse(user));
-    }
-
-    @GetMapping("/me")
-    public ApiResponse<UserResponse> userProfile() {
-        User user = userService.getCurrentUser();
-        return new ApiResponse<>("User fetched successfully", new UserResponse(user));
     }
 
     @PostMapping("/verify-email")

@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
-import { AuthContext } from "../contexts/auth-context";
+import { AuthContext } from "../context/AuthContext";
 import {
     getcurrentuser,
     logout as logoutUser,
     login as loginUser,
     loginWithGoogle as loginUserWithGoogle,
-} from "./auth";
+} from "../api/AuthApi";
 import type { User } from "../types/AuthContextType";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -14,7 +14,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     useEffect(() => {
         getcurrentuser()
-            .then(setUser)
+            .then((currentUser) => {
+                setUser(currentUser ?? null);
+            })
             .catch(() => setUser(null))
             .finally(() => setIsLoading(false));
     }, []);

@@ -58,7 +58,8 @@ public class SecurityConfig {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf
-                        .ignoringRequestMatchers("/api/v1/auth/**", "/api/v1/users/register")
+                        .ignoringRequestMatchers("/api/v1/auth/**", "/api/v1/users/register", "/api/v1/bookings/**",
+                                "/api/v1/events/**")
                         .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(

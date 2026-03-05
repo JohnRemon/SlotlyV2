@@ -33,10 +33,20 @@ public class SessionAuthenticationService {
         Authentication authentication = authenticate(request.getEmail(), request.getPassword());
         User user = getUserFromAuthentication(authentication);
 
-        validateLocalUser(user);
+        // validateLocalUser(user);
         persistSession(authentication, httpServletRequest, httpServletResponse);
 
         return user;
+    }
+
+    public User me() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+        if (auth != null && auth.isAuthenticated() && auth.getPrincipal() instanceof User user) {
+            return user;
+        }
+
+        return null;
     }
 
     private Authentication authenticate(String email, String password) {

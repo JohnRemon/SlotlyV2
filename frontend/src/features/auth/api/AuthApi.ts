@@ -1,4 +1,4 @@
-import api from "./api";
+import api from "../../../lib/api";
 
 export async function login(email: string, password: string) {
     return api.post("/api/v1/auth/login", { email, password });
@@ -23,6 +23,6 @@ export async function register(payload: {
 }
 
 export async function getcurrentuser() {
-    const res = await api.get("/api/v1/users/me");
+    const res = await api.get("/api/v1/auth/me");
     return res.data.data;
 }

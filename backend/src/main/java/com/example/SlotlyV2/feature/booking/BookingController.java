@@ -42,10 +42,16 @@ public class BookingController {
                 new BookingResponse(booking, booking.getEvent().getTimeZone(), timeZoneConverter));
     }
 
-    @PatchMapping("/{bookingId}")
-    public ApiResponse<Void> cancel(@Valid @RequestBody CancelBookingRequest request, @PathVariable Long bookingId) {
-        bookingService.cancel(request, bookingId);
+    @PatchMapping("/{id}/cancel")
+    public ApiResponse<Void> cancel(@Valid @RequestBody CancelBookingRequest request, @PathVariable Long id) {
+        bookingService.cancel(request, id);
         return new ApiResponse<Void>("booking cancelled successfully", null);
+    }
+
+    @PostMapping("{id}/no-show")
+    public ApiResponse<Void> markNoShow(@PathVariable Long id) {
+        bookingService.markNoShow(id);
+        return new ApiResponse<>("booking marked as no show successfully", null);
     }
 
     @GetMapping("/me")
@@ -60,5 +66,14 @@ public class BookingController {
 
         return new ApiResponse<>("Bookings fetched successfully", bookingResponses);
 
+    }
+
+    @GetMapping
+    public ApiResponse<BookingResponse> getBooking(@PathVariable Long id) {
+        User currentUser = userService.getCurrentUser();
+        String userTimezone = currentUser.getTimeZone();
+        Booking booking = bookingService.getBooking(id);
+        return new ApiResponse<>("Booking fetched successfully",
+                new BookingResponse(booking, userTimezone, timeZoneConverter));
     }
 }

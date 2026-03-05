@@ -10,6 +10,7 @@ import com.example.SlotlyV2.common.exception.event.InvalidBookingException;
 import com.example.SlotlyV2.common.exception.event.MaxCapacityExceededException;
 import com.example.SlotlyV2.common.exception.slot.InvalidSlotException;
 import com.example.SlotlyV2.common.exception.slot.SlotAlreadyBookedException;
+import com.example.SlotlyV2.common.exception.slot.SlotNotBookedException;
 import com.example.SlotlyV2.feature.booking.Booking;
 import com.example.SlotlyV2.feature.booking.BookingRepository;
 import com.example.SlotlyV2.feature.booking.BookingStatus;
@@ -72,7 +73,7 @@ public class SlotValidator {
 
     private void validateSlotIsBooked(Slot slot) {
         if (slot.isAvailable()) {
-            throw new InvalidSlotException("This slot is not booked");
+            throw new SlotNotBookedException("This slot is not booked");
         }
     }
 

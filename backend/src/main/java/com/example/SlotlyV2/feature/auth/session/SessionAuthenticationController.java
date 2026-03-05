@@ -1,5 +1,6 @@
 package com.example.SlotlyV2.feature.auth.session;
 
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -40,5 +41,15 @@ public class SessionAuthenticationController {
     public ApiResponse<Void> logout(HttpServletRequest request, HttpServletResponse response) {
         sessionAuthenticationService.logout(request, response);
         return new ApiResponse<>("Logged out successfully", null);
+    }
+
+    @GetMapping("/me")
+    public ApiResponse<UserResponse> me() {
+        User user = sessionAuthenticationService.me();
+
+        if (user != null) {
+            return new ApiResponse<>("User fetched successfully", new UserResponse(user));
+        }
+        return new ApiResponse<>("No user logged in", null);
     }
 }

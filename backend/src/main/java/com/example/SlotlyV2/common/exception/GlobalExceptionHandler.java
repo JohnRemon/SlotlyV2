@@ -135,6 +135,6 @@ public class GlobalExceptionHandler {
                 .map(error -> error.getDefaultMessage())
                 .collect(Collectors.toList());
 
-        return new ApiResponse<>("Invalid Arguments", errors);
+        return new ApiResponse<>("Invalid Arguments: " + errors, errors);
     }
 }
