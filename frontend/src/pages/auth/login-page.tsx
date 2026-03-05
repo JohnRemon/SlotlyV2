@@ -100,6 +100,9 @@ const LoginPage = () => {
                         onSuccess={(res) => {
                             loginWithGoogle(res.credential!)
                                 .then(() => navigate("/scheduling"))
+                                .then(() =>
+                                    toast.success("Successfully signed in"),
+                                )
                                 .catch(() =>
                                     toast.error("Google sign-in failed."),
                                 );

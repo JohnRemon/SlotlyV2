@@ -115,7 +115,7 @@ const Sidebar = ({
                 </a>
                 <button
                     onClick={onLogout}
-                    className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium text-error/70 hover:bg-error/10 hover:text-error transition-colors"
+                    className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium text-error/70 hover:bg-error/10 hover:text-error transition-colors cursor-pointer"
                 >
                     <LogOut className="w-4 h-4 shrink-0" />
                     Logout

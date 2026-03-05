@@ -5,7 +5,7 @@ export async function login(email: string, password: string) {
 }
 
 export async function loginWithGoogle(idToken: string) {
-    return api.post("/api/v1/auth/google", idToken);
+    return api.post("/api/v1/auth/google", { idToken });
 }
 
 export async function logout() {
