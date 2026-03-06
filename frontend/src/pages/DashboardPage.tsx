@@ -4,7 +4,7 @@ import { useAuth } from "../features/auth/hooks/useAuth";
 import { logout } from "../features/auth/api/AuthApi";
 import toast from "react-hot-toast";
 
-type ActiveLink = "Scheduling" | "Bookings" | "Availability" | "Apps";
+type ActiveLink = "Events" | "Bookings" | "Availability" | "Apps";
 
 const DashboardPage = () => {
     const { user } = useAuth();
@@ -18,11 +18,11 @@ const DashboardPage = () => {
     };
 
     const getActiveLink = (pathname: string): ActiveLink => {
-        if (pathname.startsWith("/scheduling")) return "Scheduling";
+        if (pathname.startsWith("/events")) return "Events";
         if (pathname.startsWith("/bookings")) return "Bookings";
         if (pathname.startsWith("/availability")) return "Availability";
         if (pathname.startsWith("/apps")) return "Apps";
-        return "Scheduling";
+        return "Events";
     };
 
     return (

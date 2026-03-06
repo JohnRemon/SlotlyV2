@@ -19,7 +19,7 @@ const LoginPage = () => {
 
         try {
             await login(email, password);
-            navigate("/scheduling");
+            navigate("/events");
         } catch (error) {
             if (axios.isAxiosError(error)) {
                 toast.error(error.response?.data?.message);
@@ -99,7 +99,7 @@ const LoginPage = () => {
                     <GoogleLogin
                         onSuccess={(res) => {
                             loginWithGoogle(res.credential!)
-                                .then(() => navigate("/scheduling"))
+                                .then(() => navigate("/events"))
                                 .then(() =>
                                     toast.success("Successfully signed in"),
                                 )

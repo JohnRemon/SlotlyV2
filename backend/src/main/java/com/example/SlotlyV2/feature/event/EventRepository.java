@@ -12,12 +12,14 @@ import com.example.SlotlyV2.feature.user.User;
 public interface EventRepository extends JpaRepository<Event, Long> {
 
     // Find events by host
-    List<Event> findByHost(User host);
+    List<Event> findByHostAndDeletedAtIsNull(User host);
 
-    Page<Event> findByHost(User host, Pageable pageable);
+    Page<Event> findByHostAndDeletedAtIsNull(User host, Pageable pageable);
+
+    Optional<Event> findByIdAndDeletedAtIsNull(Long id);
 
     // Find Events by link
-    Optional<Event> findByShareableId(String shareableId);
+    Optional<Event> findByShareableIdAndDeletedAtIsNull(String shareableId);
 
     // Check if shareableId exists
     boolean existsByShareableId(String shareableId);

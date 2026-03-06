@@ -14,13 +14,13 @@ import com.example.SlotlyV2.feature.slot.dto.SlotResponse;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping("/api/v1/events")
 @RequiredArgsConstructor
 public class SlotController {
     private final SlotService slotService;
     private final TimeZoneConverter timeZoneConverter;
 
-    @GetMapping("/events/{eventId}/slots")
+    @GetMapping("/{eventId}/slots")
     public ApiResponse<List<SlotResponse>> getSlots(@PathVariable Long eventId) {
         List<Slot> slots = slotService.getSlots(eventId);
 
@@ -31,13 +31,13 @@ public class SlotController {
         return new ApiResponse<>("Slots fetched successfully", slotResponses);
     }
 
-    @GetMapping("events/{eventId}/slots/{slotId}")
+    @GetMapping("/{eventId}/slots/{slotId}")
     public ApiResponse<SlotResponse> getSlot(@PathVariable Long eventId, @PathVariable Long slotId) {
         Slot slot = slotService.getSlotById(slotId);
         return new ApiResponse<>("Slot fetched successfully", new SlotResponse(slot, timeZoneConverter));
     }
 
-    @GetMapping("/share/{shareableId}/slots")
+    @GetMapping("/public/{shareableId}/slots")
     public ApiResponse<List<SlotResponse>> getAvailableSlotsByShareableId(
             @PathVariable String shareableId) {
         List<Slot> availableSlots = slotService.getAvailableSlotsByShareableId(shareableId);

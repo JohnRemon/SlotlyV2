@@ -10,7 +10,7 @@ import {
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-type ActiveLink = "Scheduling" | "Bookings" | "Availability" | "Apps";
+type ActiveLink = "Events" | "Bookings" | "Availability" | "Apps";
 
 interface NavLink {
     label: ActiveLink;
@@ -29,9 +29,9 @@ interface SidebarProps {
 
 const NAV_LINKS: NavLink[] = [
     {
-        label: "Scheduling",
+        label: "Events",
         icon: <Link2 className="w-4 h-4 shrink-0" />,
-        href: "/scheduling",
+        href: "/events",
     },
     {
         label: "Bookings",
@@ -55,7 +55,7 @@ const NAV_LINKS: NavLink[] = [
 const Sidebar = ({
     username = "User",
     avatarChar,
-    activeLink = "Scheduling",
+    activeLink = "Events",
     onLogout,
 }: SidebarProps) => {
     const initial = avatarChar ?? username[0].toUpperCase();

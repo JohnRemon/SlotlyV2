@@ -1,5 +1,6 @@
 package com.example.SlotlyV2.feature.booking;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -15,6 +16,10 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     List<Booking> findByAttendeeEmail(String attendeeEmail);
 
     List<Booking> findByEventAndStatus(Event event, BookingStatus bookingStatus);
+
+    List<Booking> findByEventId(Long eventId);
+
+    List<Booking> findByEventIdAndSlotEndTimeGreaterThanEqual(Long eventId, OffsetDateTime dateTime);
 
     Integer countByEventAndStatus(Event event, BookingStatus bookingStatus);
 

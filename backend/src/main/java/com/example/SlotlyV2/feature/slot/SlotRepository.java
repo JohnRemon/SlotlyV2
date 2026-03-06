@@ -6,7 +6,9 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.example.SlotlyV2.feature.event.Event;
 
@@ -22,4 +24,8 @@ public interface SlotRepository extends JpaRepository<Slot, Long> {
     Optional<Slot> findById(Long id);
 
     Optional<Slot> findByEventIdAndStartTime(Long eventId, OffsetDateTime startTime);
+
+    @Transactional
+    @Modifying
+    void deleteByEventIdAndEndTimeGreaterThanEqual(Long eventId, OffsetDateTime dateTime);
 }

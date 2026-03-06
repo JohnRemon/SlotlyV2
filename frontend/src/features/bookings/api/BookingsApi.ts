@@ -1,4 +1,9 @@
-import type { Booking, CreateBookingRequest } from "../types/Booking";
+import type {
+    Booking,
+    CreateBookingRequest,
+    PublicEvent,
+    Slot,
+} from "../types/Booking";
 import API from "../../../lib/api";
 
 export const createBooking = async (
@@ -31,4 +36,18 @@ export const cancelBooking = async (
 
 export const noShow = async (id: number): Promise<void> => {
     await API.post(`/api/v1/bookings/${id}/no-show`);
+};
+
+export const getPublicEvent = async (
+    shareableId: string,
+): Promise<PublicEvent> => {
+    const res = await API.get(`/api/v1/events/public/${shareableId}`);
+    return res.data.data;
+};
+
+export const getAvailableSlots = async (
+    shareableId: string,
+): Promise<Slot[]> => {
+    const res = await API.get(`/api/v1/events/public/${shareableId}/slots`);
+    return res.data.data;
 };

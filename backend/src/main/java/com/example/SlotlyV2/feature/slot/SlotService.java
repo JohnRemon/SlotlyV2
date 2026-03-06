@@ -55,7 +55,7 @@ public class SlotService {
     }
 
     public List<Slot> getAvailableSlotsByShareableId(String shareableId) {
-        Event event = eventRepository.findByShareableId(shareableId)
+        Event event = eventRepository.findByShareableIdAndDeletedAtIsNull(shareableId)
                 .orElseThrow(() -> new EventNotFoundException("Event Not Found"));
 
         if (!event.getAvailabilityRules().getIsPublic()) {

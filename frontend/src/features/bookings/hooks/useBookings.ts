@@ -24,8 +24,8 @@ export const useBookings = () => {
         reason: string,
     ) => {
         await cancelBooking(id, attendeeEmail, reason);
-        setBookings((prevBookings) =>
-            prevBookings.map((booking) =>
+        setBookings((prev) =>
+            prev.map((booking) =>
                 booking.id === id
                     ? {
                           ...booking,

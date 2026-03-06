@@ -40,7 +40,7 @@ const RegisterPage = () => {
                 timeZone: timezone,
             });
             await login(email, password);
-            navigate("/scheduling");
+            navigate("/events");
         } catch (error) {
             toast.error(getErrorMessage(error));
         } finally {
@@ -175,7 +175,7 @@ const RegisterPage = () => {
                     <GoogleLogin
                         onSuccess={(res) => {
                             loginWithGoogle(res.credential!)
-                                .then(() => navigate("/scheduling"))
+                                .then(() => navigate("/events"))
                                 .catch((error) =>
                                     toast.error(getErrorMessage(error)),
                                 );

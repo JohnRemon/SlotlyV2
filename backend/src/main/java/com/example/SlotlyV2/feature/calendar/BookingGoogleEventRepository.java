@@ -23,4 +23,12 @@ public interface BookingGoogleEventRepository extends JpaRepository<BookingGoogl
     @Transactional
     @Modifying
     void deleteByBookingId(Long id);
+
+    @Transactional
+    @Modifying
+    void deleteByBookingEventId(Long eventId);
+
+    @Transactional
+    @Modifying
+    void deleteByBookingIdIn(List<Long> bookingIds);
 }

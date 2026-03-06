@@ -22,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class BookingFormService {
     private final BookingFormRepository bookingFormRepository;
+    private final FormAnswerRepository formAnswerRepository;
     private final EventRepository eventRepository;
     private final UserService userService;
 
@@ -58,6 +59,10 @@ public class BookingFormService {
 
         BookingForm bookingForm = bookingFormRepository.findByEventId(eventId)
                 .orElseThrow(() -> new BookingFormNotFoundException("No form exists for this event, create one"));
+
+        if (!bookingForm.getFields().isEmpty()) {
+            formAnswerRepository.deleteByFormFieldIn(bookingForm.getFields());
+        }
 
         bookingForm.getFields().clear();
 

@@ -9,4 +9,8 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface FormAnswerRepository extends JpaRepository<FieldAnswer, UUID> {
     List<FieldAnswer> findByBookingId(Long id);
+
+    void deleteByBookingEventId(Long eventId);
+
+    void deleteByFormFieldIn(List<FormQuestion> formFields);
 }

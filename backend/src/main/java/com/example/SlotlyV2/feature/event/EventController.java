@@ -80,7 +80,7 @@ public class EventController {
         return new ApiResponse<>("Event created successfully", new EventResponse(event, timeZoneConverter));
     }
 
-    @GetMapping("/share/{shareableId}")
+    @GetMapping("/public/{shareableId}")
     public ApiResponse<EventResponse> getEventByShareableId(@PathVariable String shareableId) {
         Event event = eventService.getEventByShareableId(shareableId);
         return new ApiResponse<>("Event fetched successfully", new EventResponse(event, timeZoneConverter));

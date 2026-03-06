@@ -1,12 +1,14 @@
 import axios from "axios";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { useBookings } from "../hooks/useBookings";
-import type { BookingTab, Booking } from "../types/Booking";
 import { BookingCard } from "../components/BookingCard";
 import { BookingDetailModal } from "../components/BookingDetailModal";
 import { CancelBookingModal } from "../components/CancelBookingModal";
+import { useBookings } from "../hooks/useBookings";
+import type { Booking, BookingTab } from "../types/Booking";
 import { isPast } from "../utils/DateUtils";
+import { useSearchParams } from "react-router";
+import { CalendarX } from "lucide-react";
 
 // ─── Tab Config ───────────────────────────────────────────────────────────────
 
@@ -22,9 +24,15 @@ const TABS: { label: string; value: BookingTab }[] = [
 const BookingsPage = () => {
     const { bookings, isLoading, cancel, noShow } = useBookings();
 
-    const [activeTab, setActiveTab] = useState<BookingTab>("CONFIRMED");
+    const [searchParams, setSearchParams] = useSearchParams();
     const [viewBooking, setViewBooking] = useState<Booking | null>(null);
     const [cancelBooking, setCancelBooking] = useState<Booking | null>(null);
+
+    const activeTab = (searchParams.get("tab") as BookingTab) ?? "CONFIRMED";
+
+    const handleTabChange = (tab: BookingTab) => {
+        setSearchParams({ tab });
+    };
 
     const filtered = bookings.filter((booking) => {
         if (activeTab === "CONFIRMED") {
@@ -80,7 +88,7 @@ const BookingsPage = () => {
                 {TABS.map(({ label, value }) => (
                     <button
                         key={value}
-                        onClick={() => setActiveTab(value)}
+                        onClick={() => handleTabChange(value)}
                         className={`px-3 py-1.5 rounded-xl text-sm font-medium transition-all cursor-pointer ${
                             activeTab === value
                                 ? "bg-base-100 text-base-content shadow-sm"
@@ -98,8 +106,18 @@ const BookingsPage = () => {
                     <span className="loading loading-spinner loading-md text-primary" />
                 </div>
             ) : filtered.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-16 text-base-content/30 gap-2">
-                    <p className="text-sm">No bookings here</p>
+                <div className="flex flex-col items-center justify-center py-16 gap-4 border-2 border-dotted border-base-content/30 rounded-sm">
+                    <div className="w-14 h-14 rounded-full bg-base-300 flex items-center justify-center">
+                        <CalendarX className="w-6 h-6 text-base-content/30" />
+                    </div>
+                    <div className="text-center">
+                        <p className="font-semibold text-base-content/60 text-sm">
+                            No {activeTab.toLowerCase()} bookings yet
+                        </p>
+                        <p className="text-xs text-base-content/40 mt-1">
+                            Share your event link to get started
+                        </p>
+                    </div>
                 </div>
             ) : (
                 <div className="flex flex-col gap-2">

@@ -62,6 +62,9 @@ public class Event {
     @Column(name = "created_at", updatable = false)
     private OffsetDateTime createdAt;
 
+    @Column(name = "deleted_at")
+    private OffsetDateTime deletedAt;
+
     @Column(name = "event_start")
     private OffsetDateTime eventStart;
 
@@ -100,6 +103,14 @@ public class Event {
     }
 
     private String generateShareableId() {
-        return UUID.randomUUID().toString().substring(0, 16).replace("-", "");
+        return UUID.randomUUID().toString().replace("-", "");
+    }
+
+    public boolean isDeleted() {
+        return deletedAt != null;
+    }
+
+    public void markDeleted(OffsetDateTime timestamp) {
+        this.deletedAt = timestamp;
     }
 }

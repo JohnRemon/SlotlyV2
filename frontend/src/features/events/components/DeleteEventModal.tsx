@@ -1,31 +1,26 @@
-import { X } from "lucide-react";
+import { Trash2, X } from "lucide-react";
+import type { Event } from "../types/Event";
 import { useState } from "react";
-import type { Booking } from "../types/Booking";
 
-interface CancelModalProps {
-    booking: Booking | null;
-    onConfirm: (
-        id: number,
-        attendeeEmail: string,
-        reason: string,
-    ) => Promise<void>;
+interface DeleteEventModalProps {
+    event: Event | null;
+    onConfirm: (event: Event) => Promise<void>;
     onClose: () => void;
 }
 
-export const CancelBookingModal = ({
-    booking,
+export const DeleteEventModal = ({
+    event,
     onConfirm,
     onClose,
-}: CancelModalProps) => {
-    const [reason, setReason] = useState("");
+}: DeleteEventModalProps) => {
     const [isLoading, setIsLoading] = useState(false);
 
-    if (!booking) return null;
+    if (!event) return null;
 
     const handleConfirm = async () => {
         setIsLoading(true);
         try {
-            await onConfirm(booking.id, booking.attendeeEmail, reason);
+            await onConfirm(event);
             onClose();
         } finally {
             setIsLoading(false);
@@ -36,7 +31,7 @@ export const CancelBookingModal = ({
         <dialog className="modal modal-open">
             <div className="modal-box rounded-2xl max-w-sm p-0 overflow-hidden">
                 <div className="flex items-center justify-between px-6 py-4 border-b border-base-300">
-                    <h3 className="font-bold text-base">Cancel Booking</h3>
+                    <h3 className="font-bold text-base">Delete Event</h3>
                     <button
                         className="btn btn-ghost btn-xs btn-circle"
                         onClick={onClose}
@@ -44,43 +39,33 @@ export const CancelBookingModal = ({
                         <X className="w-4 h-4" />
                     </button>
                 </div>
-
-                <div className="px-6 py-5 flex flex-col gap-4">
+                <div className="px-6 py-5 flex flex-col gap-2">
                     <p className="text-sm text-base-content/60">
-                        You're cancelling the booking for{" "}
+                        Are you sure you want to delete{" "}
                         <span className="font-semibold text-base-content">
-                            {booking.attendeeName}
+                            {event.eventName}
                         </span>
-                        . This cannot be undone.
+                        ? This will also cancel all existing bookings.
                     </p>
-                    <div className="flex flex-col gap-1.5">
-                        <label className="text-sm font-medium">
-                            Reason (optional)
-                        </label>
-                        <textarea
-                            className="textarea textarea-bordered w-full resize-none"
-                            rows={3}
-                            placeholder="Let the attendee know why..."
-                            value={reason}
-                            onChange={(e) => setReason(e.target.value)}
-                        />
-                    </div>
                 </div>
-
                 <div className="flex gap-2 px-6 py-4 border-t border-base-300">
                     <button
-                        className="btn btn-ghost btn-sm flex-1"
+                        className="btn btn-outline btn-sm flex-1"
                         onClick={onClose}
-                    ></button>
+                    >
+                        Cancel
+                    </button>
                     <button
-                        className="btn btn-error btn-sm flex-1"
+                        className="btn btn-error btn-sm flex-1 gap-2"
                         onClick={handleConfirm}
                         disabled={isLoading}
                     >
                         {isLoading ? (
                             <span className="loading loading-spinner loading-xs" />
                         ) : (
-                            "Cancel booking"
+                            <>
+                                <Trash2 className="w-4 h-4" /> Delete
+                            </>
                         )}
                     </button>
                 </div>

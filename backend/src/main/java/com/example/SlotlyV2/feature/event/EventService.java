@@ -14,8 +14,10 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.SlotlyV2.common.exception.auth.UnauthorizedAccessException;
 import com.example.SlotlyV2.common.exception.event.EventNotFoundException;
 import com.example.SlotlyV2.common.util.TimeZoneConverter;
+import com.example.SlotlyV2.feature.booking.Booking;
 import com.example.SlotlyV2.feature.booking.BookingRepository;
 import com.example.SlotlyV2.feature.booking.BookingStatus;
+import com.example.SlotlyV2.feature.calendar.BookingGoogleEventRepository;
 import com.example.SlotlyV2.feature.email.dto.EventCancelledEmailDTO;
 import com.example.SlotlyV2.feature.email.event.EventCancelledEvent;
 import com.example.SlotlyV2.feature.event.dto.EventRequest;
@@ -35,6 +37,7 @@ import lombok.extern.slf4j.Slf4j;
 public class EventService {
     private final EventRepository eventRepository;
     private final BookingRepository bookingRepository;
+    private final BookingGoogleEventRepository bookingGoogleEventRepository;
     private final SlotRepository slotRepository;
     private final SlotService slotService;
     private final UserService userService;
@@ -76,7 +79,7 @@ public class EventService {
     }
 
     public Page<EventResponse> getEvents(User host, Pageable pageable) {
-        Page<Event> eventPage = eventRepository.findByHost(host, pageable);
+        Page<Event> eventPage = eventRepository.findByHostAndDeletedAtIsNull(host, pageable);
 
         List<EventResponse> responses = eventPage.getContent().stream()
                 .map(event -> new EventResponse(event, timeZoneConverter))
@@ -90,7 +93,7 @@ public class EventService {
     }
 
     public Event getEventByShareableId(String shareableId) {
-        Event event = eventRepository.findByShareableId(shareableId)
+        Event event = eventRepository.findByShareableIdAndDeletedAtIsNull(shareableId)
                 .orElseThrow(() -> new EventNotFoundException("Event Not Found"));
 
         return event;
@@ -112,24 +115,34 @@ public class EventService {
     @Transactional
     public void deleteEventById(Long id) {
         Event event = findAndAuthorizeEvent(id);
+        OffsetDateTime nowUtc = OffsetDateTime.now(ZoneOffset.UTC);
+
+        List<Booking> upcomingBookings = bookingRepository.findByEventIdAndSlotEndTimeGreaterThanEqual(event.getId(), nowUtc);
+        List<Long> upcomingBookingIds = upcomingBookings.stream().map(Booking::getId).toList();
 
         // Build Cancellation Email
         EventCancelledEmailDTO data = new EventCancelledEmailDTO(
                 event.getId(),
                 event.getEventName(),
-                event.getSlots().stream()
-                        .map(Slot::getBooking)
-                        .filter(booking -> booking != null && booking.isActive())
+                upcomingBookings.stream()
+                        .filter(Booking::isActive)
                         .map(booking -> booking.getAttendeeEmail())
                         .distinct()
                         .toList());
 
-        eventRepository.delete(event);
+        if (!upcomingBookingIds.isEmpty()) {
+            bookingGoogleEventRepository.deleteByBookingIdIn(upcomingBookingIds);
+            bookingRepository.deleteAll(upcomingBookings);
+        }
+        slotRepository.deleteByEventIdAndEndTimeGreaterThanEqual(event.getId(), nowUtc);
+
+        event.markDeleted(nowUtc);
+        eventRepository.save(event);
         eventPublisher.publishEvent(new EventCancelledEvent(data));
     }
 
     private Event findAndAuthorizeEvent(Long id) {
-        Event event = eventRepository.findById(id)
+        Event event = eventRepository.findByIdAndDeletedAtIsNull(id)
                 .orElseThrow(() -> new EventNotFoundException("Event Not Found"));
 
         validateHost(event);
