@@ -13,11 +13,11 @@ export async function logout() {
 }
 
 export async function register(payload: {
+    firstName: string;
+    lastName: string;
     email: string;
     password: string;
-    firstname: string;
-    lastname: string;
-    timezone: string;
+    timeZone: string;
 }) {
     return api.post("/api/v1/users/register", payload);
 }
@@ -25,4 +25,19 @@ export async function register(payload: {
 export async function getcurrentuser() {
     const res = await api.get("/api/v1/auth/me");
     return res.data.data;
+}
+
+export async function forgotPassword(email: string) {
+    return api.post("/api/v1/password-reset/request", { email });
+}
+
+export async function resetPassword(
+    token: string,
+    password: string,
+    confirmPassword: string,
+) {
+    return api.post(`/api/v1/password-reset/confirm?token=${token}`, {
+        password,
+        confirmPassword,
+    });
 }

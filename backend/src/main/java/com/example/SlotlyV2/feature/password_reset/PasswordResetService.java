@@ -39,6 +39,12 @@ public class PasswordResetService {
             return;
         }
 
+        // check if google sign-in is available
+        // if (user.isOAuthUser()) {
+        // throw new InvalidCredentialsException("This account uses Google sign-in.
+        // Please log in with Google.");
+        // }
+
         // generate password token
         String token = verificationTokenService.generatePasswordResetToken(user);
 
