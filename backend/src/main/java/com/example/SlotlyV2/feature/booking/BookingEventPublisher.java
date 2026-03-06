@@ -28,7 +28,6 @@ public class BookingEventPublisher {
                 .eventName(booking.getEvent().getEventName())
                 .startTime(booking.getSlot().getStartTime())
                 .endTime(booking.getSlot().getEndTime())
-                .timeZone(booking.getEvent().getTimeZone())
                 .hostDisplayName(nameUtils.getUserFullName(booking))
                 .build();
 

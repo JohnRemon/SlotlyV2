@@ -77,10 +77,9 @@ public class EventService {
 
     public Page<EventResponse> getEvents(User host, Pageable pageable) {
         Page<Event> eventPage = eventRepository.findByHost(host, pageable);
-        String userTimezone = userService.getCurrentUser().getTimeZone();
 
         List<EventResponse> responses = eventPage.getContent().stream()
-                .map(event -> new EventResponse(event, userTimezone, timeZoneConverter))
+                .map(event -> new EventResponse(event, timeZoneConverter))
                 .toList();
 
         return new PageImpl<>(responses, pageable, eventPage.getTotalElements());
@@ -98,7 +97,7 @@ public class EventService {
     }
 
     @Transactional
-    public Event editEvent(EventRequest request, Long id) {
+    public Event updateEvent(EventRequest request, Long id) {
         Event event = findAndAuthorizeEvent(id);
 
         validateNewCapacity(request, event);
@@ -119,8 +118,9 @@ public class EventService {
                 event.getId(),
                 event.getEventName(),
                 event.getSlots().stream()
-                        .filter(slot -> slot.isAvailable())
-                        .map(slot -> slot.getBooking().getAttendeeEmail())
+                        .map(Slot::getBooking)
+                        .filter(booking -> booking != null && booking.isActive())
+                        .map(booking -> booking.getAttendeeEmail())
                         .distinct()
                         .toList());
 
@@ -150,7 +150,7 @@ public class EventService {
     private void updateEventDetails(EventRequest request, Event event) {
         event.setEventName(request.getEventName());
         event.setDescription(request.getDescription());
-        event.setTimeZone(request.getTimeZone());
+        // event.setTimeZone(request.getTimeZone());
         event.setAvailabilityRules(
                 eventFactory.buildAvailabilityRules(request.getAvailabilityRulesDTO()));
     }

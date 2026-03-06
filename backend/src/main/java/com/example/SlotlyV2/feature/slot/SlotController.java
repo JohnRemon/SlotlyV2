@@ -10,8 +10,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.SlotlyV2.common.dto.ApiResponse;
 import com.example.SlotlyV2.common.util.TimeZoneConverter;
 import com.example.SlotlyV2.feature.slot.dto.SlotResponse;
-import com.example.SlotlyV2.feature.user.User;
-import com.example.SlotlyV2.feature.user.UserService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -20,17 +18,14 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SlotController {
     private final SlotService slotService;
-    private final UserService userService;
     private final TimeZoneConverter timeZoneConverter;
 
     @GetMapping("/events/{eventId}/slots")
     public ApiResponse<List<SlotResponse>> getSlots(@PathVariable Long eventId) {
         List<Slot> slots = slotService.getSlots(eventId);
-        User currentUser = userService.getCurrentUser();
-        String userTimezone = currentUser.getTimeZone();
 
         List<SlotResponse> slotResponses = slots.stream()
-                .map(slot -> new SlotResponse(slot, userTimezone, timeZoneConverter))
+                .map(slot -> new SlotResponse(slot, timeZoneConverter))
                 .toList();
 
         return new ApiResponse<>("Slots fetched successfully", slotResponses);
@@ -39,8 +34,7 @@ public class SlotController {
     @GetMapping("events/{eventId}/slots/{slotId}")
     public ApiResponse<SlotResponse> getSlot(@PathVariable Long eventId, @PathVariable Long slotId) {
         Slot slot = slotService.getSlotById(slotId);
-        return new ApiResponse<>("Slot fetched successfully",
-                new SlotResponse(slot, userService.getCurrentUser().getTimeZone(), timeZoneConverter));
+        return new ApiResponse<>("Slot fetched successfully", new SlotResponse(slot, timeZoneConverter));
     }
 
     @GetMapping("/share/{shareableId}/slots")
@@ -49,8 +43,7 @@ public class SlotController {
         List<Slot> availableSlots = slotService.getAvailableSlotsByShareableId(shareableId);
 
         List<SlotResponse> availableSlotsResponse = availableSlots.stream()
-                .map(availableSlot -> new SlotResponse(availableSlot, availableSlot.getEvent().getTimeZone(),
-                        timeZoneConverter))
+                .map(availableSlot -> new SlotResponse(availableSlot, timeZoneConverter))
                 .toList();
 
         return new ApiResponse<>("Slots fetched successfully", availableSlotsResponse);

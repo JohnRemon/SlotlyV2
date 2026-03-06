@@ -68,9 +68,6 @@ public class Event {
     @Column(name = "event_end")
     private OffsetDateTime eventEnd;
 
-    @Column(name = "time_zone")
-    private String timeZone;
-
     @Column(unique = true)
     private String shareableId;
 

@@ -29,8 +29,8 @@ public class EventFactory {
         AvailabilityRules availabilityRules = buildAvailabilityRules(
                 request.getAvailabilityRulesDTO());
 
-        OffsetDateTime utcStart = timeZoneConverter.toUtc(request.getEventStart(), request.getTimeZone());
-        OffsetDateTime utcEnd = timeZoneConverter.toUtc(request.getEventEnd(), request.getTimeZone());
+        OffsetDateTime utcStart = timeZoneConverter.toUtc(request.getEventStart());
+        OffsetDateTime utcEnd = timeZoneConverter.toUtc(request.getEventEnd());
 
         Event.EventBuilder builder = Event.builder()
                 .eventName(request.getEventName())
@@ -38,12 +38,10 @@ public class EventFactory {
                 .host(userService.getCurrentUser())
                 .eventStart(utcStart)
                 .eventEnd(utcEnd)
-                .timeZone(request.getTimeZone())
                 .availabilityRules(availabilityRules);
 
         if (request.getRecurrenceRulesDTO() != null) {
-            RecurrenceRules recurrenceRules = buildRecurrenceRules(request.getRecurrenceRulesDTO(),
-                    request.getTimeZone());
+            RecurrenceRules recurrenceRules = buildRecurrenceRules(request.getRecurrenceRulesDTO());
 
             builder.isRecurring(true)
                     .recurrenceRules(recurrenceRules);
@@ -77,14 +75,14 @@ public class EventFactory {
                 .build();
     }
 
-    private RecurrenceRules buildRecurrenceRules(RecurrenceRulesDTO dto, String timeZone) {
+    private RecurrenceRules buildRecurrenceRules(RecurrenceRulesDTO dto) {
         return RecurrenceRules.builder()
                 .recurrenceFrequency(dto.getRecurrenceFrequency())
                 .recurrenceEndType(dto.getRecurrenceEndType())
                 .recurrenceDayOfWeek(dto.getRecurrenceDayOfWeek())
                 .recurrenceOccurrences(dto.getRecurrenceOccurrences())
                 .recurrenceEndDate(dto.getRecurrenceEndDate() != null
-                        ? timeZoneConverter.toUtc(dto.getRecurrenceEndDate(), timeZone)
+                        ? timeZoneConverter.toUtc(dto.getRecurrenceEndDate())
                         : null)
                 .build();
     }

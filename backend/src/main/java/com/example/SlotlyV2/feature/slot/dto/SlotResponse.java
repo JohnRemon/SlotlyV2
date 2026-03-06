@@ -19,9 +19,9 @@ public class SlotResponse {
     private OffsetDateTime startTime;
     private OffsetDateTime endTime;
 
-    public SlotResponse(Slot slot, String userTimezone, TimeZoneConverter timeZoneConverter) {
+    public SlotResponse(Slot slot, TimeZoneConverter timeZoneConverter) {
         this.id = slot.getId();
-        this.startTime = timeZoneConverter.toUserTimezone(slot.getStartTime(), userTimezone);
-        this.endTime = timeZoneConverter.toUserTimezone(slot.getEndTime(), userTimezone);
+        this.startTime = timeZoneConverter.toUtc(slot.getStartTime());
+        this.endTime = timeZoneConverter.toUtc(slot.getEndTime());
     }
 }

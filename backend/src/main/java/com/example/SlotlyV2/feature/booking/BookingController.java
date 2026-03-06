@@ -38,8 +38,7 @@ public class BookingController {
     public ApiResponse<BookingResponse> book(@Valid @RequestBody BookingRequest request) {
         rateLimitHelper.checkBookingRateLimit(request.getAttendeeEmail());
         Booking booking = bookingService.book(request);
-        return new ApiResponse<>("booking created successfully",
-                new BookingResponse(booking, booking.getEvent().getTimeZone(), timeZoneConverter));
+        return new ApiResponse<>("booking created successfully", new BookingResponse(booking, timeZoneConverter));
     }
 
     @PatchMapping("/{id}/cancel")
@@ -57,11 +56,10 @@ public class BookingController {
     @GetMapping("/me")
     public ApiResponse<List<BookingResponse>> getBookings() {
         User currentUser = userService.getCurrentUser();
-        String userTimezone = currentUser.getTimeZone();
         List<Booking> bookings = bookingService.getBookings(currentUser);
 
         List<BookingResponse> bookingResponses = bookings.stream()
-                .map(booking -> new BookingResponse(booking, userTimezone, timeZoneConverter))
+                .map(booking -> new BookingResponse(booking, timeZoneConverter))
                 .toList();
 
         return new ApiResponse<>("Bookings fetched successfully", bookingResponses);
@@ -70,10 +68,7 @@ public class BookingController {
 
     @GetMapping("/{id}")
     public ApiResponse<BookingResponse> getBooking(@PathVariable Long id) {
-        User currentUser = userService.getCurrentUser();
-        String userTimezone = currentUser.getTimeZone();
         Booking booking = bookingService.getBooking(id);
-        return new ApiResponse<>("Booking fetched successfully",
-                new BookingResponse(booking, userTimezone, timeZoneConverter));
+        return new ApiResponse<>("Booking fetched successfully", new BookingResponse(booking, timeZoneConverter));
     }
 }

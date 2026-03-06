@@ -28,13 +28,13 @@ public class BookingResponse {
     private final OffsetDateTime cancelledAt;
     private final List<BookingFormAnswerResponse> formAnswers;
 
-    public BookingResponse(Booking booking, String userTimezone, TimeZoneConverter timeZoneConverter) {
+    public BookingResponse(Booking booking, TimeZoneConverter timeZoneConverter) {
         this.id = booking.getId();
         this.attendeeName = booking.getAttendeeDisplayName();
         this.attendeeEmail = booking.getAttendeeEmail();
         this.eventName = booking.getEvent().getEventName();
-        this.startTime = timeZoneConverter.toUserTimezone(booking.getSlot().getStartTime(), userTimezone);
-        this.endTime = timeZoneConverter.toUserTimezone(booking.getSlot().getEndTime(), userTimezone);
+        this.startTime = timeZoneConverter.toUtc(booking.getSlot().getStartTime());
+        this.endTime = timeZoneConverter.toUtc(booking.getSlot().getEndTime());
         this.bookingStatus = booking.getStatus();
         this.notes = booking.getNotes();
         this.cancellationReason = booking.getCancellationReason();

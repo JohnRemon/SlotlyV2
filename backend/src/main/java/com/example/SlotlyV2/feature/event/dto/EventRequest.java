@@ -33,9 +33,6 @@ public class EventRequest {
     @Future(message = "Event must be in the future")
     private OffsetDateTime eventEnd;
 
-    @NotBlank(message = "Timezone is required")
-    private String timeZone;
-
     @Valid
     private AvailabilityRulesDTO availabilityRulesDTO;
 
