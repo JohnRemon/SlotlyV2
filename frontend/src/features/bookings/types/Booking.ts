@@ -15,7 +15,25 @@ export interface Booking {
         fieldLabel: string;
         fieldAnswer: string;
     }[];
-    createdAt: string;
+    createdAt?: string;
+}
+
+export interface BookingFormAnswerRequest {
+    fieldId: string;
+    fieldResponse: string;
+}
+
+export interface BookingFormSubmissionRequest {
+    answers: BookingFormAnswerRequest[];
+}
+
+export interface CreateBookingRequest {
+    eventId: number;
+    slotId: number;
+    attendeeName: string;
+    attendeeEmail: string;
+    notes?: string;
+    formSubmission?: BookingFormSubmissionRequest;
 }
 
 export type BookingTab = "CONFIRMED" | "CANCELLED" | "NO_SHOW" | "PAST";

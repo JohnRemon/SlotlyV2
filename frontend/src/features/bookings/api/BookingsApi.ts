@@ -1,5 +1,12 @@
-import type { Booking } from "../types/Booking";
+import type { Booking, CreateBookingRequest } from "../types/Booking";
 import API from "../../../lib/api";
+
+export const createBooking = async (
+    payload: CreateBookingRequest,
+): Promise<Booking> => {
+    const res = await API.post("/api/v1/bookings", payload);
+    return res.data.data;
+};
 
 export const getBooking = async (id: number): Promise<Booking> => {
     const res = await API.get(`/api/v1/bookings/${id}`);
@@ -16,7 +23,10 @@ export const cancelBooking = async (
     attendeeEmail: string,
     reason: string,
 ): Promise<void> => {
-    await API.patch(`/api/v1/bookings/${id}/cancel`, { attendeeEmail, reason });
+    await API.patch(`/api/v1/bookings/${id}/cancel`, {
+        attendeeEmail,
+        cancellationReason: reason,
+    });
 };
 
 export const noShow = async (id: number): Promise<void> => {

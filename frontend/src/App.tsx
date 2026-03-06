@@ -9,11 +9,20 @@ import SchedulingPage from "./pages/SchedulingPage.tsx";
 import SettingsPage from "./pages/SettingsPage.tsx";
 import AppsPage from "./pages/AppsPage.tsx";
 import HomePage from "./pages/HomePage.tsx";
+import RegisterPage from "./features/auth/pages/RegisterPage.tsx";
+import ForgotPasswordPage from "./features/auth/pages/ForgotPasswordPage.tsx";
+import ResetPasswordPage from "./features/auth/pages/ResetPasswordPage.tsx";
 
 function App() {
     return (
         <Routes>
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route
+                path="/forgot-password/:token"
+                element={<ResetPasswordPage />}
+            />
             <Route path="/" element={<HomePage />} />
 
             <Route element={<ProtectedRoute />}>

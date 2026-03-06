@@ -145,7 +145,7 @@ export const BookingDetailModal = ({
                                             {answer.fieldLabel}
                                         </p>
                                         <p className="text-sm text-base-content font-medium">
-                                            {answer.fieldResponse}
+                                            {answer.fieldAnswer}
                                         </p>
                                     </div>
                                 ))}
