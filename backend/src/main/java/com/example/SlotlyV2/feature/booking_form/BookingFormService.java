@@ -10,8 +10,8 @@ import com.example.SlotlyV2.common.exception.auth.UnauthorizedAccessException;
 import com.example.SlotlyV2.common.exception.booking_form.BookingFormAlreadyExists;
 import com.example.SlotlyV2.common.exception.booking_form.BookingFormNotFoundException;
 import com.example.SlotlyV2.common.exception.event.EventNotFoundException;
-import com.example.SlotlyV2.feature.booking_form.dto.FormQuestionDTO;
-import com.example.SlotlyV2.feature.booking_form.dto.FormRequest;
+import com.example.SlotlyV2.feature.booking_form.dto.BookingFormFieldRequest;
+import com.example.SlotlyV2.feature.booking_form.dto.BookingFormRequest;
 import com.example.SlotlyV2.feature.event.Event;
 import com.example.SlotlyV2.feature.event.EventRepository;
 import com.example.SlotlyV2.feature.user.UserService;
@@ -26,7 +26,7 @@ public class BookingFormService {
     private final UserService userService;
 
     @Transactional
-    public BookingForm createForm(Long eventId, FormRequest request) {
+    public BookingForm createForm(Long eventId, BookingFormRequest request) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new EventNotFoundException("Event not found"));
 
@@ -41,7 +41,7 @@ public class BookingFormService {
                 .build();
         event.setBookingForm(form);
 
-        List<FormQuestion> fields = request.getFormFields().stream()
+        List<FormQuestion> fields = request.getFields().stream()
                 .map(q -> buildField(q, form))
                 .collect(Collectors.toList());
 
@@ -50,7 +50,7 @@ public class BookingFormService {
     }
 
     @Transactional
-    public BookingForm updateForm(Long eventId, FormRequest request) {
+    public BookingForm updateForm(Long eventId, BookingFormRequest request) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new EventNotFoundException("Event not found"));
 
@@ -61,7 +61,7 @@ public class BookingFormService {
 
         bookingForm.getFields().clear();
 
-        List<FormQuestion> newFields = request.getFormFields().stream()
+        List<FormQuestion> newFields = request.getFields().stream()
                 .map(q -> buildField(q, bookingForm))
                 .collect(Collectors.toList());
 
@@ -75,7 +75,7 @@ public class BookingFormService {
                 .orElseThrow(() -> new BookingFormNotFoundException("Booking form not found"));
     }
 
-    private FormQuestion buildField(FormQuestionDTO dto, BookingForm form) {
+    private FormQuestion buildField(BookingFormFieldRequest dto, BookingForm form) {
         return FormQuestion.builder()
                 .bookingForm(form)
                 .label(dto.getLabel())

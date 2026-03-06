@@ -11,8 +11,8 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.SlotlyV2.common.dto.ApiResponse;
-import com.example.SlotlyV2.feature.booking_form.dto.FormQuestionsView;
-import com.example.SlotlyV2.feature.booking_form.dto.FormRequest;
+import com.example.SlotlyV2.feature.booking_form.dto.BookingFormRequest;
+import com.example.SlotlyV2.feature.booking_form.dto.BookingFormResponse;
 import com.example.SlotlyV2.feature.event.Event;
 import com.example.SlotlyV2.feature.event.EventService;
 
@@ -28,31 +28,31 @@ public class BookingFormController {
 
     @PostMapping("/{eventId}/booking-form")
     @ResponseStatus(HttpStatus.CREATED)
-    public ApiResponse<FormQuestionsView> createBookingForm(@PathVariable Long eventId,
-            @Valid @RequestBody FormRequest request) {
+    public ApiResponse<BookingFormResponse> createBookingForm(@PathVariable Long eventId,
+            @Valid @RequestBody BookingFormRequest request) {
         BookingForm bookingForm = bookingFormService.createForm(eventId, request);
-        return new ApiResponse<>("Booking form created successfully", new FormQuestionsView(bookingForm));
+        return new ApiResponse<>("Booking form created successfully", new BookingFormResponse(bookingForm));
     }
 
     @PutMapping("/{eventId}/booking-form")
-    public ApiResponse<FormQuestionsView> updateBookingForm(
+    public ApiResponse<BookingFormResponse> updateBookingForm(
             @PathVariable Long eventId,
-            @Valid @RequestBody FormRequest request) {
+            @Valid @RequestBody BookingFormRequest request) {
 
         BookingForm bookingForm = bookingFormService.updateForm(eventId, request);
-        return new ApiResponse<>("Booking form updated successfully", new FormQuestionsView(bookingForm));
+        return new ApiResponse<>("Booking form updated successfully", new BookingFormResponse(bookingForm));
     }
 
     @GetMapping("/{eventId}/booking-form")
-    public ApiResponse<FormQuestionsView> getBookingForm(@PathVariable Long eventId) {
+    public ApiResponse<BookingFormResponse> getBookingForm(@PathVariable Long eventId) {
         BookingForm bookingForm = bookingFormService.getForm(eventId);
-        return new ApiResponse<>("Booking form retrieved successfully", new FormQuestionsView(bookingForm));
+        return new ApiResponse<>("Booking form retrieved successfully", new BookingFormResponse(bookingForm));
     }
 
     @GetMapping("share/{shareableId}/booking-form")
-    public ApiResponse<FormQuestionsView> getBookingForm(@PathVariable String shareableId) {
+    public ApiResponse<BookingFormResponse> getBookingForm(@PathVariable String shareableId) {
         Event event = eventService.getEventByShareableId(shareableId);
         BookingForm bookingForm = bookingFormService.getForm(event.getId());
-        return new ApiResponse<>("Booking form retrieved successfully", new FormQuestionsView(bookingForm));
+        return new ApiResponse<>("Booking form retrieved successfully", new BookingFormResponse(bookingForm));
     }
 }

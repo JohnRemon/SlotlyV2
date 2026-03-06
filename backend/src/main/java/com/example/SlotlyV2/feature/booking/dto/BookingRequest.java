@@ -1,6 +1,6 @@
 package com.example.SlotlyV2.feature.booking.dto;
 
-import com.example.SlotlyV2.feature.booking_form.dto.SubmitFormAnswers;
+import com.example.SlotlyV2.feature.booking_form.dto.BookingFormSubmissionRequest;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
@@ -34,5 +34,5 @@ public class BookingRequest {
     private String notes;
 
     @Valid
-    private SubmitFormAnswers formSubmission;
+    private BookingFormSubmissionRequest formSubmission;
 }

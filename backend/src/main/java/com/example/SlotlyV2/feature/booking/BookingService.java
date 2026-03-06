@@ -19,7 +19,7 @@ import com.example.SlotlyV2.feature.booking_form.FieldAnswer;
 import com.example.SlotlyV2.feature.booking_form.BookingFormRepository;
 import com.example.SlotlyV2.feature.booking_form.FormQuestion;
 import com.example.SlotlyV2.feature.booking_form.FormQuestionRepository;
-import com.example.SlotlyV2.feature.booking_form.dto.FieldAnswerDTO;
+import com.example.SlotlyV2.feature.booking_form.dto.BookingFormAnswerRequest;
 import com.example.SlotlyV2.feature.event.Event;
 import com.example.SlotlyV2.feature.event.EventRepository;
 import com.example.SlotlyV2.feature.slot.Slot;
@@ -117,13 +117,13 @@ public class BookingService {
                 .collect(Collectors.toList());
     }
 
-    private FieldAnswer buildAndAddAnswer(Booking booking, FieldAnswerDTO dto) {
+    private FieldAnswer buildAndAddAnswer(Booking booking, BookingFormAnswerRequest dto) {
         FieldAnswer fieldAnswer = buildAnswer(dto);
         booking.addFormAnswer(fieldAnswer);
         return fieldAnswer;
     }
 
-    private FieldAnswer buildAnswer(FieldAnswerDTO dto) {
+    private FieldAnswer buildAnswer(BookingFormAnswerRequest dto) {
         return FieldAnswer.builder()
                 .formField(findQuestionById(dto.getFieldId()))
                 .answer(dto.getFieldResponse())

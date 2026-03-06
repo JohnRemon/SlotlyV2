@@ -48,7 +48,7 @@ public class BookingController {
         return new ApiResponse<Void>("booking cancelled successfully", null);
     }
 
-    @PostMapping("{id}/no-show")
+    @PostMapping("/{id}/no-show")
     public ApiResponse<Void> markNoShow(@PathVariable Long id) {
         bookingService.markNoShow(id);
         return new ApiResponse<>("booking marked as no show successfully", null);
@@ -68,7 +68,7 @@ public class BookingController {
 
     }
 
-    @GetMapping
+    @GetMapping("/{id}")
     public ApiResponse<BookingResponse> getBooking(@PathVariable Long id) {
         User currentUser = userService.getCurrentUser();
         String userTimezone = currentUser.getTimeZone();

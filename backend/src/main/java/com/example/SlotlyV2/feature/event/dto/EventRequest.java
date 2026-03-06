@@ -3,7 +3,7 @@ package com.example.SlotlyV2.feature.event.dto;
 import java.time.OffsetDateTime;
 
 import com.example.SlotlyV2.feature.availability.dto.AvailabilityRulesDTO;
-import com.example.SlotlyV2.feature.booking_form.BookingForm;
+import com.example.SlotlyV2.feature.booking_form.dto.BookingFormRequest;
 import com.example.SlotlyV2.feature.recurrence.dto.RecurrenceRulesDTO;
 
 import jakarta.validation.Valid;
@@ -43,5 +43,5 @@ public class EventRequest {
     private RecurrenceRulesDTO recurrenceRulesDTO;
 
     @Valid
-    private BookingFormDTO bookingFormDTO;
+    private BookingFormRequest bookingForm;
 }

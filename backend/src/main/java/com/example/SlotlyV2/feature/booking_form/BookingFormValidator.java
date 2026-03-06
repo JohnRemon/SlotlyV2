@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Component;
 
 import com.example.SlotlyV2.common.exception.booking_form.InvalidFormResponseException;
-import com.example.SlotlyV2.feature.booking_form.dto.FieldAnswerDTO;
+import com.example.SlotlyV2.feature.booking_form.dto.BookingFormAnswerRequest;
 import com.example.SlotlyV2.feature.booking_form.enums.FieldType;
 
 import lombok.RequiredArgsConstructor;
@@ -20,16 +20,16 @@ public class BookingFormValidator {
 
     private static final Pattern PHONE_PATTERN = Pattern.compile("^[+]?[0-9\\s\\-()]{7,20}$");
 
-    public void validateAnswers(List<FormQuestion> fields, List<FieldAnswerDTO> answers) {
+    public void validateAnswers(List<FormQuestion> fields, List<BookingFormAnswerRequest> answers) {
         validateRequiredQuestions(fields, answers);
         validateQuestionsExist(fields, answers);
         validateFieldTypes(fields, answers);
     }
 
-    private void validateRequiredQuestions(List<FormQuestion> fields, List<FieldAnswerDTO> answers) {
+    private void validateRequiredQuestions(List<FormQuestion> fields, List<BookingFormAnswerRequest> answers) {
         for (FormQuestion field : fields) {
             if (field.isRequired()) {
-                FieldAnswerDTO answer = findAnswerForField(answers, field.getId());
+                BookingFormAnswerRequest answer = findAnswerForField(answers, field.getId());
                 if (answer == null || answer.getFieldResponse() == null || answer.getFieldResponse().trim().isEmpty()) {
                     throw new InvalidFormResponseException("Required field '" + field.getLabel() + "' is missing");
                 }
@@ -37,22 +37,22 @@ public class BookingFormValidator {
         }
     }
 
-    private void validateQuestionsExist(List<FormQuestion> fields, List<FieldAnswerDTO> answers) {
+    private void validateQuestionsExist(List<FormQuestion> fields, List<BookingFormAnswerRequest> answers) {
         Map<UUID, FormQuestion> fieldMap = fields.stream()
                 .collect(Collectors.toMap(FormQuestion::getId, f -> f));
 
-        for (FieldAnswerDTO answer : answers) {
+        for (BookingFormAnswerRequest answer : answers) {
             if (!fieldMap.containsKey(answer.getFieldId())) {
                 throw new InvalidFormResponseException("Invalid field ID: " + answer.getFieldId());
             }
         }
     }
 
-    private void validateFieldTypes(List<FormQuestion> fields, List<FieldAnswerDTO> answers) {
+    private void validateFieldTypes(List<FormQuestion> fields, List<BookingFormAnswerRequest> answers) {
         Map<UUID, FormQuestion> fieldMap = fields.stream()
                 .collect(Collectors.toMap(FormQuestion::getId, f -> f));
 
-        for (FieldAnswerDTO answer : answers) {
+        for (BookingFormAnswerRequest answer : answers) {
             FormQuestion field = fieldMap.get(answer.getFieldId());
             if (field == null)
                 continue;
@@ -70,7 +70,7 @@ public class BookingFormValidator {
         }
     }
 
-    private FieldAnswerDTO findAnswerForField(List<FieldAnswerDTO> answers, UUID fieldId) {
+    private BookingFormAnswerRequest findAnswerForField(List<BookingFormAnswerRequest> answers, UUID fieldId) {
         return answers.stream()
                 .filter(a -> a.getFieldId().equals(fieldId))
                 .findFirst()

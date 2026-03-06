@@ -13,8 +13,8 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class FormRequest {
+public class BookingFormSubmissionRequest {
     @Valid
-    @NotEmpty(message = "form fields are required")
-    private List<FormQuestionDTO> formFields;
+    @NotEmpty(message = "answers are required")
+    private List<BookingFormAnswerRequest> answers;
 }

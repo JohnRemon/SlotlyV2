@@ -1,8 +1,5 @@
 package com.example.SlotlyV2.feature.booking_form.dto;
 
-import java.util.UUID;
-
-import com.example.SlotlyV2.feature.booking_form.FormQuestion;
 import com.example.SlotlyV2.feature.booking_form.enums.FieldType;
 
 import jakarta.validation.constraints.Min;
@@ -17,9 +14,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class FormQuestionDTO {
-    private UUID id;
-
+public class BookingFormFieldRequest {
     @NotBlank(message = "label is required")
     private String label;
 
@@ -32,12 +27,4 @@ public class FormQuestionDTO {
     @Min(value = 0, message = "display order must be non-negative")
     @Builder.Default
     private Integer displayOrder = 0;
-
-    public FormQuestionDTO(FormQuestion formField) {
-        this.id = formField.getId();
-        this.label = formField.getLabel();
-        this.fieldType = formField.getFieldType();
-        this.required = formField.isRequired();
-        this.displayOrder = formField.getDisplayOrder();
-    }
 }

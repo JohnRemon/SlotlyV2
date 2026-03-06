@@ -6,7 +6,7 @@ import java.util.List;
 import com.example.SlotlyV2.common.util.TimeZoneConverter;
 import com.example.SlotlyV2.feature.booking.Booking;
 import com.example.SlotlyV2.feature.booking.BookingStatus;
-import com.example.SlotlyV2.feature.booking_form.dto.FieldResponseDTO;
+import com.example.SlotlyV2.feature.booking_form.dto.BookingFormAnswerResponse;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -26,7 +26,7 @@ public class BookingResponse {
     private final String notes;
     private final String cancellationReason;
     private final OffsetDateTime cancelledAt;
-    private final List<FieldResponseDTO> formAnswers;
+    private final List<BookingFormAnswerResponse> formAnswers;
 
     public BookingResponse(Booking booking, String userTimezone, TimeZoneConverter timeZoneConverter) {
         this.id = booking.getId();
@@ -40,7 +40,7 @@ public class BookingResponse {
         this.cancellationReason = booking.getCancellationReason();
         this.cancelledAt = booking.getCancelledAt();
         this.formAnswers = booking.getFormAnswers().stream()
-                .map(FieldResponseDTO::new)
+                .map(BookingFormAnswerResponse::new)
                 .toList();
     }
 }

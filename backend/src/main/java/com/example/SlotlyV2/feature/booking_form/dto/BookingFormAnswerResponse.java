@@ -11,11 +11,11 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class FieldResponseDTO {
+public class BookingFormAnswerResponse {
     private String fieldLabel;
     private String fieldAnswer;
 
-    public FieldResponseDTO(FieldAnswer answer) {
+    public BookingFormAnswerResponse(FieldAnswer answer) {
         this.fieldLabel = answer.getFormField().getLabel();
         this.fieldAnswer = answer.getAnswer();
     }
