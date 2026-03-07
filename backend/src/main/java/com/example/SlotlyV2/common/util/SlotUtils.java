@@ -11,6 +11,7 @@ import com.example.SlotlyV2.common.exception.event.InvalidEventException;
 import com.example.SlotlyV2.feature.event.Event;
 import com.example.SlotlyV2.feature.event.enums.RecurrenceEndType;
 import com.example.SlotlyV2.feature.recurrence.RecurrenceRules;
+import com.example.SlotlyV2.feature.schedule.Schedule;
 import com.example.SlotlyV2.feature.schedule.ScheduleService;
 import com.example.SlotlyV2.feature.slot.Slot;
 
@@ -22,7 +23,7 @@ public class SlotUtils {
     private final static Integer MAX_YEARS = 1;
     private final ScheduleService scheduleService;
 
-    public List<Slot> buildSlotsByTime(Event event, OffsetDateTime start, OffsetDateTime end) {
+    public List<Slot> buildSlotsByTime(Schedule schedule, Event event, OffsetDateTime start, OffsetDateTime end) {
         List<Slot> slots = new ArrayList<>();
         OffsetDateTime currentStart = start;
 
@@ -34,7 +35,7 @@ public class SlotUtils {
 
             OffsetDateTime slotEnd = currentStart.plusMinutes(slotDuration);
 
-            if (scheduleService.isValidSlot(event.getHost(), currentStart, slotDuration)) {
+            if (scheduleService.isValidSlot(schedule, event.getHost(), currentStart, slotDuration)) {
                 Slot slot = Slot.builder()
                         .event(event)
                         .startTime(currentStart)
@@ -47,7 +48,7 @@ public class SlotUtils {
         return slots;
     }
 
-    public List<Slot> buildRecurringSlots(Event event) {
+    public List<Slot> buildRecurringSlots(Event event, Schedule schedule) {
         List<Slot> slots = new ArrayList<>();
 
         OffsetDateTime currentStart = event.getEventStart();
@@ -70,14 +71,14 @@ public class SlotUtils {
 
         while (!currentStart.isAfter(end)) {
             OffsetDateTime currentEnd = currentStart.plus(eventDuration);
-            slots.addAll(buildSlotsByTime(event, currentStart, currentEnd));
+            slots.addAll(buildSlotsByTime(schedule, event, currentStart, currentEnd));
             currentStart = getNextRecurrence(currentStart, rules);
         }
 
         return slots;
     }
 
-    public List<Slot> buildRecurringSlotsByOccurrences(Event event) {
+    public List<Slot> buildRecurringSlotsByOccurrences(Event event, Schedule schedule) {
         List<Slot> slots = new ArrayList<>();
 
         OffsetDateTime currentStart = event.getEventStart();
@@ -94,7 +95,7 @@ public class SlotUtils {
 
         while (count < rules.getRecurrenceOccurrences()) {
             OffsetDateTime currentEnd = currentStart.plus(eventDuration);
-            slots.addAll(buildSlotsByTime(event, currentStart, currentEnd));
+            slots.addAll(buildSlotsByTime(schedule, event, currentStart, currentEnd));
             currentStart = getNextRecurrence(currentStart, rules);
             count++;
         }

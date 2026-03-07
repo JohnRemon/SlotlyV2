@@ -14,4 +14,6 @@ public interface ScheduleRepository extends JpaRepository<Schedule, UUID> {
     Optional<Schedule> findByUser(User user);
 
     List<Schedule> findAllByUser(User user);
+
+    Optional<Schedule> findByUserAndIsDefaultTrue(User user);
 }

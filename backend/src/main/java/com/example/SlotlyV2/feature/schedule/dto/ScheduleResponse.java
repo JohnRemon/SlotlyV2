@@ -15,10 +15,12 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ScheduleResponse {
     private List<DailyScheduleResponse> dailyScheduleResponses;
+    private Boolean isDefault;
 
     public ScheduleResponse(Schedule schedule) {
         this.dailyScheduleResponses = schedule.getDailySchedules().stream()
                 .map(DailyScheduleResponse::new)
                 .toList();
+        this.isDefault = schedule.getIsDefault();
     }
 }

@@ -40,4 +40,6 @@ public class Schedule {
     private List<DailySchedule> dailySchedules;
 
     // TODO: add a default schedule and use this shcedule when creating events
+    @Builder.Default
+    private Boolean isDefault = false;
 }

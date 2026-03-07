@@ -17,6 +17,7 @@ import com.example.SlotlyV2.feature.booking_form.enums.FieldType;
 import com.example.SlotlyV2.feature.event.dto.EventRequest;
 import com.example.SlotlyV2.feature.recurrence.RecurrenceRules;
 import com.example.SlotlyV2.feature.recurrence.dto.RecurrenceRulesDTO;
+import com.example.SlotlyV2.feature.schedule.Schedule;
 import com.example.SlotlyV2.feature.user.UserService;
 
 import lombok.RequiredArgsConstructor;
@@ -27,7 +28,7 @@ public class EventFactory {
     private final UserService userService;
     private final TimeZoneConverter timeZoneConverter;
 
-    public Event createFrom(EventRequest request) {
+    public Event createFrom(EventRequest request, Schedule schedule) {
         AvailabilityRules availabilityRules = buildAvailabilityRules(
                 request.getAvailabilityRulesDTO());
 
@@ -40,6 +41,7 @@ public class EventFactory {
                 .host(userService.getCurrentUser())
                 .eventStart(utcStart)
                 .eventEnd(utcEnd)
+                .schedule(schedule)
                 .availabilityRules(availabilityRules);
 
         if (request.getRecurrenceRulesDTO() != null) {

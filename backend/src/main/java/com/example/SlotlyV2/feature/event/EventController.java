@@ -1,5 +1,7 @@
 package com.example.SlotlyV2.feature.event;
 
+import java.util.UUID;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -84,6 +86,12 @@ public class EventController {
             @PathVariable Long id) {
         Event event = eventService.updateBookingForm(request, id);
         return new ApiResponse<>("Booking form updated successfully", new EventResponse(event, timeZoneConverter));
+    }
+
+    @PatchMapping("/{id}/schedule")
+    public ApiResponse<EventResponse> updateSchedule(@PathVariable Long id, @RequestParam UUID scheduleId) {
+        Event event = eventService.updateEventSchedule(scheduleId, id);
+        return new ApiResponse<>("Schedule updated successfully", new EventResponse(event, timeZoneConverter));
     }
 
     @DeleteMapping("/{id}")

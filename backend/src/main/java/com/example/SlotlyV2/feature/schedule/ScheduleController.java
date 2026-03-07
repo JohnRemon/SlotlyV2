@@ -68,7 +68,7 @@ public class ScheduleController {
         return new ApiResponse<>("Schedule deleted successfully", null);
     }
 
-    @GetMapping("/blocked-periods/${id}")
+    @GetMapping("/blocked-periods/{id}")
     public ApiResponse<BlockedPeriodResponse> getBlockedPeriodById(@PathVariable UUID id) {
         BlockedPeriod blockedPeriod = scheduleService.getBookingPeriodById(id);
         return new ApiResponse<>("Blocked Period fetched successfully", new BlockedPeriodResponse(blockedPeriod));

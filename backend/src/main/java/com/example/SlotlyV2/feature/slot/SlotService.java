@@ -16,6 +16,7 @@ import com.example.SlotlyV2.feature.event.Event;
 import com.example.SlotlyV2.feature.event.EventRepository;
 import com.example.SlotlyV2.feature.event.strategy.RecurrenceStrategy;
 import com.example.SlotlyV2.feature.event.strategy.RecurrenceStrategyFactory;
+import com.example.SlotlyV2.feature.schedule.Schedule;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,22 +31,22 @@ public class SlotService {
     private final RecurrenceStrategyFactory recurrenceStrategyFactory;
 
     @Transactional
-    public void generateSlots(Event event) {
-        slotRepository.saveAll(slotUtils.buildSlotsByTime(event, event.getEventStart(), event.getEventEnd()));
+    public void generateSlots(Event event, Schedule schedule) {
+        slotRepository.saveAll(slotUtils.buildSlotsByTime(schedule, event, event.getEventStart(), event.getEventEnd()));
     }
 
     @Transactional
-    public void generateSlots(Event event, OffsetDateTime start, OffsetDateTime end) {
-        slotRepository.saveAll(slotUtils.buildSlotsByTime(event, start, end));
+    public void generateSlots(Event event, Schedule schedule, OffsetDateTime start, OffsetDateTime end) {
+        slotRepository.saveAll(slotUtils.buildSlotsByTime(schedule, event, start, end));
     }
 
     @Transactional
-    public void generateSlotsRecurring(Event event) {
+    public void generateSlotsRecurring(Event event, Schedule schedule) {
         String strategyType = event.getRecurrenceRules().getRecurrenceFrequency() + "_"
                 + event.getRecurrenceRules().getRecurrenceEndType();
         RecurrenceStrategy recurrenceStrategy = recurrenceStrategyFactory.getStrategy(strategyType);
 
-        slotRepository.saveAll(recurrenceStrategy.generateSlots(event));
+        slotRepository.saveAll(recurrenceStrategy.generateSlots(event, schedule));
     }
 
     public List<Slot> getSlots(Long eventId) {

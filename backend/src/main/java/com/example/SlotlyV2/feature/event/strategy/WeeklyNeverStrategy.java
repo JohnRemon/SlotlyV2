@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import com.example.SlotlyV2.common.util.SlotUtils;
 import com.example.SlotlyV2.feature.event.Event;
 import com.example.SlotlyV2.feature.event.enums.StrategyType;
+import com.example.SlotlyV2.feature.schedule.Schedule;
 import com.example.SlotlyV2.feature.slot.Slot;
 
 import lombok.RequiredArgsConstructor;
@@ -17,7 +18,7 @@ public class WeeklyNeverStrategy implements RecurrenceStrategy {
     private final SlotUtils slotUtils;
 
     @Override
-    public List<Slot> generateSlots(final Event event) {
-        return slotUtils.buildRecurringSlots(event);
+    public List<Slot> generateSlots(Event event, Schedule schedule) {
+        return slotUtils.buildRecurringSlots(event, schedule);
     }
 }

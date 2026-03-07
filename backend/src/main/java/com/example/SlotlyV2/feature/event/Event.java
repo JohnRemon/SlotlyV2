@@ -11,6 +11,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import com.example.SlotlyV2.feature.availability.AvailabilityRules;
 import com.example.SlotlyV2.feature.booking_form.BookingForm;
 import com.example.SlotlyV2.feature.recurrence.RecurrenceRules;
+import com.example.SlotlyV2.feature.schedule.Schedule;
 import com.example.SlotlyV2.feature.slot.Slot;
 import com.example.SlotlyV2.feature.user.User;
 
@@ -90,6 +91,10 @@ public class Event {
 
     @OneToOne(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
     private BookingForm bookingForm;
+
+    @ManyToOne
+    @JoinColumn(name = "schedule_id")
+    private Schedule schedule;
 
     @PrePersist
     private void onCreate() {

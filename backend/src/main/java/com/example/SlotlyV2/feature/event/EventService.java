@@ -3,6 +3,7 @@ package com.example.SlotlyV2.feature.event;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
@@ -13,6 +14,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.SlotlyV2.common.exception.auth.UnauthorizedAccessException;
 import com.example.SlotlyV2.common.exception.event.EventNotFoundException;
+import com.example.SlotlyV2.common.exception.schedule.InvalidScheduleException;
+import com.example.SlotlyV2.common.exception.schedule.ScheduleNotFoundException;
 import com.example.SlotlyV2.common.util.TimeZoneConverter;
 import com.example.SlotlyV2.feature.booking.Booking;
 import com.example.SlotlyV2.feature.booking.BookingRepository;
@@ -28,6 +31,8 @@ import com.example.SlotlyV2.feature.booking_form.dto.BookingFormUpdateRequest;
 import com.example.SlotlyV2.feature.booking_form.enums.FieldType;
 import com.example.SlotlyV2.feature.event.dto.EventRequest;
 import com.example.SlotlyV2.feature.event.dto.EventResponse;
+import com.example.SlotlyV2.feature.schedule.Schedule;
+import com.example.SlotlyV2.feature.schedule.ScheduleRepository;
 import com.example.SlotlyV2.feature.slot.Slot;
 import com.example.SlotlyV2.feature.slot.SlotRepository;
 import com.example.SlotlyV2.feature.slot.SlotService;
@@ -43,8 +48,9 @@ import lombok.extern.slf4j.Slf4j;
 public class EventService {
     private final EventRepository eventRepository;
     private final BookingRepository bookingRepository;
-    private final BookingGoogleEventRepository bookingGoogleEventRepository;
     private final SlotRepository slotRepository;
+    private final ScheduleRepository scheduleRepository;
+    private final BookingGoogleEventRepository bookingGoogleEventRepository;
     private final SlotService slotService;
     private final UserService userService;
     private final ApplicationEventPublisher eventPublisher;
@@ -58,12 +64,16 @@ public class EventService {
         // Verify Start and End Dates
         eventValidator.validateEventDates(request.getEventStart(), request.getEventEnd());
 
+        // Fetch default schedule
+        Schedule defaultSchedule = scheduleRepository.findByUserAndIsDefaultTrue(userService.getCurrentUser())
+                .orElseThrow(() -> new InvalidScheduleException("No default schedule found"));
+
         // Create the Event
-        Event event = eventFactory.createFrom(request);
+        Event event = eventFactory.createFrom(request, defaultSchedule);
         event = eventRepository.save(event);
 
         // Generate slots
-        slotService.generateSlots(event);
+        slotService.generateSlots(event, defaultSchedule);
 
         return event;
     }
@@ -74,12 +84,16 @@ public class EventService {
         eventValidator.validateEventDates(request.getEventStart(), request.getEventEnd());
         eventValidator.validateRecurringEventRules(request);
 
+        // Fetch default schedule
+        Schedule defaultSchedule = scheduleRepository.findByUserAndIsDefaultTrue(userService.getCurrentUser())
+                .orElseThrow(() -> new InvalidScheduleException("No default schedule found"));
+
         // Create the event
-        Event event = eventFactory.createFrom(request);
+        Event event = eventFactory.createFrom(request, defaultSchedule);
         event = eventRepository.save(event);
 
         // Generate slots
-        slotService.generateSlotsRecurring(event);
+        slotService.generateSlotsRecurring(event, defaultSchedule);
 
         return event;
     }
@@ -135,9 +149,6 @@ public class EventService {
         Event event = findAndAuthorizeEvent(id);
 
         BookingForm bookingForm = event.getBookingForm();
-        if (bookingForm == null) {
-            bookingForm = BookingForm.builder().event(event).build();
-        }
 
         if (request.getFields() != null) {
             bookingForm.getFields().clear();
@@ -156,6 +167,25 @@ public class EventService {
 
         event.setBookingForm(bookingForm);
         return eventRepository.save(event);
+    }
+
+    @Transactional
+    public Event updateEventSchedule(UUID scheduleId, Long id) {
+        Event event = findAndAuthorizeEvent(id);
+
+        Schedule schedule = scheduleRepository.findById(scheduleId)
+                .orElseThrow(() -> new ScheduleNotFoundException("Schedule not found"));
+
+        if (!schedule.getUser().getId().equals(userService.getCurrentUser().getId())) {
+            throw new UnauthorizedAccessException("Not your schedule");
+        }
+
+        event.setSchedule(schedule);
+        eventRepository.save(event);
+
+        regenerateFutureSlots(event);
+
+        return event;
     }
 
     @Transactional
@@ -235,7 +265,7 @@ public class EventService {
         deleteUnbookedSlots(event, effectiveStart);
 
         if (effectiveStart.isBefore(event.getEventEnd())) {
-            slotService.generateSlots(event, effectiveStart, event.getEventEnd());
+            slotService.generateSlots(event, event.getSchedule(), effectiveStart, event.getEventEnd());
         }
     }
 }

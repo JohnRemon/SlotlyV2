@@ -15,4 +15,7 @@ import lombok.NoArgsConstructor;
 public class ScheduleRequest {
     @NotNull(message = "daily schedules are required")
     private List<DailyScheduleRequest> days;
+
+    @NotNull(message = "Default is required")
+    private Boolean isDefault;
 }
