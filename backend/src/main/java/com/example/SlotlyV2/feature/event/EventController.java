@@ -20,6 +20,7 @@ import com.example.SlotlyV2.common.dto.PagedResponse;
 import com.example.SlotlyV2.common.util.TimeZoneConverter;
 import com.example.SlotlyV2.feature.event.dto.EventRequest;
 import com.example.SlotlyV2.feature.event.dto.EventResponse;
+import com.example.SlotlyV2.feature.event.dto.PublicEventResponse;
 import com.example.SlotlyV2.feature.user.UserService;
 
 import jakarta.validation.Valid;
@@ -81,8 +82,8 @@ public class EventController {
     }
 
     @GetMapping("/public/{shareableId}")
-    public ApiResponse<EventResponse> getEventByShareableId(@PathVariable String shareableId) {
+    public ApiResponse<PublicEventResponse> getEventByShareableId(@PathVariable String shareableId) {
         Event event = eventService.getEventByShareableId(shareableId);
-        return new ApiResponse<>("Event fetched successfully", new EventResponse(event, timeZoneConverter));
+        return new ApiResponse<>("Event fetched successfully", new PublicEventResponse(event, timeZoneConverter));
     }
 }

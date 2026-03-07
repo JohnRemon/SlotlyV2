@@ -1,10 +1,12 @@
 package com.example.SlotlyV2.feature.slot;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.SlotlyV2.common.dto.ApiResponse;
@@ -39,8 +41,16 @@ public class SlotController {
 
     @GetMapping("/public/{shareableId}/slots")
     public ApiResponse<List<SlotResponse>> getAvailableSlotsByShareableId(
-            @PathVariable String shareableId) {
-        List<Slot> availableSlots = slotService.getAvailableSlotsByShareableId(shareableId);
+            @PathVariable String shareableId,
+            @RequestParam(required = false) LocalDate date,
+            @RequestParam(required = false) String timeZone) {
+        List<Slot> availableSlots;
+
+        if (date == null && timeZone == null) {
+            availableSlots = slotService.getAvailableSlotsByShareableId(shareableId);
+        } else {
+            availableSlots = slotService.getAvailableSlotsByShareableIdAndDate(shareableId, date, timeZone);
+        }
 
         List<SlotResponse> availableSlotsResponse = availableSlots.stream()
                 .map(availableSlot -> new SlotResponse(availableSlot, timeZoneConverter))
@@ -48,4 +58,5 @@ public class SlotController {
 
         return new ApiResponse<>("Slots fetched successfully", availableSlotsResponse);
     }
+
 }

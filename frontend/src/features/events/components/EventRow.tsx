@@ -67,7 +67,7 @@ export const EventRow = ({ event, onDelete }: EventRowProps) => {
 
             {/* Actions */}
             <div className="flex items-center gap-3">
-                <span className="text-xs font-medium text-base-content/60 bg-base-content/5 px-2 py-1 rounded-lg">
+                <span className="text-xs font-medium text-base-content/60 bg-base-content/15 px-2 py-1 rounded-sm">
                     {isPublic ? "Public" : "Private"}
                 </span>
                 <input

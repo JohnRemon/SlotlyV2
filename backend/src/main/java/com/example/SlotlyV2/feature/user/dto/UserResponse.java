@@ -2,9 +2,13 @@ package com.example.SlotlyV2.feature.user.dto;
 
 import com.example.SlotlyV2.feature.user.User;
 
-import lombok.Value;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
 
-@Value
+@Data
+@Builder
+@AllArgsConstructor
 public class UserResponse {
     private final Long id;
     private final String email;

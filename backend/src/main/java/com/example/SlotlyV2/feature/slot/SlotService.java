@@ -1,6 +1,8 @@
 package com.example.SlotlyV2.feature.slot;
 
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -64,6 +66,17 @@ public class SlotService {
 
         return slotRepository.findByEvent(event).stream()
                 .filter(slot -> slot.isAvailable())
+                .toList();
+    }
+
+    public List<Slot> getAvailableSlotsByShareableIdAndDate(String shareableId, LocalDate date, String timeZone) {
+        ZoneId zone = ZoneId.of(timeZone);
+        List<Slot> allAvailableSlots = getAvailableSlotsByShareableId(shareableId);
+        return allAvailableSlots.stream()
+                .filter(slot -> slot.getStartTime()
+                        .atZoneSameInstant(zone)
+                        .toLocalDate()
+                        .equals(date))
                 .toList();
     }
 

@@ -1,5 +1,4 @@
 import { Route, Routes } from "react-router";
-import ProtectedRoute from "./components/routing/ProtectedRoute.tsx";
 import LoginPage from "./features/auth/pages/LoginPage.tsx";
 import AvailabilityPage from "./pages/AvailabilityPage.tsx";
 import DashboardPage from "./pages/DashboardPage.tsx";
@@ -12,6 +11,8 @@ import RegisterPage from "./features/auth/pages/RegisterPage.tsx";
 import ForgotPasswordPage from "./features/auth/pages/ForgotPasswordPage.tsx";
 import ResetPasswordPage from "./features/auth/pages/ResetPasswordPage.tsx";
 import EventsPage from "./features/events/pages/EventsPage.tsx";
+import BookingSlotsPage from "./features/booking-page/pages/BookingSlotsPage.tsx";
+import ProtectedRoute from "./components/routing/ProtectedRoute.tsx";
 
 function App() {
     return (
@@ -23,6 +24,7 @@ function App() {
                 path="/forgot-password/:token"
                 element={<ResetPasswordPage />}
             />
+            <Route path="/book/:shareableId" element={<BookingSlotsPage />} />
             <Route path="/" element={<HomePage />} />
 
             <Route element={<ProtectedRoute />}>

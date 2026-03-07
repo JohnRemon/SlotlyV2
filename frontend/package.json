@@ -15,10 +15,12 @@
         "@vvo/tzdb": "^6.198.0",
         "lucide-react": "^0.577.0",
         "react": "^19.2.0",
+        "react-day-picker": "^9.14.0",
         "react-dom": "^19.2.0",
         "react-hot-toast": "^2.6.0",
         "react-router": "^7.13.1",
         "react-timezone-select": "^3.3.2",
+        "tailwind-scrollbar-hide": "^4.0.0",
         "tailwindcss": "^4.2.1"
     },
     "devDependencies": {
@@ -29,8 +31,10 @@
         "@vitejs/plugin-react": "^5.1.1",
         "daisyui": "^5.5.19",
         "eslint": "^9.39.1",
+        "eslint-plugin-react-dom": "^2.13.0",
         "eslint-plugin-react-hooks": "^7.0.1",
         "eslint-plugin-react-refresh": "^0.4.24",
+        "eslint-plugin-react-x": "^2.13.0",
         "globals": "^16.5.0",
         "typescript": "~5.9.3",
         "typescript-eslint": "^8.48.0",

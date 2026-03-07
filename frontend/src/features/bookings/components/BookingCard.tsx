@@ -1,6 +1,6 @@
 import { Calendar, Clock, Mail, User } from "lucide-react";
-import type { Booking } from "../types/Booking";
-import { formatDate, formatTime, isPast } from "../utils/DateUtils";
+import type { Booking } from "../types/Booking.ts";
+import { formatDate, formatTime, isPast } from "../utils/DateUtils.ts";
 
 // ───  Helpers ─────────────────────────────────────────────────────────────
 

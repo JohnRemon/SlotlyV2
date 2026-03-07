@@ -65,7 +65,7 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/v1/users/register",
                                 "/api/v1/users/login",
-                                "/api/v1/share/**",
+                                "/api/v1/events/public/**",
                                 "/api/v1/auth/**",
                                 "/api/v1/users/verify-email/**",
                                 "/api/v1/password-reset/**",

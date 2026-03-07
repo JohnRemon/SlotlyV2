@@ -71,7 +71,7 @@ const EventsPage = () => {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-base-content/30" />
                 <input
                     type="text"
-                    className="input input-bordered w-full pl-9 rounded-lg"
+                    className="input input-bordered w-full pl-9 rounded-lg outline-none"
                     placeholder="Search"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
@@ -103,7 +103,7 @@ const EventsPage = () => {
                                 onClick={() => setShowModal(true)}
                             >
                                 <Plus className="w-4 h-4" />
-                                Create "{query}"
+                                Create Event
                             </button>
                         </>
                     ) : (

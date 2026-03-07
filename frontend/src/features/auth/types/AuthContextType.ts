@@ -1,10 +1,6 @@
-export interface User {
-    id: number;
-    email: string;
-    firstName: string;
-    lastName: string;
-    timeZone: string;
-}
+import type { User } from "../../profile/types/User";
+
+export type { User } from "../../profile/types/User";
 
 export interface AuthContextType {
     user: User | null;

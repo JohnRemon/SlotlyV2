@@ -1,10 +1,6 @@
-import type {
-    Booking,
-    CreateBookingRequest,
-    PublicEvent,
-    Slot,
-} from "../types/Booking";
+import type { Booking, CreateBookingRequest } from "../types/Booking";
 import API from "../../../lib/api";
+import type { PublicEvent, Slot } from "../../booking-page/types/BookingSlots";
 
 export const createBooking = async (
     payload: CreateBookingRequest,
@@ -49,5 +45,18 @@ export const getAvailableSlots = async (
     shareableId: string,
 ): Promise<Slot[]> => {
     const res = await API.get(`/api/v1/events/public/${shareableId}/slots`);
+    return res.data.data;
+};
+
+export const getAvailableSlotsByDate = async (
+    shareableId: string,
+    date: string,
+): Promise<Slot[]> => {
+    const res = await API.get(`/api/v1/events/public/${shareableId}/slots`, {
+        params: {
+            date,
+            timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        },
+    });
     return res.data.data;
 };
