@@ -4,6 +4,7 @@ import java.time.OffsetDateTime;
 
 import com.example.SlotlyV2.common.util.TimeZoneConverter;
 import com.example.SlotlyV2.feature.availability.dto.AvailabilityRulesDTO;
+import com.example.SlotlyV2.feature.booking_form.dto.BookingFormResponse;
 import com.example.SlotlyV2.feature.event.Event;
 import com.example.SlotlyV2.feature.recurrence.dto.RecurrenceRulesDTO;
 
@@ -21,6 +22,7 @@ public class EventResponse {
     private AvailabilityRulesDTO availabilityRulesDTO;
     private RecurrenceRulesDTO recurringRulesDTO;
     private String shareableId;
+    private BookingFormResponse bookingForm;
 
     public EventResponse(Event event, TimeZoneConverter timeZoneConverter) {
         this.id = event.getId();
@@ -48,5 +50,6 @@ public class EventResponse {
                 : null;
 
         this.shareableId = event.getShareableId();
+        this.bookingForm = new BookingFormResponse(event.getBookingForm());
     }
 }

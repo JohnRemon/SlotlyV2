@@ -4,6 +4,7 @@ import toast from "react-hot-toast";
 import type { Event } from "../types/Event";
 import { useState } from "react";
 import { updateEvent } from "../api/EventsApi";
+import { useNavigate } from "react-router";
 
 interface EventRowProps {
     event: Event;
@@ -13,6 +14,8 @@ interface EventRowProps {
 
 export const EventRow = ({ event, onDelete }: EventRowProps) => {
     const bookingUrl = `${window.location.origin}/book/${event.shareableId}`;
+
+    const navigate = useNavigate();
 
     const [isPublic, setIsPublic] = useState(
         event.availabilityRulesDTO.isPublic,
@@ -50,7 +53,10 @@ export const EventRow = ({ event, onDelete }: EventRowProps) => {
     };
 
     return (
-        <div className="bg-base-100 border border-base-300 rounded-xl px-5 py-4 flex items-center gap-4 hover:border-base-content/20 transition-colors group">
+        <div
+            className="bg-base-100 border border-base-300 rounded-xl px-5 py-4 flex items-center gap-4 hover:border-base-content/20 transition-colors group cursor-pointer"
+            onClick={() => navigate(`/events/${event.id}`)}
+        >
             {/* name */}
             <div className="flex items-center gap-3 flex-1 min-w-0">
                 <div className="min-w-0">

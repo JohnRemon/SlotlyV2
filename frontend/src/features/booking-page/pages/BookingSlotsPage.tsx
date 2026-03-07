@@ -1,5 +1,5 @@
 import axios from "axios";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useParams } from "react-router";
 import {
@@ -51,24 +51,38 @@ const BookingPage = () => {
             .finally(() => setLoadingEvent(false));
     }, [shareableId]);
 
-    const handleSelectDate = async (date: string) => {
-        setSelectedDate(date);
-        setSelectedSlot(null);
-        setShowForm(false);
-        setLoadingSlots(true);
-        try {
-            const data = await getAvailableSlotsByDate(shareableId, date);
-            setSlots(data);
-        } catch (error) {
-            if (axios.isAxiosError(error)) {
-                toast.error(error.response?.data?.message);
-            } else {
-                toast.error("Something went wrong");
+    const handleSelectDate = useCallback(
+        async (date: string) => {
+            setSelectedDate(date);
+            setSelectedSlot(null);
+            setShowForm(false);
+            setLoadingSlots(true);
+            try {
+                const data = await getAvailableSlotsByDate(shareableId, date);
+                setSlots(data);
+            } catch (error) {
+                if (axios.isAxiosError(error)) {
+                    toast.error(error.response?.data?.message);
+                } else {
+                    toast.error("Something went wrong");
+                }
+            } finally {
+                setLoadingSlots(false);
             }
-        } finally {
-            setLoadingSlots(false);
-        }
-    };
+        },
+        [shareableId],
+    );
+
+    useEffect(() => {
+        if (!event) return;
+        const today = new Date();
+        const start = new Date(event.eventStart);
+        const firstDay = start > today ? start : today;
+        const month = String(firstDay.getMonth() + 1).padStart(2, "0");
+        const day = String(firstDay.getDate()).padStart(2, "0");
+        const dateStr = `${firstDay.getFullYear()}-${month}-${day}`;
+        handleSelectDate(dateStr);
+    }, [event, handleSelectDate]);
 
     const handleSelectSlot = (slot: Slot) => {
         setSelectedSlot(slot);
@@ -111,7 +125,7 @@ const BookingPage = () => {
                 {!showForm && (
                     <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-base-300 items-stretch">
                         {/* Left: Event Details */}
-                        <div className="px-6 py-8">
+                        <div className="px-7 py-8">
                             <EventPanel
                                 event={event}
                                 selectedSlot={selectedSlotLabel}
@@ -119,7 +133,7 @@ const BookingPage = () => {
                         </div>
 
                         {/* Middle: Calendar */}
-                        <div className="px-6 py-8 h-full">
+                        <div className="px-7 py-8 h-full">
                             <CalendarPanel
                                 eventStart={event.eventStart}
                                 eventEnd={event.eventEnd}
@@ -129,7 +143,7 @@ const BookingPage = () => {
                         </div>
 
                         {/* Right: Slots */}
-                        <div className="px-6 py-8 min-h-89 flex flex-col">
+                        <div className="px-6 py-8 min-h-96 flex flex-col">
                             {!selectedDate ? (
                                 <div className="flex-1 flex items-center justify-center">
                                     <p className="text-sm text-base-content/40 text-center">
@@ -160,7 +174,7 @@ const BookingPage = () => {
                 {showForm && (
                     <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-base-300">
                         {/* Left: Event Details */}
-                        <div className="px-6 py-8">
+                        <div className="px-7 py-8">
                             <EventPanel
                                 event={event}
                                 selectedSlot={selectedSlotLabel}
@@ -168,7 +182,7 @@ const BookingPage = () => {
                         </div>
 
                         {/* Right: Booking Form */}
-                        <div className="px-6 py-8">
+                        <div className="px-7 py-8">
                             <BookingForm
                                 event={event}
                                 slot={selectedSlot!}

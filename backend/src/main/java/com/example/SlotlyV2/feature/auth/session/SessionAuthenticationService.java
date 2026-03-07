@@ -33,7 +33,7 @@ public class SessionAuthenticationService {
         Authentication authentication = authenticate(request.getEmail(), request.getPassword());
         User user = getUserFromAuthentication(authentication);
 
-        validateLocalUser(user);
+        // validateLocalUser(user);
         persistSession(authentication, httpServletRequest, httpServletResponse);
 
         return user;

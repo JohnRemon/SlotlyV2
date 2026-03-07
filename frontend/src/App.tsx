@@ -13,6 +13,7 @@ import ResetPasswordPage from "./features/auth/pages/ResetPasswordPage.tsx";
 import EventsPage from "./features/events/pages/EventsPage.tsx";
 import BookingSlotsPage from "./features/booking-page/pages/BookingSlotsPage.tsx";
 import ProtectedRoute from "./components/routing/ProtectedRoute.tsx";
+import EventDetailPage from "./features/events/pages/EventDetailsPage.tsx";
 
 function App() {
     return (
@@ -30,6 +31,7 @@ function App() {
             <Route element={<ProtectedRoute />}>
                 <Route element={<DashboardPage />}>
                     <Route path="/events" element={<EventsPage />} />
+                    <Route path="/events/:id" element={<EventDetailPage />} />
                     <Route path="/bookings" element={<BookingsPage />} />
                     <Route
                         path="/availability"

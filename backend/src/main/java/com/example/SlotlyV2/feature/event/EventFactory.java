@@ -1,6 +1,7 @@
 package com.example.SlotlyV2.feature.event;
 
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.stereotype.Component;
@@ -49,11 +50,7 @@ public class EventFactory {
 
         Event event = builder.build();
 
-        if (request.getBookingForm() != null
-                && request.getBookingForm().getFields() != null
-                && !request.getBookingForm().getFields().isEmpty()) {
-            event.setBookingForm(buildBookingForm(request.getBookingForm(), event));
-        }
+        event.setBookingForm(buildBookingForm(request.getBookingForm(), event));
 
         return event;
     }
@@ -92,15 +89,18 @@ public class EventFactory {
                 .event(event)
                 .build();
 
-        List<FormQuestion> fields = request.getFields().stream()
-                .map(f -> FormQuestion.builder()
-                        .bookingForm(form)
-                        .label(f.getLabel())
-                        .fieldType(orDefault(f.getFieldType(), FieldType.TEXT))
-                        .required(f.isRequired())
-                        .displayOrder(orDefault(f.getDisplayOrder(), 0))
-                        .build())
-                .toList();
+        List<FormQuestion> fields = new ArrayList<>();
+        if (request != null && request.getFields() != null && !request.getFields().isEmpty()) {
+            fields = request.getFields().stream()
+                    .map(field -> FormQuestion.builder()
+                            .bookingForm(form)
+                            .label(field.getLabel())
+                            .fieldType(orDefault(field.getFieldType(), FieldType.TEXT))
+                            .required(field.isRequired())
+                            .displayOrder(orDefault(field.getDisplayOrder(), 0))
+                            .build())
+                    .toList();
+        }
 
         form.setFields(fields);
         return form;
