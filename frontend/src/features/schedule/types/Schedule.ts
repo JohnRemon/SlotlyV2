@@ -14,6 +14,10 @@ export interface DailyScheduleResponse {
     isAvailable: string;
 }
 
+export interface ScheduleRequest {
+    days: DailyScheduleRequest[];
+}
+
 export interface Schedule {
     id: string;
     user: User;
