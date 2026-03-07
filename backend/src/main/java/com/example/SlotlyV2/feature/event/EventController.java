@@ -50,6 +50,21 @@ public class EventController {
         return new ApiResponse<>("Event fetched successfully", new EventResponse(event, timeZoneConverter));
     }
 
+    @GetMapping
+    public ApiResponse<PagedResponse<EventResponse>> getEvents(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir) {
+
+        Sort sort = Sort.by(Sort.Direction.fromString(sortDir), sortBy);
+        PageRequest pageable = PageRequest.of(page, size, sort);
+
+        Page<EventResponse> events = eventService.getEvents(userService.getCurrentUser(), pageable);
+        return new ApiResponse<>("Events fetched successfully",
+                PagedResponse.of(events));
+    }
+
     @PutMapping("/{id}")
     public ApiResponse<EventResponse> updateEvent(@Valid @RequestBody EventRequest request, @PathVariable Long id) {
         Event event = eventService.updateEvent(request, id);
@@ -75,21 +90,6 @@ public class EventController {
     public ApiResponse<Void> deleteEventById(@PathVariable Long id) {
         eventService.deleteEventById(id);
         return new ApiResponse<>("Event deleted successfully", null);
-    }
-
-    @GetMapping
-    public ApiResponse<PagedResponse<EventResponse>> getEvents(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "createdAt") String sortBy,
-            @RequestParam(defaultValue = "desc") String sortDir) {
-
-        Sort sort = Sort.by(Sort.Direction.fromString(sortDir), sortBy);
-        PageRequest pageable = PageRequest.of(page, size, sort);
-
-        Page<EventResponse> events = eventService.getEvents(userService.getCurrentUser(), pageable);
-        return new ApiResponse<>("Events fetched successfully",
-                PagedResponse.of(events));
     }
 
     @PostMapping("/recurring")
