@@ -36,8 +36,20 @@ export interface BookingFormFieldRequest {
     displayOrder: number;
 }
 
+export interface BookingFormFieldResponse {
+    id: string;
+    label: string;
+    fieldType: FieldStatus;
+    required: boolean;
+    displayOrder: number;
+}
+
 export interface BookingFormRequest {
     fields: BookingFormFieldRequest[];
+}
+
+export interface BookingFormResponse {
+    fields: BookingFormFieldResponse[];
 }
 
 export interface CreateBookingRequest {

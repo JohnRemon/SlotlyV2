@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 import com.example.SlotlyV2.common.util.TimeZoneConverter;
 import com.example.SlotlyV2.feature.availability.AvailabilityRules;
 import com.example.SlotlyV2.feature.availability.dto.AvailabilityRulesDTO;
+import com.example.SlotlyV2.feature.availability.dto.AvailabilityRulesUpdateRequest;
 import com.example.SlotlyV2.feature.booking_form.BookingForm;
 import com.example.SlotlyV2.feature.booking_form.FormQuestion;
 import com.example.SlotlyV2.feature.booking_form.dto.BookingFormRequest;
@@ -56,10 +57,6 @@ public class EventFactory {
     }
 
     public AvailabilityRules buildAvailabilityRules(AvailabilityRulesDTO dto) {
-        if (dto == null) {
-            dto = new AvailabilityRulesDTO();
-        }
-
         return AvailabilityRules.builder()
                 .slotDurationMinutes(orDefault(dto.getSlotDurationMinutes(), 30))
                 .maxSlotsPerUser(orDefault(dto.getMaxSlotsPerUser(), 1))
@@ -69,6 +66,19 @@ public class EventFactory {
                 .maxCapacity(dto.getMaxCapacity())
                 .allowsCancellations(orDefault(dto.getAllowCancellations(), true))
                 .isPublic(orDefault(dto.getIsPublic(), true))
+                .build();
+    }
+
+    public AvailabilityRules buildAvailabilityRules(AvailabilityRulesUpdateRequest request) {
+        return AvailabilityRules.builder()
+                .slotDurationMinutes(request.getSlotDurationMinutes())
+                .maxSlotsPerUser(request.getMaxSlotsPerUser())
+                .bufferMinutes(request.getBufferMinutes())
+                .minimumNoticeHours(request.getMinimumNoticeHours())
+                .maximumAdvanceDays(request.getMaximumAdvanceDays())
+                .maxCapacity(request.getMaxCapacity())
+                .allowsCancellations(request.getAllowCancellations())
+                .isPublic(request.getIsPublic())
                 .build();
     }
 
@@ -109,4 +119,5 @@ public class EventFactory {
     private <T> T orDefault(T value, T defaultValue) {
         return value != null ? value : defaultValue;
     }
+
 }

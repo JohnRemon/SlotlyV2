@@ -1,10 +1,10 @@
 import { Clock, Copy, ExternalLink, Trash } from "lucide-react";
 import type React from "react";
-import toast from "react-hot-toast";
-import type { Event } from "../types/Event";
 import { useState } from "react";
-import { updateEvent } from "../api/EventsApi";
+import toast from "react-hot-toast";
 import { useNavigate } from "react-router";
+import { updateEvent } from "../api/EventsApi";
+import type { Event } from "../types/Event";
 
 interface EventRowProps {
     event: Event;
@@ -53,12 +53,12 @@ export const EventRow = ({ event, onDelete }: EventRowProps) => {
     };
 
     return (
-        <div
-            className="bg-base-100 border border-base-300 rounded-xl px-5 py-4 flex items-center gap-4 hover:border-base-content/20 transition-colors group cursor-pointer"
-            onClick={() => navigate(`/events/${event.id}`)}
-        >
+        <div className="bg-base-100 border border-base-300 rounded-xl px-5 py-4 flex items-center gap-4 hover:border-base-content/20 transition-colors group cursor-pointer">
             {/* name */}
-            <div className="flex items-center gap-3 flex-1 min-w-0">
+            <div
+                className="flex items-center gap-3 flex-1 min-w-0"
+                onClick={() => navigate(`/events/${event.id}`)}
+            >
                 <div className="min-w-0">
                     <p className="font-bold text-sm text-base-content truncate">
                         {event.eventName}

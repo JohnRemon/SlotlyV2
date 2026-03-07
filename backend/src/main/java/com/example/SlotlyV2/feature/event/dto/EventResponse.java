@@ -33,6 +33,10 @@ public class EventResponse {
         this.availabilityRulesDTO = AvailabilityRulesDTO.builder()
                 .slotDurationMinutes(event.getAvailabilityRules().getSlotDurationMinutes())
                 .maxSlotsPerUser(event.getAvailabilityRules().getMaxSlotsPerUser())
+                .bufferMinutes(event.getAvailabilityRules().getBufferMinutes())
+                .minimumNoticeHours(event.getAvailabilityRules().getMinimumNoticeHours())
+                .maximumAdvanceDays(event.getAvailabilityRules().getMaximumAdvanceDays())
+                .maxCapacity(event.getAvailabilityRules().getMaxCapacity())
                 .allowCancellations(event.getAvailabilityRules().getAllowsCancellations())
                 .isPublic(event.getAvailabilityRules().getIsPublic())
                 .build();
@@ -50,6 +54,8 @@ public class EventResponse {
                 : null;
 
         this.shareableId = event.getShareableId();
-        this.bookingForm = new BookingFormResponse(event.getBookingForm());
+        this.bookingForm = event.getBookingForm() != null
+                ? new BookingFormResponse(event.getBookingForm())
+                : null;
     }
 }

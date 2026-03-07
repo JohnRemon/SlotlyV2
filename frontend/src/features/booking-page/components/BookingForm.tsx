@@ -115,7 +115,7 @@ export const BookingForm = ({
                             <label className="text-sm font-medium">
                                 {field.label}
                                 {field.required && (
-                                    <span className="text-error ml-0.5">*</span>
+                                    <span className="text-error ml-1">*</span>
                                 )}
                             </label>
                             {field.fieldType === "TEXTAREA" ? (

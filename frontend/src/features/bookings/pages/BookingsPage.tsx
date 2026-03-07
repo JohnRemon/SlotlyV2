@@ -114,9 +114,6 @@ const BookingsPage = () => {
                         <p className="font-semibold text-base-content/60 text-sm">
                             No {activeTab.toLowerCase()} bookings yet
                         </p>
-                        <p className="text-xs text-base-content/40 mt-1">
-                            Share your event link to get started
-                        </p>
                     </div>
                 </div>
             ) : (

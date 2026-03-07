@@ -1,4 +1,7 @@
-import type { BookingFormRequest } from "../../bookings/types/Booking";
+import type {
+    BookingFormRequest,
+    BookingFormResponse,
+} from "../../bookings/types/Booking";
 
 export type RecurrenceFrequency = "DAILY" | "WEEKLY" | "MONTHLY" | "CUSTOM";
 export type RecurrenceEndType = "NEVER" | "OCCURRENCES" | "DATE";
@@ -28,6 +31,7 @@ export interface Event {
         recurrenceEndDate: string;
     };
     shareableId: string;
+    bookingForm: BookingFormResponse;
 }
 
 export interface EventRequest {

@@ -28,6 +28,8 @@ public class ScheduleController {
     private final ScheduleService scheduleService;
     private final UserService userService;
 
+    // TODO: create schedule
+
     @PutMapping
     public ApiResponse<Void> updateSchedule(@Valid @RequestBody ScheduleRequest request) {
         scheduleService.updateSchedule(userService.getCurrentUser(), request);

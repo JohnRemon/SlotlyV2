@@ -20,6 +20,12 @@ import com.example.SlotlyV2.feature.booking.BookingStatus;
 import com.example.SlotlyV2.feature.calendar.BookingGoogleEventRepository;
 import com.example.SlotlyV2.feature.email.dto.EventCancelledEmailDTO;
 import com.example.SlotlyV2.feature.email.event.EventCancelledEvent;
+import com.example.SlotlyV2.feature.availability.AvailabilityRules;
+import com.example.SlotlyV2.feature.availability.dto.AvailabilityRulesUpdateRequest;
+import com.example.SlotlyV2.feature.booking_form.BookingForm;
+import com.example.SlotlyV2.feature.booking_form.FormQuestion;
+import com.example.SlotlyV2.feature.booking_form.dto.BookingFormUpdateRequest;
+import com.example.SlotlyV2.feature.booking_form.enums.FieldType;
 import com.example.SlotlyV2.feature.event.dto.EventRequest;
 import com.example.SlotlyV2.feature.event.dto.EventResponse;
 import com.example.SlotlyV2.feature.slot.Slot;
@@ -113,11 +119,52 @@ public class EventService {
     }
 
     @Transactional
+    public Event updateAvailabilityRules(AvailabilityRulesUpdateRequest request, Long id) {
+        Event event = findAndAuthorizeEvent(id);
+
+        AvailabilityRules newRules = eventFactory.buildAvailabilityRules(request);
+        event.setAvailabilityRules(newRules);
+
+        regenerateFutureSlots(event);
+
+        return eventRepository.save(event);
+    }
+
+    @Transactional
+    public Event updateBookingForm(BookingFormUpdateRequest request, Long id) {
+        Event event = findAndAuthorizeEvent(id);
+
+        BookingForm bookingForm = event.getBookingForm();
+        if (bookingForm == null) {
+            bookingForm = BookingForm.builder().event(event).build();
+        }
+
+        if (request.getFields() != null) {
+            bookingForm.getFields().clear();
+            for (var fieldReq : request.getFields()) {
+                FormQuestion field = FormQuestion.builder()
+                        .bookingForm(bookingForm)
+                        .label(fieldReq.getLabel())
+                        .fieldType(fieldReq.getFieldType() != null ? fieldReq.getFieldType() : FieldType.TEXT)
+                        .required(fieldReq.isRequired())
+                        .displayOrder(fieldReq.getDisplayOrder() != null ? fieldReq.getDisplayOrder()
+                                : bookingForm.getFields().size())
+                        .build();
+                bookingForm.getFields().add(field);
+            }
+        }
+
+        event.setBookingForm(bookingForm);
+        return eventRepository.save(event);
+    }
+
+    @Transactional
     public void deleteEventById(Long id) {
         Event event = findAndAuthorizeEvent(id);
         OffsetDateTime nowUtc = OffsetDateTime.now(ZoneOffset.UTC);
 
-        List<Booking> upcomingBookings = bookingRepository.findByEventIdAndSlotEndTimeGreaterThanEqual(event.getId(), nowUtc);
+        List<Booking> upcomingBookings = bookingRepository.findByEventIdAndSlotEndTimeGreaterThanEqual(event.getId(),
+                nowUtc);
         List<Long> upcomingBookingIds = upcomingBookings.stream().map(Booking::getId).toList();
 
         // Build Cancellation Email

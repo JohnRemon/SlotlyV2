@@ -6,6 +6,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -18,6 +19,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.SlotlyV2.common.dto.ApiResponse;
 import com.example.SlotlyV2.common.dto.PagedResponse;
 import com.example.SlotlyV2.common.util.TimeZoneConverter;
+import com.example.SlotlyV2.feature.availability.dto.AvailabilityRulesUpdateRequest;
+import com.example.SlotlyV2.feature.booking_form.dto.BookingFormUpdateRequest;
 import com.example.SlotlyV2.feature.event.dto.EventRequest;
 import com.example.SlotlyV2.feature.event.dto.EventResponse;
 import com.example.SlotlyV2.feature.event.dto.PublicEventResponse;
@@ -51,6 +54,21 @@ public class EventController {
     public ApiResponse<EventResponse> updateEvent(@Valid @RequestBody EventRequest request, @PathVariable Long id) {
         Event event = eventService.updateEvent(request, id);
         return new ApiResponse<EventResponse>("Event edited successfully", new EventResponse(event, timeZoneConverter));
+    }
+
+    @PatchMapping("/{id}/availability-rules")
+    public ApiResponse<EventResponse> updateAvailabilityRules(@RequestBody AvailabilityRulesUpdateRequest request,
+            @PathVariable Long id) {
+        Event event = eventService.updateAvailabilityRules(request, id);
+        return new ApiResponse<>("Availability rules updated successfully",
+                new EventResponse(event, timeZoneConverter));
+    }
+
+    @PatchMapping("/{id}/booking-form")
+    public ApiResponse<EventResponse> updateBookingForm(@RequestBody BookingFormUpdateRequest request,
+            @PathVariable Long id) {
+        Event event = eventService.updateBookingForm(request, id);
+        return new ApiResponse<>("Booking form updated successfully", new EventResponse(event, timeZoneConverter));
     }
 
     @DeleteMapping("/{id}")

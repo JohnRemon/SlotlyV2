@@ -1,8 +1,13 @@
 import axios from "axios";
 import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { useNavigate, useParams } from "react-router";
-import { getEvent, updateEvent, deleteEvent } from "../api/EventsApi";
+import { useNavigate, useParams, useSearchParams } from "react-router";
+import {
+    getEvent,
+    updateEvent,
+    updateBookingForm,
+    deleteEvent,
+} from "../api/EventsApi";
 import type { Event, EventRequest } from "../types/Event";
 import type { BookingFormFieldRequest } from "../../bookings/types/Booking";
 import {
@@ -71,32 +76,41 @@ const EventDetailPage = () => {
     const [isLoading, setLoading] = useState(true);
     const [isSaving, setSaving] = useState(false);
     const [isDeleting, setDeleting] = useState(false);
-    const [activeTab, setActiveTab] = useState<Tab>("general");
+    const [searchParams, setSearchParams] = useSearchParams();
+    const activeTab = (searchParams.get("tab") as Tab) ?? "general";
+    const setActiveTab = (tab: Tab) => setSearchParams({ tab });
     const [form, setForm] = useState<FormState | null>(null);
 
     useEffect(() => {
         getEvent(Number(id))
-            .then((e) => {
-                setEvent(e);
+            .then((event) => {
+                setEvent(event);
                 setForm({
-                    eventName: e.eventName,
-                    description: e.description ?? "",
-                    eventStart: toDateTimeLocal(e.eventStart),
-                    eventEnd: toDateTimeLocal(e.eventEnd),
+                    eventName: event.eventName,
+                    description: event.description ?? "",
+                    eventStart: toDateTimeLocal(event.eventStart),
+                    eventEnd: toDateTimeLocal(event.eventEnd),
                     slotDurationMinutes:
-                        e.availabilityRulesDTO.slotDurationMinutes,
-                    bufferMinutes: e.availabilityRulesDTO.bufferMinutes ?? 0,
+                        event.availabilityRulesDTO.slotDurationMinutes,
+                    bufferMinutes:
+                        event.availabilityRulesDTO.bufferMinutes ?? 0,
                     minimumNoticeHours:
-                        e.availabilityRulesDTO.minimumNoticeHours ?? 0,
+                        event.availabilityRulesDTO.minimumNoticeHours ?? 0,
                     maximumAdvanceDays:
-                        e.availabilityRulesDTO.maximumAdvanceDays ?? 30,
-                    maxCapacity: e.availabilityRulesDTO.maxCapacity ?? 1,
+                        event.availabilityRulesDTO.maximumAdvanceDays ?? 30,
+                    maxCapacity: event.availabilityRulesDTO.maxCapacity ?? 1,
                     maxSlotsPerUser:
-                        e.availabilityRulesDTO.maxSlotsPerUser ?? 1,
+                        event.availabilityRulesDTO.maxSlotsPerUser ?? 1,
                     allowCancellations:
-                        e.availabilityRulesDTO.allowCancellations ?? true,
-                    isPublic: e.availabilityRulesDTO.isPublic ?? true,
-                    fields: [],
+                        event.availabilityRulesDTO.allowCancellations ?? true,
+                    isPublic: event.availabilityRulesDTO.isPublic ?? true,
+                    fields:
+                        event.bookingForm?.fields?.map((f) => ({
+                            label: f.label,
+                            fieldType: f.fieldType,
+                            required: f.required,
+                            displayOrder: f.displayOrder,
+                        })) ?? [],
                 });
             })
             .catch((error) => {
@@ -111,33 +125,42 @@ const EventDetailPage = () => {
             .finally(() => setLoading(false));
     }, [id]);
 
+    // ── handleSave ────────────────────────────────────────────────────────────
+    // booking-form tab  → PATCH /events/:id/booking-form  (fast, no slot regen)
+    // all other tabs    → PUT   /events/:id               (full update)
     const handleSave = async () => {
         if (!form) return;
         setSaving(true);
         try {
-            const payload: EventRequest = {
-                eventName: form.eventName,
-                description: form.description || undefined,
-                eventStart: new Date(form.eventStart).toISOString(),
-                eventEnd: new Date(form.eventEnd).toISOString(),
-                availabilityRulesDTO: {
-                    slotDurationMinutes: form.slotDurationMinutes,
-                    bufferMinutes: form.bufferMinutes,
-                    minimumNoticeHours: form.minimumNoticeHours,
-                    maximumAdvanceDays: form.maximumAdvanceDays,
-                    maxCapacity: form.maxCapacity,
-                    maxSlotsPerUser: form.maxSlotsPerUser,
-                    allowCancellations: form.allowCancellations,
-                    isPublic: form.isPublic,
-                },
-                bookingForm:
-                    form.fields.length > 0
-                        ? { fields: form.fields }
-                        : undefined,
-            };
-            const updated = await updateEvent(payload, Number(id));
+            let updated: Event;
+
+            if (activeTab === "booking-form") {
+                updated = await updateBookingForm(
+                    { fields: form.fields },
+                    Number(id),
+                );
+            } else {
+                const payload: EventRequest = {
+                    eventName: form.eventName,
+                    description: form.description || undefined,
+                    eventStart: new Date(form.eventStart).toISOString(),
+                    eventEnd: new Date(form.eventEnd).toISOString(),
+                    availabilityRulesDTO: {
+                        slotDurationMinutes: form.slotDurationMinutes,
+                        bufferMinutes: form.bufferMinutes,
+                        minimumNoticeHours: form.minimumNoticeHours,
+                        maximumAdvanceDays: form.maximumAdvanceDays,
+                        maxCapacity: form.maxCapacity,
+                        maxSlotsPerUser: form.maxSlotsPerUser,
+                        allowCancellations: form.allowCancellations,
+                        isPublic: form.isPublic,
+                    },
+                };
+                updated = await updateEvent(payload, Number(id));
+            }
+
             setEvent(updated);
-            toast.success("Event saved");
+            toast.success("Saved");
         } catch (error) {
             if (axios.isAxiosError(error)) {
                 toast.error(
@@ -238,7 +261,6 @@ const EventDetailPage = () => {
         <div className="p-6 max-w-7xl mx-auto">
             {/* ── Header ── */}
             <div className="flex items-center justify-between mb-6">
-                {/* Left: back + title */}
                 <div className="flex items-center gap-3">
                     <button
                         className="btn btn-ghost btn-sm btn-circle"
@@ -256,9 +278,7 @@ const EventDetailPage = () => {
                     </div>
                 </div>
 
-                {/* Right: actions */}
                 <div className="flex items-center gap-2">
-                    {/* Public toggle */}
                     <span className="text-xs font-medium text-base-content/60 bg-base-content/10 px-2 py-1 rounded-sm">
                         {form.isPublic ? "Public" : "Private"}
                     </span>
@@ -271,7 +291,6 @@ const EventDetailPage = () => {
 
                     <div className="w-px h-5 bg-base-300 mx-1" />
 
-                    {/* Copy link */}
                     <button
                         className="btn btn-ghost btn-xs btn-square"
                         title="Copy booking link"
@@ -283,7 +302,6 @@ const EventDetailPage = () => {
                         <Copy className="w-3.5 h-3.5" />
                     </button>
 
-                    {/* View booking page */}
                     <a
                         href={bookingUrl}
                         target="_blank"
@@ -294,7 +312,6 @@ const EventDetailPage = () => {
                         <ExternalLink className="w-3.5 h-3.5" />
                     </a>
 
-                    {/* Delete */}
                     <button
                         className="btn btn-ghost btn-xs btn-square text-error hover:bg-error/10 rounded-lg"
                         title="Delete event"
@@ -310,7 +327,6 @@ const EventDetailPage = () => {
 
                     <div className="w-px h-5 bg-base-300 mx-1" />
 
-                    {/* Save */}
                     <button
                         className="btn btn-primary btn-sm"
                         onClick={handleSave}
@@ -327,7 +343,6 @@ const EventDetailPage = () => {
 
             {/* ── Layout ── */}
             <div className="flex flex-col lg:flex-row gap-6">
-                {/* ── Sidebar (lg+) / Top tabs (sm) ── */}
                 <div className="lg:w-48 lg:shrink-0">
                     <nav className="flex flex-row lg:flex-col gap-1 overflow-x-auto pb-1 lg:pb-0 scrollbar-hide">
                         {TABS.map((tab) => (
@@ -348,9 +363,8 @@ const EventDetailPage = () => {
                     </nav>
                 </div>
 
-                {/* ── Content ── */}
                 <div className="flex-1 bg-base-100 border border-base-300 rounded-xl p-6">
-                    {/* General */}
+                    {/* ── General ── */}
                     {activeTab === "general" && (
                         <div className="flex flex-col gap-5">
                             <h2 className="text-sm font-semibold text-base-content">
@@ -435,7 +449,7 @@ const EventDetailPage = () => {
                         </div>
                     )}
 
-                    {/* Limits */}
+                    {/* ── Limits ── */}
                     {activeTab === "limits" && (
                         <div className="flex flex-col gap-5">
                             <h2 className="text-sm font-semibold text-base-content">
@@ -569,7 +583,7 @@ const EventDetailPage = () => {
                         </div>
                     )}
 
-                    {/* Availability */}
+                    {/* ── Availability ── */}
                     {activeTab === "availability" && (
                         <div className="flex flex-col gap-5">
                             <h2 className="text-sm font-semibold text-base-content">
@@ -588,7 +602,7 @@ const EventDetailPage = () => {
                         </div>
                     )}
 
-                    {/* Booking Form */}
+                    {/* ── Booking Form ── */}
                     {activeTab === "booking-form" && (
                         <div className="flex flex-col gap-5">
                             <div className="flex items-center justify-between">
@@ -704,7 +718,7 @@ const EventDetailPage = () => {
                         </div>
                     )}
 
-                    {/* Advanced */}
+                    {/* ── Advanced ── */}
                     {activeTab === "advanced" && (
                         <div className="flex flex-col gap-5">
                             <h2 className="text-sm font-semibold text-base-content">
