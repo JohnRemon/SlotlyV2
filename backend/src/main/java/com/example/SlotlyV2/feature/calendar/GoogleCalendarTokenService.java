@@ -55,19 +55,26 @@ public class GoogleCalendarTokenService {
     }
 
     @Transactional
-    public GoogleCalendarToken connectCalendar(String code, User user) {
+    public void connectCalendar(String code, User user) {
         try {
             GoogleTokenResponse tokenResponse = new GoogleAuthorizationCodeTokenRequest(
-                    httpTransport,
-                    jsonFactory,
-                    TOKEN_URL,
-                    config.getClientId(),
-                    config.getClientSecret(),
-                    code,
-                    config.getRedirectUri())
+                    httpTransport, jsonFactory, TOKEN_URL,
+                    config.getClientId(), config.getClientSecret(),
+                    code, config.getRedirectUri())
                     .execute();
 
-            return saveTokens(user, tokenResponse);
+            GoogleCalendarToken token = tokenRepository.findByUserId(user.getId())
+                    .orElseGet(() -> GoogleCalendarToken.builder().user(user).build());
+
+            token.setAccessToken(tokenResponse.getAccessToken());
+            token.setExpiresAt(calculateExpirationTime(tokenResponse.getExpiresInSeconds()));
+            token.setScope(tokenResponse.getScope());
+
+            if (tokenResponse.getRefreshToken() != null) {
+                token.setRefreshToken(tokenResponse.getRefreshToken());
+            }
+
+            tokenRepository.save(token);
 
         } catch (IOException e) {
             log.error("Failed to connect to calendar for user {}", user.getId(), e);
@@ -131,7 +138,7 @@ public class GoogleCalendarTokenService {
     }
 
     public boolean isConnected(Long userId) {
-        return tokenRepository.findByUserId(userId).isPresent();
+        return tokenRepository.existsByUserId(userId);
     }
 
     public boolean isConnectedAndValid(Long userId) {
@@ -154,23 +161,6 @@ public class GoogleCalendarTokenService {
         }
 
         return true;
-    }
-
-    private GoogleCalendarToken saveTokens(User user, GoogleTokenResponse tokenResponse) {
-        GoogleCalendarToken token = tokenRepository.findByUserId(user.getId())
-                .orElseGet(GoogleCalendarToken::new);
-
-        token.setUser(user);
-        token.setAccessToken(tokenResponse.getAccessToken());
-
-        if (tokenResponse.getRefreshToken() != null) {
-            token.setRefreshToken(tokenResponse.getRefreshToken());
-        }
-
-        token.setExpiresAt(calculateExpirationTime(tokenResponse.getExpiresInSeconds()));
-        token.setScope(tokenResponse.getScope());
-
-        return tokenRepository.save(token);
     }
 
     private GoogleCalendarToken updateTokens(GoogleCalendarToken token, GoogleTokenResponse tokenResponse) {

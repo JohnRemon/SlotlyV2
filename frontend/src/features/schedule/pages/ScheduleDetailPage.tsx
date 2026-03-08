@@ -37,7 +37,7 @@ const ScheduleDetailPage = () => {
     // Name editing
     const [editingName, setEditingName] = useState(false);
     const [draftName, setDraftName] = useState("");
-    const [isRenamig, setIsRenaming] = useState(false);
+    const [isRenaming, setIsRenaming] = useState(false);
     const nameInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -101,8 +101,10 @@ const ScheduleDetailPage = () => {
 
     const updateDay = (dayOfWeek: number, patch: Partial<DailySchedule>) => {
         setDays((prev) =>
-            prev.map((d) =>
-                d.dayOfWeek === dayOfWeek ? { ...d, ...patch } : d,
+            prev.map((schedule) =>
+                schedule.dayOfWeek === dayOfWeek
+                    ? { ...schedule, ...patch }
+                    : schedule,
             ),
         );
     };
@@ -115,11 +117,11 @@ const ScheduleDetailPage = () => {
                 {
                     name: schedule.name,
                     isDefault: schedule.isDefault,
-                    days: days.map((d) => ({
-                        dayOfWeek: d.dayOfWeek,
-                        startTime: d.startTime,
-                        endTime: d.endTime,
-                        isAvailable: d.isAvailable,
+                    days: days.map((schedule) => ({
+                        dayOfWeek: schedule.dayOfWeek,
+                        startTime: schedule.startTime,
+                        endTime: schedule.endTime,
+                        isAvailable: schedule.isAvailable,
                     })),
                 },
                 id,
@@ -134,7 +136,7 @@ const ScheduleDetailPage = () => {
             toast.success("Schedule saved");
         } catch (error) {
             if (axios.isAxiosError(error)) {
-                toast.error(error.response?.data?.message ?? "Failed to save");
+                toast.error(error.response?.data?.message);
             } else {
                 toast.error("Something went wrong");
             }
@@ -190,10 +192,10 @@ const ScheduleDetailPage = () => {
                                     <button
                                         type="button"
                                         className="btn btn-ghost btn-xs btn-square text-success"
-                                        disabled={isRenamig}
+                                        disabled={isRenaming}
                                         onClick={handleRenameSave}
                                     >
-                                        {isRenamig ? (
+                                        {isRenaming ? (
                                             <span className="loading loading-spinner loading-xs" />
                                         ) : (
                                             <Check className="w-3.5 h-3.5" />

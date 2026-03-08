@@ -73,6 +73,10 @@ public class GoogleCalendarController {
         // Validate state (CSRF protection)
         String expectedState = (String) session.getAttribute(OAUTH_STATE_KEY);
         if (expectedState == null) {
+            if (googleOAuth2Service.isConnected(user.getId())) {
+                log.info("Google Calendar already connected for user {}", user.getId());
+                return new ApiResponse<>("Google Calendar already connected", null);
+            }
             log.warn("No OAuth state found in session for user {}", user.getId());
             throw new InvalidTokenException("OAuth state not found. Please restart the connection process.");
         }
@@ -84,18 +88,14 @@ public class GoogleCalendarController {
             throw new InvalidTokenException("Invalid OAuth state. Possible CSRF attack detected.");
         }
 
-        try {
-            // Exchange authorization code for tokens
-            googleOAuth2Service.connectCalendar(request.getCode(), user);
+        session.removeAttribute(OAUTH_STATE_KEY);
 
-            log.info("Successfully connected Google Calendar for user {}", user.getId());
+        // Exchange authorization code for tokens
+        googleOAuth2Service.connectCalendar(request.getCode(), user);
 
-            return new ApiResponse<>("Google Calendar connected successfully", null);
+        log.info("Successfully connected Google Calendar for user {}", user.getId());
 
-        } finally {
-            // Always cleanup state, even if exchange fails
-            session.removeAttribute(OAUTH_STATE_KEY);
-        }
+        return new ApiResponse<>("Google Calendar connected successfully", null);
     }
 
     @DeleteMapping("/disconnect")

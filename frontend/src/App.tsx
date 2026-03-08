@@ -4,7 +4,6 @@ import DashboardPage from "./pages/DashboardPage.tsx";
 import BookingsPage from "./features/bookings/pages/BookingsPage.tsx";
 import ProfilePage from "./pages/ProfilePage.tsx";
 import SettingsPage from "./pages/SettingsPage.tsx";
-import AppsPage from "./pages/AppsPage.tsx";
 import HomePage from "./pages/HomePage.tsx";
 import RegisterPage from "./features/auth/pages/RegisterPage.tsx";
 import ForgotPasswordPage from "./features/auth/pages/ForgotPasswordPage.tsx";
@@ -16,6 +15,7 @@ import EventDetailPage from "./features/events/pages/EventDetailsPage.tsx";
 import SchedulesPage from "./features/schedule/pages/SchedulesPage.tsx";
 import ScheduleDetailPage from "./features/schedule/pages/ScheduleDetailPage.tsx";
 import { SchedulesProvider } from "./features/schedule/context/SchedulesContext.tsx";
+import AppsPage from "./features/apps/pages/AppsPage.tsx";
 
 function App() {
     return (
