@@ -15,7 +15,7 @@ public class DailyScheduleResponse {
     private Integer dayOfWeek;
     private LocalTime startTime;
     private LocalTime endTime;
-    private boolean isAvailable;
+    private Boolean isAvailable;
 
     public DailyScheduleResponse(DailySchedule dailySchedule) {
         this.dayOfWeek = dailySchedule.getDayOfWeek();

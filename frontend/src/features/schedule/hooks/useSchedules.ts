@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
-import type { Schedule, ScheduleRequest } from "../types/Schedule";
+import type {
+    Schedule,
+    ScheduleRequest,
+    UpdateScheduleRequest,
+} from "../types/Schedule";
 import {
     createSchedule,
     deleteSchedule,
@@ -22,9 +26,10 @@ export const useSchedules = () => {
     const create = async (request: ScheduleRequest) => {
         const newSchedule = await createSchedule(request);
         setSchedules((prev) => [newSchedule, ...prev]);
+        return newSchedule;
     };
 
-    const update = async (request: ScheduleRequest, id: string) => {
+    const update = async (request: UpdateScheduleRequest, id: string) => {
         const updatedSchedule = await updateSchedule(request, id);
         setSchedules((prev) =>
             prev.map((schedule) =>

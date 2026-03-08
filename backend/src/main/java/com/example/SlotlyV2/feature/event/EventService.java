@@ -17,23 +17,22 @@ import com.example.SlotlyV2.common.exception.event.EventNotFoundException;
 import com.example.SlotlyV2.common.exception.schedule.InvalidScheduleException;
 import com.example.SlotlyV2.common.exception.schedule.ScheduleNotFoundException;
 import com.example.SlotlyV2.common.util.TimeZoneConverter;
+import com.example.SlotlyV2.feature.availability.AvailabilityRules;
+import com.example.SlotlyV2.feature.availability.dto.AvailabilityRulesUpdateRequest;
 import com.example.SlotlyV2.feature.booking.Booking;
 import com.example.SlotlyV2.feature.booking.BookingRepository;
 import com.example.SlotlyV2.feature.booking.BookingStatus;
-import com.example.SlotlyV2.feature.calendar.BookingGoogleEventRepository;
-import com.example.SlotlyV2.feature.email.dto.EventCancelledEmailDTO;
-import com.example.SlotlyV2.feature.email.event.EventCancelledEvent;
-import com.example.SlotlyV2.feature.availability.AvailabilityRules;
-import com.example.SlotlyV2.feature.availability.dto.AvailabilityRulesUpdateRequest;
 import com.example.SlotlyV2.feature.booking_form.BookingForm;
 import com.example.SlotlyV2.feature.booking_form.FormQuestion;
 import com.example.SlotlyV2.feature.booking_form.dto.BookingFormUpdateRequest;
 import com.example.SlotlyV2.feature.booking_form.enums.FieldType;
+import com.example.SlotlyV2.feature.calendar.BookingGoogleEventRepository;
+import com.example.SlotlyV2.feature.email.dto.EventCancelledEmailDTO;
+import com.example.SlotlyV2.feature.email.event.EventCancelledEvent;
 import com.example.SlotlyV2.feature.event.dto.EventRequest;
 import com.example.SlotlyV2.feature.event.dto.EventResponse;
 import com.example.SlotlyV2.feature.schedule.Schedule;
 import com.example.SlotlyV2.feature.schedule.ScheduleRepository;
-import com.example.SlotlyV2.feature.slot.Slot;
 import com.example.SlotlyV2.feature.slot.SlotRepository;
 import com.example.SlotlyV2.feature.slot.SlotService;
 import com.example.SlotlyV2.feature.user.User;
@@ -127,7 +126,7 @@ public class EventService {
 
         updateEventDetails(request, event);
 
-        regenerateFutureSlots(event);
+        slotService.regenerateFutureSlots(event);
 
         return eventRepository.save(event);
     }
@@ -139,7 +138,7 @@ public class EventService {
         AvailabilityRules newRules = eventFactory.buildAvailabilityRules(request);
         event.setAvailabilityRules(newRules);
 
-        regenerateFutureSlots(event);
+        slotService.regenerateFutureSlots(event);
 
         return eventRepository.save(event);
     }
@@ -183,7 +182,7 @@ public class EventService {
         event.setSchedule(schedule);
         eventRepository.save(event);
 
-        regenerateFutureSlots(event);
+        slotService.regenerateFutureSlots(event);
 
         return event;
     }
@@ -245,27 +244,4 @@ public class EventService {
                 eventFactory.buildAvailabilityRules(request.getAvailabilityRulesDTO()));
     }
 
-    private void deleteUnbookedSlots(Event event, OffsetDateTime effectiveStart) {
-        List<Slot> slots = slotRepository.findByEvent(event);
-
-        List<Slot> unbookedSlots = slots.stream()
-                .filter(slot -> slot.getStartTime().isAfter(effectiveStart))
-                .filter(slot -> slot.getBooking() == null || !slot.getBooking().isActive())
-                .toList();
-
-        slotRepository.deleteAll(unbookedSlots);
-    }
-
-    private void regenerateFutureSlots(Event event) {
-        OffsetDateTime nowUtc = OffsetDateTime.now(ZoneOffset.UTC);
-        OffsetDateTime effectiveStart = nowUtc.isAfter(event.getEventStart())
-                ? nowUtc
-                : event.getEventStart();
-
-        deleteUnbookedSlots(event, effectiveStart);
-
-        if (effectiveStart.isBefore(event.getEventEnd())) {
-            slotService.generateSlots(event, event.getSchedule(), effectiveStart, event.getEventEnd());
-        }
-    }
 }

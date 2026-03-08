@@ -1,19 +1,26 @@
 package com.example.SlotlyV2.common.util;
 
 import java.time.Duration;
+import java.time.LocalTime;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.stereotype.Component;
 
 import com.example.SlotlyV2.common.exception.event.InvalidEventException;
+import com.example.SlotlyV2.common.exception.schedule.ScheduleNotFoundException;
 import com.example.SlotlyV2.feature.event.Event;
 import com.example.SlotlyV2.feature.event.enums.RecurrenceEndType;
 import com.example.SlotlyV2.feature.recurrence.RecurrenceRules;
+import com.example.SlotlyV2.feature.schedule.BlockedPeriod;
+import com.example.SlotlyV2.feature.schedule.BlockedPeriodRepository;
+import com.example.SlotlyV2.feature.schedule.DailySchedule;
 import com.example.SlotlyV2.feature.schedule.Schedule;
-import com.example.SlotlyV2.feature.schedule.ScheduleService;
 import com.example.SlotlyV2.feature.slot.Slot;
+import com.example.SlotlyV2.feature.user.User;
+import com.example.SlotlyV2.feature.calendar.GoogleCalendarService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -21,7 +28,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SlotUtils {
     private final static Integer MAX_YEARS = 1;
-    private final ScheduleService scheduleService;
+    private final BlockedPeriodRepository blockedPeriodRepository;
+    private final GoogleCalendarService googleCalendarService;
 
     public List<Slot> buildSlotsByTime(Schedule schedule, Event event, OffsetDateTime start, OffsetDateTime end) {
         List<Slot> slots = new ArrayList<>();
@@ -35,7 +43,7 @@ public class SlotUtils {
 
             OffsetDateTime slotEnd = currentStart.plusMinutes(slotDuration);
 
-            if (scheduleService.isValidSlot(schedule, event.getHost(), currentStart, slotDuration)) {
+            if (isValidSlot(schedule, event.getHost(), currentStart, slotDuration)) {
                 Slot slot = Slot.builder()
                         .event(event)
                         .startTime(currentStart)
@@ -110,5 +118,42 @@ public class SlotUtils {
             case MONTHLY -> current.plusMonths(1);
             case CUSTOM -> current.plusDays(rules.getInterval());
         };
+    }
+
+    private boolean isValidSlot(Schedule schedule, User user, OffsetDateTime start, Integer slotDuration) {
+        ZoneId userZone = ZoneId.of(user.getTimeZone());
+        Integer dayOfWeek = start.atZoneSameInstant(userZone).getDayOfWeek().getValue();
+
+        DailySchedule day = schedule.getDailySchedules().stream()
+                .filter(scheduleDay -> scheduleDay.getDayOfWeek().equals(dayOfWeek))
+                .findFirst()
+                .orElseThrow(() -> new ScheduleNotFoundException("Daily Schedule Not Found"));
+
+        if (!day.isAvailable()) {
+            return false;
+        }
+
+        OffsetDateTime end = start.plusMinutes(slotDuration);
+
+        LocalTime startTime = start.atZoneSameInstant(userZone).toLocalTime();
+        LocalTime endTime = end.atZoneSameInstant(userZone).toLocalTime();
+
+        if (startTime.isBefore(day.getStartTime()) || endTime.isAfter(day.getEndTime())) {
+            return false;
+        }
+
+        if (endTime.isBefore(startTime)) {
+            return false;
+        }
+
+        List<BlockedPeriod> blocks = blockedPeriodRepository
+                .findByUserIdAndEndTimeAfterAndStartTimeBefore(user.getId(), start, end);
+
+        if (!blocks.isEmpty()) {
+            return false;
+        }
+
+        List<com.google.api.services.calendar.model.Event> events = googleCalendarService.getUpcomingEvents(user, start, end);
+        return events.isEmpty();
     }
 }

@@ -6,6 +6,7 @@ import {
     getEvent,
     updateEvent,
     updateBookingForm,
+    updateSchedule,
     deleteEvent,
 } from "../api/EventsApi";
 import type { Event, EventRequest } from "../types/Event";
@@ -22,8 +23,9 @@ import {
     ExternalLink,
     ChevronLeft,
 } from "lucide-react";
+import { useSchedules } from "../../schedule/hooks/useSchedules";
+import { AvailabilityTab } from "./AvailabilityTab";
 
-// ── Tabs ──────────────────────────────────────────────────────────────────────
 type Tab = "general" | "limits" | "availability" | "booking-form" | "advanced";
 
 const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
@@ -46,7 +48,6 @@ const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
     },
 ];
 
-// ── Form state ────────────────────────────────────────────────────────────────
 interface FormState {
     eventName: string;
     description: string;
@@ -81,31 +82,37 @@ const EventDetailPage = () => {
     const setActiveTab = (tab: Tab) => setSearchParams({ tab });
     const [form, setForm] = useState<FormState | null>(null);
 
+    const { schedules, isLoading: schedulesLoading } = useSchedules();
+    const [draftScheduleId, setDraftScheduleId] = useState<string>("");
+    const [draftScheduleIsDefault, setDraftScheduleIsDefault] = useState(false);
+    const [isUpdatingVisibility, setIsUpdatingVisibility] = useState(false);
+
     useEffect(() => {
         getEvent(Number(id))
-            .then((event) => {
-                setEvent(event);
+            .then((e) => {
+                setEvent(e);
+                setDraftScheduleId(String(e.scheduleId));
+                setDraftScheduleIsDefault(e.scheduleIsDefault ?? false);
                 setForm({
-                    eventName: event.eventName,
-                    description: event.description ?? "",
-                    eventStart: toDateTimeLocal(event.eventStart),
-                    eventEnd: toDateTimeLocal(event.eventEnd),
+                    eventName: e.eventName,
+                    description: e.description ?? "",
+                    eventStart: toDateTimeLocal(e.eventStart),
+                    eventEnd: toDateTimeLocal(e.eventEnd),
                     slotDurationMinutes:
-                        event.availabilityRulesDTO.slotDurationMinutes,
-                    bufferMinutes:
-                        event.availabilityRulesDTO.bufferMinutes ?? 0,
+                        e.availabilityRulesDTO.slotDurationMinutes,
+                    bufferMinutes: e.availabilityRulesDTO.bufferMinutes ?? 0,
                     minimumNoticeHours:
-                        event.availabilityRulesDTO.minimumNoticeHours ?? 0,
+                        e.availabilityRulesDTO.minimumNoticeHours ?? 0,
                     maximumAdvanceDays:
-                        event.availabilityRulesDTO.maximumAdvanceDays ?? 30,
-                    maxCapacity: event.availabilityRulesDTO.maxCapacity ?? 1,
+                        e.availabilityRulesDTO.maximumAdvanceDays ?? 30,
+                    maxCapacity: e.availabilityRulesDTO.maxCapacity ?? 1,
                     maxSlotsPerUser:
-                        event.availabilityRulesDTO.maxSlotsPerUser ?? 1,
+                        e.availabilityRulesDTO.maxSlotsPerUser ?? 1,
                     allowCancellations:
-                        event.availabilityRulesDTO.allowCancellations ?? true,
-                    isPublic: event.availabilityRulesDTO.isPublic ?? true,
+                        e.availabilityRulesDTO.allowCancellations ?? true,
+                    isPublic: e.availabilityRulesDTO.isPublic ?? true,
                     fields:
-                        event.bookingForm?.fields?.map((f) => ({
+                        e.bookingForm?.fields?.map((f) => ({
                             label: f.label,
                             fieldType: f.fieldType,
                             required: f.required,
@@ -125,20 +132,78 @@ const EventDetailPage = () => {
             .finally(() => setLoading(false));
     }, [id]);
 
-    // ── handleSave ────────────────────────────────────────────────────────────
-    // booking-form tab  → PATCH /events/:id/booking-form  (fast, no slot regen)
-    // all other tabs    → PUT   /events/:id               (full update)
+    const handleScheduleChange = async (scheduleId: string) => {
+        const selected = schedules.find((s) => s.id === scheduleId);
+        setDraftScheduleId(scheduleId);
+        setDraftScheduleIsDefault(selected?.isDefault ?? false);
+    };
+
+    const buildEventPayload = (
+        sourceEvent: Event,
+        isPublic: boolean,
+    ): EventRequest => ({
+        eventName: sourceEvent.eventName,
+        description: sourceEvent.description || undefined,
+        eventStart: sourceEvent.eventStart,
+        eventEnd: sourceEvent.eventEnd,
+        availabilityRulesDTO: {
+            slotDurationMinutes:
+                sourceEvent.availabilityRulesDTO.slotDurationMinutes,
+            bufferMinutes: sourceEvent.availabilityRulesDTO.bufferMinutes ?? 0,
+            minimumNoticeHours:
+                sourceEvent.availabilityRulesDTO.minimumNoticeHours ?? 0,
+            maximumAdvanceDays:
+                sourceEvent.availabilityRulesDTO.maximumAdvanceDays ?? 30,
+            maxCapacity: sourceEvent.availabilityRulesDTO.maxCapacity ?? 1,
+            maxSlotsPerUser:
+                sourceEvent.availabilityRulesDTO.maxSlotsPerUser ?? 1,
+            allowCancellations:
+                sourceEvent.availabilityRulesDTO.allowCancellations ?? true,
+            isPublic,
+        },
+    });
+
+    const handleVisibilityToggle = async (nextIsPublic: boolean) => {
+        if (!event || !form || isUpdatingVisibility) return;
+
+        const previousIsPublic = form.isPublic;
+        set("isPublic", nextIsPublic);
+        setIsUpdatingVisibility(true);
+
+        try {
+            const payload = buildEventPayload(event, nextIsPublic);
+            const updated = await updateEvent(payload, Number(id));
+            setEvent(updated);
+            set("isPublic", updated.availabilityRulesDTO.isPublic ?? nextIsPublic);
+            toast.success("Visibility updated");
+        } catch (error) {
+            set("isPublic", previousIsPublic);
+            if (axios.isAxiosError(error)) {
+                toast.error(
+                    error.response?.data?.message ?? "Failed to update visibility",
+                );
+            } else {
+                toast.error("Something went wrong");
+            }
+        } finally {
+            setIsUpdatingVisibility(false);
+        }
+    };
+
     const handleSave = async () => {
         if (!form) return;
         setSaving(true);
         try {
             let updated: Event;
-
             if (activeTab === "booking-form") {
                 updated = await updateBookingForm(
                     { fields: form.fields },
                     Number(id),
                 );
+            } else if (activeTab === "availability") {
+                updated = await updateSchedule(Number(id), draftScheduleId);
+                setDraftScheduleId(String(updated.scheduleId));
+                setDraftScheduleIsDefault(updated.scheduleIsDefault ?? false);
             } else {
                 const payload: EventRequest = {
                     eventName: form.eventName,
@@ -158,7 +223,6 @@ const EventDetailPage = () => {
                 };
                 updated = await updateEvent(payload, Number(id));
             }
-
             setEvent(updated);
             toast.success("Saved");
         } catch (error) {
@@ -259,7 +323,7 @@ const EventDetailPage = () => {
 
     return (
         <div className="p-6 max-w-7xl mx-auto">
-            {/* ── Header ── */}
+            {/* Header */}
             <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
                     <button
@@ -286,11 +350,10 @@ const EventDetailPage = () => {
                         type="checkbox"
                         className="toggle toggle-primary toggle-sm"
                         checked={form.isPublic}
-                        onChange={(e) => set("isPublic", e.target.checked)}
+                        disabled={isUpdatingVisibility}
+                        onChange={(e) => handleVisibilityToggle(e.target.checked)}
                     />
-
                     <div className="w-px h-5 bg-base-300 mx-1" />
-
                     <button
                         className="btn btn-ghost btn-xs btn-square"
                         title="Copy booking link"
@@ -301,7 +364,6 @@ const EventDetailPage = () => {
                     >
                         <Copy className="w-3.5 h-3.5" />
                     </button>
-
                     <a
                         href={bookingUrl}
                         target="_blank"
@@ -311,7 +373,6 @@ const EventDetailPage = () => {
                     >
                         <ExternalLink className="w-3.5 h-3.5" />
                     </a>
-
                     <button
                         className="btn btn-ghost btn-xs btn-square text-error hover:bg-error/10 rounded-lg"
                         title="Delete event"
@@ -324,9 +385,7 @@ const EventDetailPage = () => {
                             <Trash2 className="w-3.5 h-3.5" />
                         )}
                     </button>
-
                     <div className="w-px h-5 bg-base-300 mx-1" />
-
                     <button
                         className="btn btn-primary btn-sm"
                         onClick={handleSave}
@@ -341,7 +400,7 @@ const EventDetailPage = () => {
                 </div>
             </div>
 
-            {/* ── Layout ── */}
+            {/* Layout */}
             <div className="flex flex-col lg:flex-row gap-6">
                 <div className="lg:w-48 lg:shrink-0">
                     <nav className="flex flex-row lg:flex-col gap-1 overflow-x-auto pb-1 lg:pb-0 scrollbar-hide">
@@ -364,13 +423,12 @@ const EventDetailPage = () => {
                 </div>
 
                 <div className="flex-1 bg-base-100 border border-base-300 rounded-xl p-6">
-                    {/* ── General ── */}
+                    {/* General */}
                     {activeTab === "general" && (
                         <div className="flex flex-col gap-5">
                             <h2 className="text-sm font-semibold text-base-content">
                                 General
                             </h2>
-
                             <div className="flex flex-col gap-1.5">
                                 <label className="text-sm font-medium">
                                     Event name
@@ -384,7 +442,6 @@ const EventDetailPage = () => {
                                     }
                                 />
                             </div>
-
                             <div className="flex flex-col gap-1.5">
                                 <label className="text-sm font-medium">
                                     Description
@@ -399,7 +456,6 @@ const EventDetailPage = () => {
                                     placeholder="Optional description shown to attendees"
                                 />
                             </div>
-
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="flex flex-col gap-1.5">
                                     <label className="text-sm font-medium">
@@ -428,7 +484,6 @@ const EventDetailPage = () => {
                                     />
                                 </div>
                             </div>
-
                             <div className="flex flex-col gap-1.5">
                                 <label className="text-sm font-medium">
                                     Slot duration (minutes)
@@ -449,13 +504,12 @@ const EventDetailPage = () => {
                         </div>
                     )}
 
-                    {/* ── Limits ── */}
+                    {/* Limits */}
                     {activeTab === "limits" && (
                         <div className="flex flex-col gap-5">
                             <h2 className="text-sm font-semibold text-base-content">
                                 Limits
                             </h2>
-
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="flex flex-col gap-1.5">
                                     <label className="text-sm font-medium">
@@ -558,7 +612,6 @@ const EventDetailPage = () => {
                                     />
                                 </div>
                             </div>
-
                             <div className="flex items-center justify-between px-4 py-3 border border-base-300 rounded-xl">
                                 <div>
                                     <p className="text-sm font-medium">
@@ -583,26 +636,18 @@ const EventDetailPage = () => {
                         </div>
                     )}
 
-                    {/* ── Availability ── */}
+                    {/* Availability */}
                     {activeTab === "availability" && (
-                        <div className="flex flex-col gap-5">
-                            <h2 className="text-sm font-semibold text-base-content">
-                                Availability
-                            </h2>
-                            <div className="flex flex-col items-center justify-center py-12 gap-3 text-center border border-dashed border-base-300 rounded-xl">
-                                <Calendar className="w-8 h-8 text-base-content/20" />
-                                <p className="text-sm text-base-content/40">
-                                    Schedule linking coming soon
-                                </p>
-                                <p className="text-xs text-base-content/30">
-                                    You'll be able to link this event to an
-                                    availability schedule
-                                </p>
-                            </div>
-                        </div>
+                        <AvailabilityTab
+                            scheduleId={draftScheduleId}
+                            scheduleIsDefault={draftScheduleIsDefault}
+                            schedules={schedules}
+                            schedulesLoading={schedulesLoading}
+                            onScheduleChange={handleScheduleChange}
+                        />
                     )}
 
-                    {/* ── Booking Form ── */}
+                    {/* Booking Form */}
                     {activeTab === "booking-form" && (
                         <div className="flex flex-col gap-5">
                             <div className="flex items-center justify-between">
@@ -618,7 +663,6 @@ const EventDetailPage = () => {
                                     Add field
                                 </button>
                             </div>
-
                             {form.fields.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center py-12 gap-3 text-center border border-dashed border-base-300 rounded-xl">
                                     <FileText className="w-8 h-8 text-base-content/20" />
@@ -718,13 +762,12 @@ const EventDetailPage = () => {
                         </div>
                     )}
 
-                    {/* ── Advanced ── */}
+                    {/* Advanced */}
                     {activeTab === "advanced" && (
                         <div className="flex flex-col gap-5">
                             <h2 className="text-sm font-semibold text-base-content">
                                 Advanced
                             </h2>
-
                             <div className="flex flex-col gap-1.5">
                                 <label className="text-sm font-medium">
                                     Booking link
@@ -758,7 +801,6 @@ const EventDetailPage = () => {
                                     </a>
                                 </div>
                             </div>
-
                             <div className="flex flex-col items-center justify-center py-12 gap-3 text-center border border-dashed border-base-300 rounded-xl">
                                 <Calendar className="w-8 h-8 text-base-content/20" />
                                 <p className="text-sm text-base-content/40">

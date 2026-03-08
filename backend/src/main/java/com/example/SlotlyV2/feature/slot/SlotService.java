@@ -3,6 +3,7 @@ package com.example.SlotlyV2.feature.slot;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -84,5 +85,29 @@ public class SlotService {
     public Slot getSlotById(Long slotId) {
         return slotRepository.findById(slotId)
                 .orElseThrow(() -> new SlotNotFoundException("Slot not found with ID: " + slotId));
+    }
+
+    public void deleteUnbookedSlots(Event event, OffsetDateTime effectiveStart) {
+        List<Slot> slots = slotRepository.findByEvent(event);
+
+        List<Slot> unbookedSlots = slots.stream()
+                .filter(slot -> slot.getStartTime().isAfter(effectiveStart))
+                .filter(slot -> slot.getBooking() == null || !slot.getBooking().isActive())
+                .toList();
+
+        slotRepository.deleteAll(unbookedSlots);
+    }
+
+    public void regenerateFutureSlots(Event event) {
+        OffsetDateTime nowUtc = OffsetDateTime.now(ZoneOffset.UTC);
+        OffsetDateTime effectiveStart = nowUtc.isAfter(event.getEventStart())
+                ? nowUtc
+                : event.getEventStart();
+
+        deleteUnbookedSlots(event, effectiveStart);
+
+        if (effectiveStart.isBefore(event.getEventEnd())) {
+            generateSlots(event, event.getSchedule(), effectiveStart, event.getEventEnd());
+        }
     }
 }

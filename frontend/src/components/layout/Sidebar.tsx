@@ -10,7 +10,7 @@ import {
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-type ActiveLink = "Events" | "Bookings" | "Availability" | "Apps";
+type ActiveLink = "Events" | "Bookings" | "Schedules" | "Apps";
 
 interface NavLink {
     label: ActiveLink;
@@ -39,9 +39,9 @@ const NAV_LINKS: NavLink[] = [
         href: "/bookings",
     },
     {
-        label: "Availability",
+        label: "Schedules",
         icon: <Clock className="w-4 h-4 shrink-0" />,
-        href: "/availability",
+        href: "/schedules",
     },
     {
         label: "Apps",

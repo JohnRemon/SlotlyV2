@@ -1,6 +1,5 @@
 import { Route, Routes } from "react-router";
 import LoginPage from "./features/auth/pages/LoginPage.tsx";
-import AvailabilityPage from "./pages/AvailabilityPage.tsx";
 import DashboardPage from "./pages/DashboardPage.tsx";
 import BookingsPage from "./features/bookings/pages/BookingsPage.tsx";
 import ProfilePage from "./pages/ProfilePage.tsx";
@@ -14,6 +13,8 @@ import EventsPage from "./features/events/pages/EventsPage.tsx";
 import BookingSlotsPage from "./features/booking-page/pages/BookingSlotsPage.tsx";
 import ProtectedRoute from "./components/routing/ProtectedRoute.tsx";
 import EventDetailPage from "./features/events/pages/EventDetailsPage.tsx";
+import SchedulesPage from "./features/schedule/pages/SchedulesPage.tsx";
+import ScheduleDetailPage from "./features/schedule/pages/ScheduleDetailPage.tsx";
 
 function App() {
     return (
@@ -33,10 +34,11 @@ function App() {
                     <Route path="/events" element={<EventsPage />} />
                     <Route path="/events/:id" element={<EventDetailPage />} />
                     <Route path="/bookings" element={<BookingsPage />} />
+                    <Route path="/schedules" element={<SchedulesPage />} />
                     <Route
-                        path="/availability"
-                        element={<AvailabilityPage />}
-                    />
+                        path="/schedules/:id"
+                        element={<ScheduleDetailPage />}
+                    />{" "}
                     <Route path="/apps" element={<AppsPage />} />
                     <Route path="/me" element={<ProfilePage />} />
                     <Route path="/settings" element={<SettingsPage />} />

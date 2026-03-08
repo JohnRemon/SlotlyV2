@@ -32,6 +32,8 @@ export interface Event {
     };
     shareableId: string;
     bookingForm: BookingFormResponse;
+    scheduleId: string;
+    scheduleIsDefault: boolean;
 }
 
 export interface EventRequest {
@@ -58,4 +60,19 @@ export interface EventRequest {
         recurrenceEndDate: string;
     };
     bookingForm?: BookingFormRequest;
+}
+
+export interface AvailabilityRulesUpdateRequest {
+    eventName?: string;
+    description?: string;
+    eventStart?: string;
+    eventEnd?: string;
+    slotDurationMinutes?: number;
+    bufferMinutes?: number;
+    minimumNoticeHours?: number;
+    maximumAdvanceDays?: number;
+    maxCapacity?: number;
+    maxSlotsPerUser?: number;
+    allowCancellations?: boolean;
+    isPublic?: boolean;
 }

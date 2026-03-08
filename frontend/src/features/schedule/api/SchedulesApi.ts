@@ -1,5 +1,9 @@
 import API from "../../../lib/api";
-import type { Schedule, ScheduleRequest } from "../types/Schedule";
+import type {
+    Schedule,
+    ScheduleRequest,
+    UpdateScheduleRequest,
+} from "../types/Schedule";
 
 export const getScheduleById = async (id: string): Promise<Schedule> => {
     const res = await API.get(`/api/v1/schedule/${id}`);
@@ -19,10 +23,20 @@ export const createSchedule = async (
 };
 
 export const updateSchedule = async (
-    request: ScheduleRequest,
+    request: UpdateScheduleRequest,
     id: string,
 ): Promise<Schedule> => {
     const res = await API.put(`/api/v1/schedule/${id}`, request);
+    return res.data.data;
+};
+
+export const updateScheduleName = async (
+    name: string,
+    id: string,
+): Promise<Schedule> => {
+    const res = await API.patch(`/api/v1/schedule/${id}/name`, null, {
+        params: { name },
+    });
     return res.data.data;
 };
 

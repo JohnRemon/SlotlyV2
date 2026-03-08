@@ -1,5 +1,9 @@
 import API from "../../../lib/api";
-import type { Event, EventRequest } from "../types/Event";
+import type {
+    AvailabilityRulesUpdateRequest,
+    Event,
+    EventRequest,
+} from "../types/Event";
 import type { BookingFormRequest } from "../../bookings/types/Booking";
 
 export const createEvent = async (payload: EventRequest): Promise<Event> => {
@@ -30,6 +34,27 @@ export const updateBookingForm = async (
     id: number,
 ): Promise<Event> => {
     const res = await API.patch(`/api/v1/events/${id}/booking-form`, payload);
+    return res.data.data;
+};
+
+export const updateAvailabilityRules = async (
+    payload: AvailabilityRulesUpdateRequest,
+    id: number,
+): Promise<Event> => {
+    const res = await API.patch(
+        `/api/v1/events/${id}/availability-rules`,
+        payload,
+    );
+    return res.data.data;
+};
+
+export const updateSchedule = async (
+    id: number,
+    scheduleId: string,
+): Promise<Event> => {
+    const res = await API.patch(`/api/v1/events/${id}/schedule`, null, {
+        params: { scheduleId },
+    });
     return res.data.data;
 };
 

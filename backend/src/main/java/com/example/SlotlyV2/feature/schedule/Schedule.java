@@ -35,11 +35,29 @@ public class Schedule {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    @Builder.Default
+    private String name = "Working hours";
+
     @ElementCollection
     @CollectionTable(name = "schedule_daily_schedules", joinColumns = @JoinColumn(name = "schedule_id"))
     private List<DailySchedule> dailySchedules;
 
-    // TODO: add a default schedule and use this shcedule when creating events
     @Builder.Default
     private Boolean isDefault = false;
+
+    public UUID getId() {
+        return id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public List<DailySchedule> getDailySchedules() {
+        return dailySchedules;
+    }
+
+    public Boolean getIsDefault() {
+        return isDefault;
+    }
 }

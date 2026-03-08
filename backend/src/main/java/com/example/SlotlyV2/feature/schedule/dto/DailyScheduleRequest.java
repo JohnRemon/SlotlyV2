@@ -24,5 +24,5 @@ public class DailyScheduleRequest {
     private LocalTime endTime;
 
     @NotNull(message = "availability is required")
-    private boolean isAvailable;
+    private Boolean isAvailable;
 }

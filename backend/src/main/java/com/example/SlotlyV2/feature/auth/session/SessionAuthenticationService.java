@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.SlotlyV2.common.exception.auth.AccountNotVerifiedException;
 import com.example.SlotlyV2.common.exception.auth.InvalidCredentialsException;
+import com.example.SlotlyV2.common.exception.auth.UnauthorizedAccessException;
 import com.example.SlotlyV2.feature.auth.dto.SessionLoginRequest;
 import com.example.SlotlyV2.feature.user.User;
 
@@ -30,8 +31,15 @@ public class SessionAuthenticationService {
     public User login(SessionLoginRequest request, HttpServletRequest httpServletRequest,
             HttpServletResponse httpServletResponse) {
 
-        Authentication authentication = authenticate(request.getEmail(), request.getPassword());
-        User user = getUserFromAuthentication(authentication);
+        Authentication authentication;
+        User user;
+
+        try {
+            authentication = authenticate(request.getEmail(), request.getPassword());
+            user = getUserFromAuthentication(authentication);
+        } catch (Exception e) {
+            throw new UnauthorizedAccessException(e.getMessage());
+        }
 
         // validateLocalUser(user);
         persistSession(authentication, httpServletRequest, httpServletResponse);
