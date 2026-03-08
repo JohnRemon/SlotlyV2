@@ -71,9 +71,15 @@ public class ScheduleController {
         return new ApiResponse<>("Schedule updated successfully", new ScheduleResponse(schedule));
     }
 
+    @PatchMapping("/{id}/default")
+    public ApiResponse<ScheduleResponse> updateDefaultSchedule(@PathVariable UUID id) {
+        Schedule schedule = scheduleService.updateDefaultSchedule(userService.getCurrentUser(), id);
+        return new ApiResponse<>("Schedule updated successfully", new ScheduleResponse(schedule));
+    }
+
     @DeleteMapping("/{id}")
     public ApiResponse<Void> deleteSchedule(@PathVariable UUID id) {
-        scheduleService.deleteSchedule(id);
+        scheduleService.deleteSchedule(userService.getCurrentUser(), id);
         return new ApiResponse<>("Schedule deleted successfully", null);
     }
 

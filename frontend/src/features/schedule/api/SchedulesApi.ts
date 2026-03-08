@@ -40,6 +40,11 @@ export const updateScheduleName = async (
     return res.data.data;
 };
 
+export const updateDefaultSchedule = async (id: string): Promise<Schedule> => {
+    const res = await API.patch(`/api/v1/schedule/${id}/default`);
+    return res.data.data;
+};
+
 export const deleteSchedule = async (id: string) => {
     await API.delete(`/api/v1/schedule/${id}`);
 };

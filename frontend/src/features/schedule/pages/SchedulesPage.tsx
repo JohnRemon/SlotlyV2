@@ -1,12 +1,12 @@
 import { Plus } from "lucide-react";
 import { useState } from "react";
-import { useSchedules } from "../hooks/useSchedules";
 import ScheduleRow from "./ScheduleRow";
 import CreateScheduleModal from "../components/CreateScheduleModal";
 import { useNavigate } from "react-router";
+import { useSchedulesContext } from "../context/schedulesContextStore";
 
 const SchedulesPage = () => {
-    const { schedules, isLoading, remove } = useSchedules();
+    const { schedules, isLoading, remove } = useSchedulesContext();
     const [showModal, setShowModal] = useState(false);
     const navigate = useNavigate();
 
@@ -18,7 +18,7 @@ const SchedulesPage = () => {
         );
 
     return (
-        <div className="p-6 max-w-3xl mx-auto">
+        <div className="p-6 max-w-7xl mx-auto">
             <div className="flex items-center justify-between mb-6">
                 <div>
                     <h1 className="text-lg font-bold text-base-content">

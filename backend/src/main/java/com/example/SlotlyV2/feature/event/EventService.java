@@ -118,6 +118,13 @@ public class EventService {
         return event;
     }
 
+    public List<Event> getEventsByScheduleId(UUID id) {
+        Schedule schedule = scheduleRepository.findById(id)
+                .orElseThrow(() -> new ScheduleNotFoundException("Schedule not found"));
+
+        return eventRepository.findByScheduleAndDeletedAtIsNull(schedule);
+    }
+
     @Transactional
     public Event updateEvent(EventRequest request, Long id) {
         Event event = findAndAuthorizeEvent(id);

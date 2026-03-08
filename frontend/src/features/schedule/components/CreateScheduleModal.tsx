@@ -2,7 +2,7 @@ import axios from "axios";
 import { X } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { useSchedules } from "../hooks/useSchedules";
+import { useSchedulesContext } from "../context/schedulesContextStore";
 
 interface Props {
     onClose: () => void;
@@ -10,7 +10,7 @@ interface Props {
 }
 
 const CreateScheduleModal = ({ onClose, onSuccess }: Props) => {
-    const { create } = useSchedules();
+    const { create } = useSchedulesContext();
     const [name, setName] = useState("");
     const [isCreating, setIsCreating] = useState(false);
 

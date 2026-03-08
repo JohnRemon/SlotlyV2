@@ -90,8 +90,35 @@ public class ScheduleService {
         return scheduleRepository.save(schedule);
     }
 
-    public void deleteSchedule(UUID id) {
-        scheduleRepository.deleteById(id);
+    @Transactional
+    public Schedule updateDefaultSchedule(User user, UUID id) {
+        Schedule defaultSchedule = scheduleRepository.findByUserAndIsDefaultTrue(user)
+                .orElseThrow(() -> new ScheduleNotFoundException("Schedule not found"));
+
+        defaultSchedule.setIsDefault(false);
+        scheduleRepository.save(defaultSchedule);
+
+        Schedule schedule = scheduleRepository.findById(id)
+                .orElseThrow(() -> new ScheduleNotFoundException("Schedule not found"));
+
+        schedule.setIsDefault(true);
+        return scheduleRepository.save(schedule);
+    }
+
+    @Transactional
+    public void deleteSchedule(User user, UUID id) {
+        Schedule schedule = scheduleRepository.findById(id)
+                .orElseThrow(() -> new ScheduleNotFoundException("Schedule not found"));
+
+        if (scheduleRepository.countByUser(user) == 1) {
+            throw new InvalidScheduleException("Cannot delete the only schedule");
+        }
+
+        if (schedule.getIsDefault()) {
+            throw new InvalidScheduleException("Cannot delete the default schedule");
+        }
+
+        scheduleRepository.delete(schedule);
     }
 
     public BlockedPeriod getBookingPeriodById(UUID id) {
@@ -164,7 +191,6 @@ public class ScheduleService {
                 .user(user)
                 .name(name)
                 .dailySchedules(dailySchedules)
-                .isDefault(true)
                 .build();
 
         return scheduleRepository.save(schedule);

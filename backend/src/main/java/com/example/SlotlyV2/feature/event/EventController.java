@@ -1,5 +1,6 @@
 package com.example.SlotlyV2.feature.event;
 
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
@@ -65,6 +66,17 @@ public class EventController {
         Page<EventResponse> events = eventService.getEvents(userService.getCurrentUser(), pageable);
         return new ApiResponse<>("Events fetched successfully",
                 PagedResponse.of(events));
+    }
+
+    @GetMapping("/by-schedule")
+    public ApiResponse<List<EventResponse>> getEventsByScheduleId(@RequestParam UUID id) {
+        List<Event> events = eventService.getEventsByScheduleId(id);
+
+        List<EventResponse> eventResponses = events.stream()
+                .map((event) -> new EventResponse(event, timeZoneConverter))
+                .toList();
+
+        return new ApiResponse<>("Events fetched successfully", eventResponses);
     }
 
     @PutMapping("/{id}")

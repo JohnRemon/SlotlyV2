@@ -1,10 +1,10 @@
 import API from "../../../lib/api";
+import type { BookingFormRequest } from "../../bookings/types/Booking";
 import type {
     AvailabilityRulesUpdateRequest,
     Event,
     EventRequest,
 } from "../types/Event";
-import type { BookingFormRequest } from "../../bookings/types/Booking";
 
 export const createEvent = async (payload: EventRequest): Promise<Event> => {
     const res = await API.post("/api/v1/events", payload);
@@ -14,6 +14,13 @@ export const createEvent = async (payload: EventRequest): Promise<Event> => {
 export const getEvents = async (): Promise<Event[]> => {
     const res = await API.get("/api/v1/events");
     return res.data.data.content;
+};
+
+export const getEventsBySchedule = async (id: string): Promise<Event[]> => {
+    const res = await API.get("/api/v1/events/by-schedule", {
+        params: { id },
+    });
+    return res.data.data;
 };
 
 export const getEvent = async (id: number): Promise<Event> => {

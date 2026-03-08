@@ -9,6 +9,7 @@ import {
     updateScheduleName,
 } from "../api/SchedulesApi";
 import type { DailySchedule, Schedule } from "../types/Schedule";
+import { useSchedulesContext } from "../context/schedulesContextStore";
 
 const DAY_NAMES = [
     "",
@@ -26,6 +27,7 @@ const toTimeInput = (time: string) => time.slice(0, 5);
 const ScheduleDetailPage = () => {
     const { id } = useParams() as { id: string };
     const navigate = useNavigate();
+    const { updateLocal } = useSchedulesContext();
 
     const [schedule, setSchedule] = useState<Schedule | null>(null);
     const [days, setDays] = useState<DailySchedule[]>([]);
@@ -81,6 +83,7 @@ const ScheduleDetailPage = () => {
         try {
             const updated = await updateScheduleName(draftName.trim(), id);
             setSchedule(updated);
+            updateLocal(updated);
             setEditingName(false);
             toast.success("Name updated");
         } catch (error) {
@@ -122,6 +125,7 @@ const ScheduleDetailPage = () => {
                 id,
             );
             setSchedule(updated);
+            updateLocal(updated);
             setDays(
                 [...updated.dailySchedules].sort(
                     (a, b) => a.dayOfWeek - b.dayOfWeek,
@@ -223,9 +227,6 @@ const ScheduleDetailPage = () => {
                                 </div>
                             )}
                         </div>
-                        <p className="text-xs text-base-content/40">
-                            Working hours
-                        </p>
                     </div>
                 </div>
 

@@ -15,6 +15,7 @@ import ProtectedRoute from "./components/routing/ProtectedRoute.tsx";
 import EventDetailPage from "./features/events/pages/EventDetailsPage.tsx";
 import SchedulesPage from "./features/schedule/pages/SchedulesPage.tsx";
 import ScheduleDetailPage from "./features/schedule/pages/ScheduleDetailPage.tsx";
+import { SchedulesProvider } from "./features/schedule/context/SchedulesContext.tsx";
 
 function App() {
     return (
@@ -34,11 +35,13 @@ function App() {
                     <Route path="/events" element={<EventsPage />} />
                     <Route path="/events/:id" element={<EventDetailPage />} />
                     <Route path="/bookings" element={<BookingsPage />} />
-                    <Route path="/schedules" element={<SchedulesPage />} />
-                    <Route
-                        path="/schedules/:id"
-                        element={<ScheduleDetailPage />}
-                    />{" "}
+                    <Route element={<SchedulesProvider />}>
+                        <Route path="/schedules" element={<SchedulesPage />} />
+                        <Route
+                            path="/schedules/:id"
+                            element={<ScheduleDetailPage />}
+                        />
+                    </Route>
                     <Route path="/apps" element={<AppsPage />} />
                     <Route path="/me" element={<ProfilePage />} />
                     <Route path="/settings" element={<SettingsPage />} />
