@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.example.SlotlyV2.common.exception.auth.AccountAlreadyVerifiedException;
 import com.example.SlotlyV2.common.exception.auth.AccountNotVerifiedException;
+import com.example.SlotlyV2.common.exception.auth.ForbiddenException;
 import com.example.SlotlyV2.common.exception.auth.GoogleOAuth2Exception;
 import com.example.SlotlyV2.common.exception.auth.InvalidCredentialsException;
 import com.example.SlotlyV2.common.exception.auth.InvalidTokenException;
@@ -71,6 +72,13 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public ErrorResponse handleUnauthorized(RuntimeException ex, HttpServletRequest request) {
         return ErrorResponse.of(ex.getMessage(), request.getRequestURI(), "UNAUTHORIZED", HttpStatus.UNAUTHORIZED);
+    }
+
+    // ── 403 Forbidden ──────────────────────────────────────────────────────
+    @ExceptionHandler(ForbiddenException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public ErrorResponse handleForbidden(RuntimeException ex, HttpServletRequest request) {
+        return ErrorResponse.of(ex.getMessage(), request.getRequestURI(), "FORBIDDEN", HttpStatus.FORBIDDEN);
     }
 
     // ── 409 Conflict ──────────────────────────────────────────────────────────
