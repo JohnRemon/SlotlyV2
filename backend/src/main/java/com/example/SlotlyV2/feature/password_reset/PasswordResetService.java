@@ -5,7 +5,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.example.SlotlyV2.common.exception.auth.PasswordMismatchException;
+import com.example.SlotlyV2.common.exception.auth.InvalidCredentialsException;
 import com.example.SlotlyV2.common.util.NameUtils;
 import com.example.SlotlyV2.feature.auth.VerificationTokenService;
 import com.example.SlotlyV2.feature.email.event.PasswordResetEvent;
@@ -28,6 +28,7 @@ public class PasswordResetService {
     private final ApplicationEventPublisher eventPublisher;
     private final NameUtils nameUtils;
 
+    @Transactional
     public void resetPasswordRequest(PasswordResetRequest request) {
         // Find user by email (return null if not found)
         User user = userRepository.findByEmail(request.getEmail())
@@ -39,11 +40,10 @@ public class PasswordResetService {
             return;
         }
 
-        // check if google sign-in is available
-        // if (user.isOAuthUser()) {
-        // throw new InvalidCredentialsException("This account uses Google sign-in.
-        // Please log in with Google.");
-        // }
+        if (user.isOAuthUser()) {
+            throw new InvalidCredentialsException(
+                    "This account uses Google sign-in. Please log in with Google.");
+        }
 
         // generate password token
         String token = verificationTokenService.generatePasswordResetToken(user);
@@ -62,13 +62,9 @@ public class PasswordResetService {
     public void resetPassword(String token, PasswordResetConfirmRequest request) {
         User user = verificationTokenService.verifyPasswordResetToken(token);
 
-        if (!request.getPassword().equals(request.getConfirmPassword())) {
-            throw new PasswordMismatchException("Passwords don't match");
-        }
-
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         userRepository.save(user);
 
-        log.info("Password reset successfully for user: {}", user.getEmail());
+        log.info("Password reset successfully userId={}", user.getId());
     }
 }

@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.SlotlyV2.common.dto.DataResponse;
 import com.example.SlotlyV2.common.rate_limiting.RateLimitHelper;
-import com.example.SlotlyV2.feature.auth.VerificationTokenService;
 import com.example.SlotlyV2.feature.user.dto.RegisterRequest;
 import com.example.SlotlyV2.feature.user.dto.UserResponse;
 
@@ -23,7 +22,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class UserController {
     private final UserService userService;
-    private final VerificationTokenService verificationTokenService;
     private final RateLimitHelper rateLimitHelper;
 
     @PostMapping("/register")
@@ -31,15 +29,13 @@ public class UserController {
     public DataResponse<UserResponse> registerUser(
             @Valid @RequestBody RegisterRequest request,
             HttpServletRequest httpServletRequest) {
-
         rateLimitHelper.checkRegisterRateLimit(httpServletRequest);
-        User user = userService.registerUser(request);
-        return DataResponse.of(new UserResponse(user));
+        return DataResponse.of(userService.registerUser(request));
     }
 
     @PostMapping("/verify-email")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void verifyEmail(@RequestParam String token) {
-        verificationTokenService.verifyEmailVerificationToken(token);
+        userService.verifyEmail(token);
     }
 }

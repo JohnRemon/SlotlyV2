@@ -49,6 +49,7 @@ public class BookingFormController {
         return DataResponse.of(new BookingFormResponse(bookingForm));
     }
 
+    // TODO: add request param for getEvent()
     @GetMapping("share/{shareableId}/booking-form")
     public DataResponse<BookingFormResponse> getBookingForm(@PathVariable String shareableId) {
         Event event = eventService.getEventByShareableId(shareableId);

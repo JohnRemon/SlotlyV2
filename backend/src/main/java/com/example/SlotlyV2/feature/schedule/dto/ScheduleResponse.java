@@ -5,15 +5,6 @@ import java.util.UUID;
 
 import com.example.SlotlyV2.feature.schedule.Schedule;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 public class ScheduleResponse {
     private UUID id;
     private String name;

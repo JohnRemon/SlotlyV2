@@ -1,3 +1,4 @@
+// ── SlotController.java ───────────────────────────────────────────────────────
 package com.example.SlotlyV2.feature.slot;
 
 import java.time.OffsetDateTime;
@@ -20,42 +21,52 @@ import lombok.RequiredArgsConstructor;
 @Component
 @RequiredArgsConstructor
 public class SlotValidator {
+
     private final BookingRepository bookingRepository;
 
     public void validateSlotForBooking(Slot slot) {
-        validateSlotIsAvailable(slot);
-        validateSlotIsNotInPast(slot);
-        validateEventMaxCapacity(slot);
-        validateMinimumNoticeHours(slot);
-        validateMaximumAdvanceDays(slot);
+        validateNotInPast(slot);
+        validateIsAvailable(slot);
+        validateMaxCapacity(slot);
+        validateMinimumNotice(slot);
+        validateMaximumAdvance(slot);
     }
 
     public void validateSlotForCancellation(Booking booking, String attendeeEmail) {
-        validateSlotIsNotInPast(booking.getSlot());
-        validateSlotIsBooked(booking.getSlot());
+        validateNotInPast(booking.getSlot());
+        validateIsBooked(booking.getSlot());
         validateCancellationsAllowed(booking.getSlot());
         validateAttendeeEmail(booking, attendeeEmail);
     }
 
-    private void validateEventMaxCapacity(Slot slot) {
-        Integer maxCapacity = slot.getEvent().getAvailabilityRules().getMaxCapacity();
-        if (maxCapacity != null) {
-            Integer currentCapacity = bookingRepository.countByEventAndStatus(slot.getEvent(), BookingStatus.CONFIRMED);
-            if (currentCapacity >= maxCapacity) {
-                throw new MaxCapacityExceededException("This event has reached maximum capacity");
-            }
-        }
-    }
+    // ── Private validators ────────────────────────────────────────────────────
 
-    private void validateSlotIsNotInPast(Slot slot) {
+    private void validateNotInPast(Slot slot) {
         if (slot.getStartTime().isBefore(OffsetDateTime.now(ZoneOffset.UTC))) {
             throw new InvalidSlotException("This slot is in the past");
         }
     }
 
-    private void validateSlotIsAvailable(Slot slot) {
+    private void validateIsAvailable(Slot slot) {
         if (!slot.isAvailable()) {
             throw new SlotAlreadyBookedException("This slot is already booked. Please choose another slot");
+        }
+    }
+
+    private void validateIsBooked(Slot slot) {
+        if (slot.isAvailable()) {
+            throw new SlotNotBookedException("This slot is not booked");
+        }
+    }
+
+    private void validateMaxCapacity(Slot slot) {
+        Integer maxCapacity = slot.getEvent().getAvailabilityRules().getMaxCapacity();
+        if (maxCapacity == null)
+            return;
+
+        int current = bookingRepository.countByEventAndStatus(slot.getEvent(), BookingStatus.CONFIRMED);
+        if (current >= maxCapacity) {
+            throw new MaxCapacityExceededException("This event has reached maximum capacity");
         }
     }
 
@@ -67,32 +78,28 @@ public class SlotValidator {
 
     private void validateAttendeeEmail(Booking booking, String attendeeEmail) {
         if (!booking.getAttendeeEmail().equals(attendeeEmail)) {
-            throw new UnauthorizedAccessException("This email is not associated with the booked slot");
+            throw new UnauthorizedAccessException("This email is not associated with this booking");
         }
     }
 
-    private void validateSlotIsBooked(Slot slot) {
-        if (slot.isAvailable()) {
-            throw new SlotNotBookedException("This slot is not booked");
-        }
-    }
+    private void validateMinimumNotice(Slot slot) {
+        int minimumNoticeHours = slot.getEvent().getAvailabilityRules().getMinimumNoticeHours();
+        if (minimumNoticeHours == 0)
+            return;
 
-    private void validateMinimumNoticeHours(Slot slot) {
-        OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
-        OffsetDateTime startTime = slot.getStartTime();
-        Integer minimumNoticeHours = slot.getEvent().getAvailabilityRules().getMinimumNoticeHours();
-        if (startTime.isBefore(now.plusHours(minimumNoticeHours))) {
-            throw new InvalidBookingException("Bookings require at least " + minimumNoticeHours + " hours notice");
-        }
-    }
-
-    private void validateMaximumAdvanceDays(Slot slot) {
-        OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
-        OffsetDateTime startTime = slot.getStartTime();
-        Integer maximumAdvanceDays = slot.getEvent().getAvailabilityRules().getMaximumAdvanceDays();
-        if (startTime.isAfter(now.plusDays(maximumAdvanceDays))) {
+        OffsetDateTime earliest = OffsetDateTime.now(ZoneOffset.UTC).plusHours(minimumNoticeHours);
+        if (slot.getStartTime().isBefore(earliest)) {
             throw new InvalidBookingException(
-                    "Bookings can't be made more than " + maximumAdvanceDays + " days in advance");
+                    "Bookings require at least " + minimumNoticeHours + " hours notice");
+        }
+    }
+
+    private void validateMaximumAdvance(Slot slot) {
+        int maximumAdvanceDays = slot.getEvent().getAvailabilityRules().getMaximumAdvanceDays();
+        OffsetDateTime latest = OffsetDateTime.now(ZoneOffset.UTC).plusDays(maximumAdvanceDays);
+        if (slot.getStartTime().isAfter(latest)) {
+            throw new InvalidBookingException(
+                    "Bookings cannot be made more than " + maximumAdvanceDays + " days in advance");
         }
     }
 }

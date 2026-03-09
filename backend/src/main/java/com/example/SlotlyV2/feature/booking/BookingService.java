@@ -1,8 +1,6 @@
 package com.example.SlotlyV2.feature.booking;
 
 import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -10,128 +8,132 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.SlotlyV2.common.exception.booking.BookingNotFoundException;
 import com.example.SlotlyV2.common.exception.booking_form.InvalidFormResponseException;
 import com.example.SlotlyV2.common.exception.booking_form.QuestionNotFoundException;
-import com.example.SlotlyV2.common.exception.event.EventNotFoundException;
 import com.example.SlotlyV2.common.exception.slot.SlotNotFoundException;
+import com.example.SlotlyV2.common.util.TimeZoneConverter;
 import com.example.SlotlyV2.feature.booking.dto.BookingRequest;
+import com.example.SlotlyV2.feature.booking.dto.BookingResponse;
 import com.example.SlotlyV2.feature.booking.dto.CancelBookingRequest;
+import com.example.SlotlyV2.feature.booking_form.BookingFormRepository;
 import com.example.SlotlyV2.feature.booking_form.BookingFormValidator;
 import com.example.SlotlyV2.feature.booking_form.FieldAnswer;
-import com.example.SlotlyV2.feature.booking_form.BookingFormRepository;
 import com.example.SlotlyV2.feature.booking_form.FormQuestion;
 import com.example.SlotlyV2.feature.booking_form.FormQuestionRepository;
 import com.example.SlotlyV2.feature.booking_form.dto.BookingFormAnswerRequest;
-import com.example.SlotlyV2.feature.event.Event;
-import com.example.SlotlyV2.feature.event.EventRepository;
 import com.example.SlotlyV2.feature.slot.Slot;
 import com.example.SlotlyV2.feature.slot.SlotRepository;
 import com.example.SlotlyV2.feature.slot.SlotValidator;
 import com.example.SlotlyV2.feature.user.User;
+import com.example.SlotlyV2.feature.user.UserService;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class BookingService {
     private final BookingRepository bookingRepository;
     private final SlotRepository slotRepository;
-    private final EventRepository eventRepository;
     private final BookingFormRepository bookingFormRepository;
     private final FormQuestionRepository formQuestionRepository;
     private final SlotValidator slotValidator;
     private final BookingEventPublisher bookingEventPublisher;
     private final BookingFormValidator bookingFormValidator;
+    private final UserService userService;
+    private final TimeZoneConverter timeZoneConverter;
 
     @Transactional
-    public Booking book(BookingRequest request) {
+    public BookingResponse book(BookingRequest request) {
         Slot slot = slotRepository.findById(request.getSlotId())
-                .orElseThrow(() -> new SlotNotFoundException("Slot not found"));
+                .orElseThrow(() -> new SlotNotFoundException("Slot not found with id: " + request.getSlotId()));
 
         slotValidator.validateSlotForBooking(slot);
 
         Booking booking = bookingRepository.save(buildBooking(request, slot));
-
         bookingEventPublisher.publishBookingEvents(booking);
 
-        return booking;
+        log.info("Booking created bookingId={} slotId={} attendeeEmail={}",
+                booking.getId(), slot.getId(), booking.getAttendeeEmail());
+        return toResponse(booking);
     }
 
     @Transactional
     public void cancel(CancelBookingRequest request, Long bookingId) {
         Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new BookingNotFoundException("Booking not found"));
+                .orElseThrow(() -> new BookingNotFoundException("Booking not found with id: " + bookingId));
 
         slotValidator.validateSlotForCancellation(booking, request.getAttendeeEmail());
-
         booking.cancel(request.getCancellationReason());
-
         bookingEventPublisher.publishCancellationEvents(booking);
+
+        log.info("Booking cancelled bookingId={} attendeeEmail={}", bookingId, request.getAttendeeEmail());
     }
 
     @Transactional
     public void markNoShow(Long id) {
         Booking booking = bookingRepository.findById(id)
-                .orElseThrow(() -> new BookingNotFoundException("Booking not found"));
+                .orElseThrow(() -> new BookingNotFoundException("Booking not found with id: " + id));
 
         booking.markAsNoShow();
         bookingRepository.save(booking);
+        log.info("Booking marked as no-show bookingId={}", id);
     }
 
-    public List<Booking> getBookings(User user) {
-        return bookingRepository.findByAttendeeEmail(user.getEmail());
+    @Transactional(readOnly = true)
+    public List<BookingResponse> getMyBookings() {
+        User currentUser = userService.getCurrentUser();
+        return bookingRepository.findByAttendeeEmail(currentUser.getEmail())
+                .stream()
+                .map(this::toResponse)
+                .toList();
     }
 
-    public Booking getBooking(Long id) {
-        return bookingRepository.findById(id).orElseThrow(() -> new BookingNotFoundException("Booking not found"));
+    @Transactional(readOnly = true)
+    public BookingResponse getBooking(Long id) {
+        return toResponse(bookingRepository.findById(id)
+                .orElseThrow(() -> new BookingNotFoundException("Booking not found with id: " + id)));
     }
+
+    // ── Private helpers ───────────────────────────────────────────────────────
 
     private Booking buildBooking(BookingRequest request, Slot slot) {
-        Event event = eventRepository.findById(request.getEventId())
-                .orElseThrow(() -> new EventNotFoundException("Event not found"));
-
         Booking booking = Booking.builder()
                 .slot(slot)
-                .event(event)
+                .event(slot.getEvent())
                 .attendeeName(request.getAttendeeName())
                 .attendeeEmail(request.getAttendeeEmail())
                 .notes(request.getNotes())
                 .build();
 
-        if (request.getFormSubmission() != null && request.getFormSubmission().getAnswers() != null
-                && !request.getFormSubmission().getAnswers().isEmpty()) {
-            List<FormQuestion> formFields = bookingFormRepository.findByEventId(event.getId())
+        boolean hasFormSubmission = request.getFormSubmission() != null
+                && request.getFormSubmission().getAnswers() != null
+                && !request.getFormSubmission().getAnswers().isEmpty();
+
+        if (hasFormSubmission) {
+            List<FormQuestion> formFields = bookingFormRepository.findByEventId(slot.getEvent().getId())
                     .orElseThrow(() -> new InvalidFormResponseException("No booking form exists for this event"))
                     .getFields();
 
-            buildAnswers(booking, request, formFields);
+            bookingFormValidator.validateAnswers(formFields, request.getFormSubmission().getAnswers());
+
+            request.getFormSubmission().getAnswers()
+                    .forEach(answer -> booking.addFormAnswer(buildAnswer(answer)));
         }
 
         return booking;
-
-    }
-
-    public void buildAnswers(Booking booking, BookingRequest bookingRequest, List<FormQuestion> formFields) {
-        bookingFormValidator.validateAnswers(formFields, bookingRequest.getFormSubmission().getAnswers());
-
-        bookingRequest.getFormSubmission().getAnswers().stream()
-                .map(answer -> buildAndAddAnswer(booking, answer))
-                .collect(Collectors.toList());
-    }
-
-    private FieldAnswer buildAndAddAnswer(Booking booking, BookingFormAnswerRequest dto) {
-        FieldAnswer fieldAnswer = buildAnswer(dto);
-        booking.addFormAnswer(fieldAnswer);
-        return fieldAnswer;
     }
 
     private FieldAnswer buildAnswer(BookingFormAnswerRequest dto) {
+        FormQuestion question = formQuestionRepository.findById(dto.getFieldId())
+                .orElseThrow(() -> new QuestionNotFoundException("Field not found with id: " + dto.getFieldId()));
+
         return FieldAnswer.builder()
-                .formField(findQuestionById(dto.getFieldId()))
+                .formField(question)
                 .answer(dto.getFieldResponse())
                 .build();
     }
 
-    private FormQuestion findQuestionById(UUID questionId) {
-        return formQuestionRepository.findById(questionId)
-                .orElseThrow(() -> new QuestionNotFoundException("Field not found"));
+    private BookingResponse toResponse(Booking booking) {
+        return new BookingResponse(booking, timeZoneConverter);
     }
 }

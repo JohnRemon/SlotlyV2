@@ -14,12 +14,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.SlotlyV2.common.dto.DataResponse;
 import com.example.SlotlyV2.common.rate_limiting.RateLimitHelper;
-import com.example.SlotlyV2.common.util.TimeZoneConverter;
 import com.example.SlotlyV2.feature.booking.dto.BookingRequest;
 import com.example.SlotlyV2.feature.booking.dto.BookingResponse;
 import com.example.SlotlyV2.feature.booking.dto.CancelBookingRequest;
-import com.example.SlotlyV2.feature.user.User;
-import com.example.SlotlyV2.feature.user.UserService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -29,16 +26,23 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class BookingController {
     private final BookingService bookingService;
-    private final UserService userService;
-    private final TimeZoneConverter timeZoneConverter;
     private final RateLimitHelper rateLimitHelper;
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public DataResponse<BookingResponse> book(@Valid @RequestBody BookingRequest request) {
         rateLimitHelper.checkBookingRateLimit(request.getAttendeeEmail());
-        Booking booking = bookingService.book(request);
-        return DataResponse.of(new BookingResponse(booking, timeZoneConverter));
+        return DataResponse.of(bookingService.book(request));
+    }
+
+    @GetMapping("/me")
+    public DataResponse<List<BookingResponse>> getMyBookings() {
+        return DataResponse.of(bookingService.getMyBookings());
+    }
+
+    @GetMapping("/{id}")
+    public DataResponse<BookingResponse> getBooking(@PathVariable Long id) {
+        return DataResponse.of(bookingService.getBooking(id));
     }
 
     @PatchMapping("/{id}/cancel")
@@ -51,25 +55,5 @@ public class BookingController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void markNoShow(@PathVariable Long id) {
         bookingService.markNoShow(id);
-
-    }
-
-    @GetMapping("/me")
-    public DataResponse<List<BookingResponse>> getBookings() {
-        User currentUser = userService.getCurrentUser();
-        List<Booking> bookings = bookingService.getBookings(currentUser);
-
-        List<BookingResponse> bookingResponses = bookings.stream()
-                .map(booking -> new BookingResponse(booking, timeZoneConverter))
-                .toList();
-
-        return DataResponse.of(bookingResponses);
-
-    }
-
-    @GetMapping("/{id}")
-    public DataResponse<BookingResponse> getBooking(@PathVariable Long id) {
-        Booking booking = bookingService.getBooking(id);
-        return DataResponse.of(new BookingResponse(booking, timeZoneConverter));
     }
 }

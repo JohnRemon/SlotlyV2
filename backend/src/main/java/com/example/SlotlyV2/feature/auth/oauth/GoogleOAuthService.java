@@ -75,7 +75,7 @@ public class GoogleOAuthService {
                 .build();
 
         user = userRepository.save(user);
-        scheduleService.createDefaultSchedule(user);
+        scheduleService.createDefaultScheduleForUser(user);
 
         return user;
     }

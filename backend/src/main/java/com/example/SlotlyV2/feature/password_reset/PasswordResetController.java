@@ -12,7 +12,6 @@ import com.example.SlotlyV2.common.rate_limiting.RateLimitHelper;
 import com.example.SlotlyV2.feature.user.dto.PasswordResetConfirmRequest;
 import com.example.SlotlyV2.feature.user.dto.PasswordResetRequest;
 
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -33,8 +32,9 @@ public class PasswordResetController {
 
     @PostMapping("/confirm")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void verifyPassword(@RequestParam String token,
-            @RequestBody @Valid PasswordResetConfirmRequest request, HttpServletRequest httpServletRequest) {
+    public void confirmPasswordReset(
+            @RequestParam String token,
+            @RequestBody @Valid PasswordResetConfirmRequest request) {
         passwordResetService.resetPassword(token, request);
     }
 }

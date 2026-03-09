@@ -5,15 +5,6 @@ import java.util.UUID;
 import com.example.SlotlyV2.feature.booking_form.FormQuestion;
 import com.example.SlotlyV2.feature.booking_form.enums.FieldType;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 public class BookingFormFieldResponse {
     private UUID id;
     private String label;

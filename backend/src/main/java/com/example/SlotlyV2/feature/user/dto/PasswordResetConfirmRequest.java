@@ -1,5 +1,6 @@
 package com.example.SlotlyV2.feature.user.dto;
 
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -14,4 +15,9 @@ public class PasswordResetConfirmRequest {
 
     @NotBlank(message = "Confirm your password")
     private final String confirmPassword;
+
+    @AssertTrue(message = "Passwords don't match")
+    public boolean isPasswordMatching() {
+        return password != null && password.equals(confirmPassword);
+    }
 }
