@@ -8,6 +8,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import com.example.SlotlyV2.feature.schedule.Schedule;
 import com.example.SlotlyV2.feature.user.User;
 
 public interface EventRepository extends JpaRepository<Event, Long> {
@@ -26,4 +27,6 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     boolean existsByShareableId(String shareableId);
 
     Page<Event> findByScheduleIdAndDeletedAtIsNull(UUID scheduleId, Pageable pageable);
+
+    List<Event> findByScheduleAndDeletedAtIsNull(Schedule schedule);
 }

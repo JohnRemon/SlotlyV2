@@ -1,8 +1,10 @@
 package com.example.SlotlyV2.feature.schedule;
 
-import java.util.List;
 import java.util.UUID;
 
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,93 +19,60 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.SlotlyV2.common.dto.DataResponse;
-import com.example.SlotlyV2.feature.schedule.dto.BlockedPeriodRequest;
-import com.example.SlotlyV2.feature.schedule.dto.BlockedPeriodResponse;
+import com.example.SlotlyV2.common.dto.PagedResponse;
 import com.example.SlotlyV2.feature.schedule.dto.ScheduleRequest;
 import com.example.SlotlyV2.feature.schedule.dto.ScheduleResponse;
 import com.example.SlotlyV2.feature.schedule.dto.UpdateScheduleRequest;
-import com.example.SlotlyV2.feature.user.UserService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/api/v1/schedule")
+@RequestMapping("/api/v1/schedules")
 @RequiredArgsConstructor
 public class ScheduleController {
+
     private final ScheduleService scheduleService;
-    private final UserService userService;
+
+    @GetMapping
+    public PagedResponse<ScheduleResponse> getSchedules(
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return PagedResponse.of(scheduleService.getSchedules(pageable));
+    }
 
     @GetMapping("/{id}")
     public DataResponse<ScheduleResponse> getScheduleById(@PathVariable UUID id) {
-        Schedule schedule = scheduleService.getSchedule(id);
-        return DataResponse.of(new ScheduleResponse(schedule));
-    }
-
-    @GetMapping
-    public DataResponse<List<ScheduleResponse>> getSchedules() {
-        List<Schedule> schedules = scheduleService.getSchedules(userService.getCurrentUser());
-
-        List<ScheduleResponse> scheduleResponses = schedules.stream()
-                .map(ScheduleResponse::new)
-                .toList();
-
-        return DataResponse.of(scheduleResponses);
+        return DataResponse.of(scheduleService.getSchedule(id));
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public DataResponse<ScheduleResponse> createSchedule(@Valid @RequestBody ScheduleRequest request) {
-        Schedule schedule = scheduleService.createSchedule(userService.getCurrentUser(), request);
-        return DataResponse.of(new ScheduleResponse(schedule));
+        return DataResponse.of(scheduleService.createSchedule(request));
     }
 
     @PutMapping("/{id}")
-    public DataResponse<ScheduleResponse> updateSchedule(@Valid @RequestBody UpdateScheduleRequest request,
+    public DataResponse<ScheduleResponse> updateSchedule(
+            @Valid @RequestBody UpdateScheduleRequest request,
             @PathVariable UUID id) {
-        Schedule schedule = scheduleService.updateSchedule(request, id);
-        return DataResponse.of(new ScheduleResponse(schedule));
+        return DataResponse.of(scheduleService.updateSchedule(request, id));
     }
 
     @PatchMapping("/{id}/name")
-    public DataResponse<ScheduleResponse> updateScheduleName(@PathVariable UUID id, @RequestParam String name) {
-        Schedule schedule = scheduleService.updateScheduleName(name, id);
-        return DataResponse.of(new ScheduleResponse(schedule));
+    public DataResponse<ScheduleResponse> updateScheduleName(
+            @PathVariable UUID id,
+            @RequestParam String name) {
+        return DataResponse.of(scheduleService.updateScheduleName(name, id));
     }
 
     @PatchMapping("/{id}/default")
-    public DataResponse<ScheduleResponse> updateDefaultSchedule(@PathVariable UUID id) {
-        Schedule schedule = scheduleService.updateDefaultSchedule(userService.getCurrentUser(), id);
-        return DataResponse.of(new ScheduleResponse(schedule));
+    public DataResponse<ScheduleResponse> setDefaultSchedule(@PathVariable UUID id) {
+        return DataResponse.of(scheduleService.updateDefaultSchedule(id));
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteSchedule(@PathVariable UUID id) {
-        scheduleService.deleteSchedule(userService.getCurrentUser(), id);
-    }
-
-    @GetMapping("/blocked-periods/{id}")
-    public DataResponse<BlockedPeriodResponse> getBlockedPeriodById(@PathVariable UUID id) {
-        BlockedPeriod blockedPeriod = scheduleService.getBookingPeriodById(id);
-        return DataResponse.of(new BlockedPeriodResponse(blockedPeriod));
-    }
-
-    @GetMapping("/block-periods")
-    public DataResponse<List<BlockedPeriodResponse>> getBlockedPeriods() {
-        List<BlockedPeriod> blockedPeriods = scheduleService.getBlockedPeriods(userService.getCurrentUser());
-
-        List<BlockedPeriodResponse> blockedPeriodResponses = blockedPeriods.stream()
-                .map(BlockedPeriodResponse::new)
-                .toList();
-
-        return DataResponse.of(blockedPeriodResponses);
-    }
-
-    @PostMapping("/block-period")
-    @ResponseStatus(HttpStatus.CREATED)
-    public DataResponse<BlockedPeriodResponse> createBlockedPeriod(@Valid @RequestBody BlockedPeriodRequest request) {
-        BlockedPeriod blockedPeriod = scheduleService.createBlockedPeriod(userService.getCurrentUser(), request);
-        return DataResponse.of(new BlockedPeriodResponse(blockedPeriod));
+        scheduleService.deleteSchedule(id);
     }
 }

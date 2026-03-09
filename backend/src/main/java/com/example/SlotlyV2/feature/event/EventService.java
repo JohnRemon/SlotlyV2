@@ -11,7 +11,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.example.SlotlyV2.common.exception.auth.UnauthorizedAccessException;
+import com.example.SlotlyV2.common.exception.auth.ForbiddenException;
 import com.example.SlotlyV2.common.exception.event.EventNotFoundException;
 import com.example.SlotlyV2.common.exception.schedule.InvalidScheduleException;
 import com.example.SlotlyV2.common.exception.schedule.ScheduleNotFoundException;
@@ -209,7 +209,7 @@ public class EventService {
 
         if (!event.getHost().getId().equals(user.getId())) {
             log.warn("Unauthorized event access attempt eventId={} userId={}", id, user.getId());
-            throw new UnauthorizedAccessException("You are not authorized to access this resource");
+            throw new ForbiddenException("You are not authorized to access this resource");
         }
 
         return event;
@@ -221,7 +221,7 @@ public class EventService {
 
         if (!schedule.getUser().getId().equals(user.getId())) {
             log.warn("Unauthorized schedule access attempt scheduleId={} userId={}", scheduleId, user.getId());
-            throw new UnauthorizedAccessException("You are not authorized to access this resource");
+            throw new ForbiddenException("You are not authorized to access this resource");
         }
         return schedule;
     }

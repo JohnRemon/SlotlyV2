@@ -1,59 +1,67 @@
 package com.example.SlotlyV2.feature.schedule;
 
 import java.time.LocalTime;
-import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.example.SlotlyV2.common.exception.schedule.BlockedPeriodNotFoundException;
+import com.example.SlotlyV2.common.exception.auth.ForbiddenException;
 import com.example.SlotlyV2.common.exception.schedule.InvalidScheduleException;
 import com.example.SlotlyV2.common.exception.schedule.ScheduleNotFoundException;
 import com.example.SlotlyV2.feature.event.EventRepository;
-import com.example.SlotlyV2.feature.schedule.dto.BlockedPeriodRequest;
 import com.example.SlotlyV2.feature.schedule.dto.DailyScheduleRequest;
 import com.example.SlotlyV2.feature.schedule.dto.ScheduleRequest;
+import com.example.SlotlyV2.feature.schedule.dto.ScheduleResponse;
 import com.example.SlotlyV2.feature.schedule.dto.UpdateScheduleRequest;
 import com.example.SlotlyV2.feature.slot.SlotService;
 import com.example.SlotlyV2.feature.user.User;
+import com.example.SlotlyV2.feature.user.UserService;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ScheduleService {
+
     private final ScheduleRepository scheduleRepository;
-    private final BlockedPeriodRepository blockedPeriodRepository;
     private final EventRepository eventRepository;
     private final SlotService slotService;
+    private final UserService userService;
 
-    // TODO: separate the blocked periods into a separate service and controller
-
-    public Schedule getSchedule(UUID id) {
-        return scheduleRepository.findById(id)
-                .orElseThrow(() -> new ScheduleNotFoundException("Schedule not found"));
+    @Transactional(readOnly = true)
+    public ScheduleResponse getSchedule(UUID id) {
+        User currentUser = userService.getCurrentUser();
+        return toResponse(findAndAuthorizeSchedule(currentUser, id));
     }
 
-    public List<Schedule> getSchedules(User user) {
-        return scheduleRepository.findAllByUser(user);
-    }
-
-    @Transactional
-    public Schedule createSchedule(User user, ScheduleRequest request) {
-        Schedule schedule = createDefaultSchedule(user, request.getName());
-
-        return scheduleRepository.save(schedule);
+    @Transactional(readOnly = true)
+    public Page<ScheduleResponse> getSchedules(Pageable pageable) {
+        User currentUser = userService.getCurrentUser();
+        return scheduleRepository.findAllByUser(currentUser, pageable)
+                .map(this::toResponse);
     }
 
     @Transactional
-    public Schedule updateSchedule(UpdateScheduleRequest request, UUID id) {
-        Schedule schedule = scheduleRepository.findById(id)
-                .orElseThrow(() -> new ScheduleNotFoundException("Schedule not found"));
+    public ScheduleResponse createSchedule(ScheduleRequest request) {
+        User currentUser = userService.getCurrentUser();
+        Schedule schedule = buildScheduleWithDefaults(currentUser, request.getName(), false);
+        log.info("Schedule created scheduleId={} userId={}", schedule.getId(), currentUser.getId());
+        return toResponse(schedule);
+    }
+
+    @Transactional
+    public ScheduleResponse updateSchedule(UpdateScheduleRequest request, UUID id) {
+        User currentUser = userService.getCurrentUser();
+        Schedule schedule = findAndAuthorizeSchedule(currentUser, id);
 
         Map<Integer, DailyScheduleRequest> requestMap = request.getDays().stream()
                 .collect(Collectors.toMap(DailyScheduleRequest::getDayOfWeek, d -> d));
@@ -64,7 +72,7 @@ public class ScheduleService {
                 continue;
 
             if (updated.getIsAvailable() && (updated.getStartTime() == null || updated.getEndTime() == null)) {
-                throw new InvalidScheduleException("Start and end time required for available days");
+                throw new InvalidScheduleException("Start and end time are required for available days");
             }
 
             day.setStartTime(updated.getStartTime());
@@ -72,138 +80,104 @@ public class ScheduleService {
             day.setAvailable(updated.getIsAvailable());
         }
 
-        List<com.example.SlotlyV2.feature.event.Event> affectedEvents = eventRepository
-                .findByScheduleAndDeletedAtIsNull(schedule);
-        for (com.example.SlotlyV2.feature.event.Event event : affectedEvents) {
-            slotService.regenerateFutureSlots(event);
-        }
+        scheduleRepository.save(schedule);
 
-        return scheduleRepository.save(schedule);
+        eventRepository.findByScheduleAndDeletedAtIsNull(schedule)
+                .forEach(slotService::regenerateFutureSlots);
+
+        log.info("Schedule updated scheduleId={} userId={}", id, currentUser.getId());
+        return toResponse(schedule);
     }
 
     @Transactional
-    public Schedule updateScheduleName(String name, UUID id) {
-        Schedule schedule = scheduleRepository.findById(id)
-                .orElseThrow(() -> new ScheduleNotFoundException("Schedule not found"));
-
+    public ScheduleResponse updateScheduleName(String name, UUID id) {
+        User currentUser = userService.getCurrentUser();
+        Schedule schedule = findAndAuthorizeSchedule(currentUser, id);
         schedule.setName(name);
-        return scheduleRepository.save(schedule);
+        log.info("Schedule renamed scheduleId={} userId={}", id, currentUser.getId());
+        return toResponse(scheduleRepository.save(schedule));
     }
 
     @Transactional
-    public Schedule updateDefaultSchedule(User user, UUID id) {
-        Schedule defaultSchedule = scheduleRepository.findByUserAndIsDefaultTrue(user)
-                .orElseThrow(() -> new ScheduleNotFoundException("Schedule not found"));
+    public ScheduleResponse updateDefaultSchedule(UUID id) {
+        User currentUser = userService.getCurrentUser();
 
-        defaultSchedule.setIsDefault(false);
-        scheduleRepository.save(defaultSchedule);
+        Schedule currentDefault = scheduleRepository.findByUserAndIsDefaultTrue(currentUser)
+                .orElseThrow(() -> new ScheduleNotFoundException("Default schedule not found"));
+        currentDefault.setIsDefault(false);
+        scheduleRepository.save(currentDefault);
 
-        Schedule schedule = scheduleRepository.findById(id)
-                .orElseThrow(() -> new ScheduleNotFoundException("Schedule not found"));
-
+        Schedule schedule = findAndAuthorizeSchedule(currentUser, id);
         schedule.setIsDefault(true);
-        return scheduleRepository.save(schedule);
+        log.info("Default schedule updated scheduleId={} userId={}", id, currentUser.getId());
+        return toResponse(scheduleRepository.save(schedule));
     }
 
     @Transactional
-    public void deleteSchedule(User user, UUID id) {
-        Schedule schedule = scheduleRepository.findById(id)
-                .orElseThrow(() -> new ScheduleNotFoundException("Schedule not found"));
+    public void deleteSchedule(UUID id) {
+        User currentUser = userService.getCurrentUser();
+        Schedule schedule = findAndAuthorizeSchedule(currentUser, id);
 
-        if (scheduleRepository.countByUser(user) == 1) {
+        if (scheduleRepository.countByUser(currentUser) == 1) {
             throw new InvalidScheduleException("Cannot delete the only schedule");
         }
 
         if (schedule.getIsDefault()) {
-            throw new InvalidScheduleException("Cannot delete the default schedule");
+            throw new InvalidScheduleException("Cannot delete the default schedule — set a new default first");
         }
 
         scheduleRepository.delete(schedule);
+        log.info("Schedule deleted scheduleId={} userId={}", id, currentUser.getId());
     }
 
-    public BlockedPeriod getBookingPeriodById(UUID id) {
-        return blockedPeriodRepository.findById(id)
-                .orElseThrow(() -> new BlockedPeriodNotFoundException("Blocked Period not found"));
+    // Called during user registration — no auth context available
+    public void createDefaultScheduleForUser(User user) {
+        buildScheduleWithDefaults(user, "Working hours", true);
     }
 
-    public List<BlockedPeriod> getBlockedPeriods(User user) {
-        return blockedPeriodRepository.findByUserId(user.getId());
-    }
+    // ── Private helpers ───────────────────────────────────────────────────────
 
-    @Transactional
-    public BlockedPeriod createBlockedPeriod(User user, BlockedPeriodRequest request) {
-        if (!validateTimeBlock(user, request.getStartTime(), request.getEndTime())) {
-            throw new InvalidScheduleException("Time block overlaps with existing block");
+    private Schedule findAndAuthorizeSchedule(User user, UUID id) {
+        Schedule schedule = scheduleRepository.findById(id)
+                .orElseThrow(() -> new ScheduleNotFoundException("Schedule not found with id: " + id));
+
+        if (!schedule.getUser().getId().equals(user.getId())) {
+            log.warn("Unauthorized schedule access attempt scheduleId={} userId={}", id, user.getId());
+            throw new ForbiddenException("You are not authorized to access this resource");
         }
 
-        if (!request.getEndTime().isAfter(request.getStartTime())) {
-            throw new InvalidScheduleException("End time must be after start time");
-        }
-
-        BlockedPeriod blockedPeriod = BlockedPeriod.builder()
-                .user(user)
-                .startTime(request.getStartTime())
-                .endTime(request.getEndTime())
-                .reason(request.getReason())
-                .isRecurring(request.isRecurring())
-                .build();
-
-        return blockedPeriodRepository.save(blockedPeriod);
+        return schedule;
     }
 
-    public boolean validateTimeBlock(User user, OffsetDateTime start, OffsetDateTime end) {
-        List<BlockedPeriod> overlapping = blockedPeriodRepository
-                .findByUserIdAndEndTimeAfterAndStartTimeBefore(
-                        user.getId(), start, end);
-        return overlapping.isEmpty();
-    }
-
-    public void createDefaultSchedule(User user) {
+    private Schedule buildScheduleWithDefaults(User user, String name, boolean isDefault) {
         List<DailySchedule> dailySchedules = new ArrayList<>();
 
         for (int i = 1; i <= 5; i++) {
-            dailySchedules.add(createDay(user, i, 9, 17, true));
+            dailySchedules.add(buildDay(i, LocalTime.of(9, 0), LocalTime.of(17, 0), true));
         }
-
-        dailySchedules.add(createDay(user, 6, 0, 0, false));
-        dailySchedules.add(createDay(user, 7, 0, 0, false));
-
-        Schedule schedule = Schedule.builder()
-                .user(user)
-                .dailySchedules(dailySchedules)
-                .isDefault(true)
-                .build();
-
-        scheduleRepository.save(schedule);
-    }
-
-    private Schedule createDefaultSchedule(User user, String name) {
-        List<DailySchedule> dailySchedules = new ArrayList<>();
-
-        for (int i = 1; i <= 5; i++) {
-            dailySchedules.add(createDay(user, i, 9, 17, true));
-        }
-
-        dailySchedules.add(createDay(user, 6, 0, 0, false));
-        dailySchedules.add(createDay(user, 7, 0, 0, false));
+        dailySchedules.add(buildDay(6, LocalTime.of(0, 0), LocalTime.of(0, 0), false));
+        dailySchedules.add(buildDay(7, LocalTime.of(0, 0), LocalTime.of(0, 0), false));
 
         Schedule schedule = Schedule.builder()
                 .user(user)
                 .name(name)
                 .dailySchedules(dailySchedules)
+                .isDefault(isDefault)
                 .build();
 
         return scheduleRepository.save(schedule);
     }
 
-    private DailySchedule createDay(User user, int dayOfWeek, int startHour, int endHour, boolean available) {
-        DailySchedule dailySchedule = DailySchedule.builder()
+    private DailySchedule buildDay(int dayOfWeek, LocalTime start, LocalTime end, boolean available) {
+        return DailySchedule.builder()
                 .dayOfWeek(dayOfWeek)
-                .startTime(LocalTime.of(startHour, 0))
-                .endTime(LocalTime.of(endHour, 0))
+                .startTime(start)
+                .endTime(end)
                 .isAvailable(available)
                 .build();
-        return dailySchedule;
     }
 
+    private ScheduleResponse toResponse(Schedule schedule) {
+        return new ScheduleResponse(schedule);
+    }
 }
