@@ -81,7 +81,7 @@ public class BookingService {
     }
 
     public Booking getBooking(Long id) {
-        return bookingRepository.findById(id).orElseThrow(() -> new BookingNotFoundException("Booking Not Found"));
+        return bookingRepository.findById(id).orElseThrow(() -> new BookingNotFoundException("Booking not found"));
     }
 
     private Booking buildBooking(BookingRequest request, Slot slot) {

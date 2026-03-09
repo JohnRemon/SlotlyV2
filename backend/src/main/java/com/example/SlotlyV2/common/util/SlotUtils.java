@@ -127,7 +127,7 @@ public class SlotUtils {
         DailySchedule day = schedule.getDailySchedules().stream()
                 .filter(scheduleDay -> scheduleDay.getDayOfWeek().equals(dayOfWeek))
                 .findFirst()
-                .orElseThrow(() -> new ScheduleNotFoundException("Daily Schedule Not Found"));
+                .orElseThrow(() -> new ScheduleNotFoundException("Daily Schedule not found"));
 
         if (!day.isAvailable()) {
             return false;

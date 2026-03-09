@@ -21,7 +21,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     List<Booking> findByEventIdAndSlotEndTimeGreaterThanEqual(Long eventId, OffsetDateTime dateTime);
 
-    Integer countByEventAndStatus(Event event, BookingStatus bookingStatus);
+    int countByEventAndStatus(Event event, BookingStatus bookingStatus);
 
     @Query("SELECT b FROM Booking b JOIN FETCH b.event e JOIN FETCH e.host JOIN FETCH b.slot WHERE b.id = :id")
     Optional<Booking> findByIdWithEventAndSlot(@Param("id") Long id);

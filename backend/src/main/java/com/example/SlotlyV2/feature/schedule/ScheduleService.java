@@ -36,7 +36,7 @@ public class ScheduleService {
 
     public Schedule getSchedule(UUID id) {
         return scheduleRepository.findById(id)
-                .orElseThrow(() -> new ScheduleNotFoundException("Schedule Not Found"));
+                .orElseThrow(() -> new ScheduleNotFoundException("Schedule not found"));
     }
 
     public List<Schedule> getSchedules(User user) {
@@ -53,7 +53,7 @@ public class ScheduleService {
     @Transactional
     public Schedule updateSchedule(UpdateScheduleRequest request, UUID id) {
         Schedule schedule = scheduleRepository.findById(id)
-                .orElseThrow(() -> new ScheduleNotFoundException("Schedule Not Found"));
+                .orElseThrow(() -> new ScheduleNotFoundException("Schedule not found"));
 
         Map<Integer, DailyScheduleRequest> requestMap = request.getDays().stream()
                 .collect(Collectors.toMap(DailyScheduleRequest::getDayOfWeek, d -> d));
@@ -84,7 +84,7 @@ public class ScheduleService {
     @Transactional
     public Schedule updateScheduleName(String name, UUID id) {
         Schedule schedule = scheduleRepository.findById(id)
-                .orElseThrow(() -> new ScheduleNotFoundException("Schedule Not Found"));
+                .orElseThrow(() -> new ScheduleNotFoundException("Schedule not found"));
 
         schedule.setName(name);
         return scheduleRepository.save(schedule);
@@ -123,7 +123,7 @@ public class ScheduleService {
 
     public BlockedPeriod getBookingPeriodById(UUID id) {
         return blockedPeriodRepository.findById(id)
-                .orElseThrow(() -> new BlockedPeriodNotFoundException("Blocked Period Not Found"));
+                .orElseThrow(() -> new BlockedPeriodNotFoundException("Blocked Period not found"));
     }
 
     public List<BlockedPeriod> getBlockedPeriods(User user) {

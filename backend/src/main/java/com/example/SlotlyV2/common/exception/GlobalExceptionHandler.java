@@ -47,7 +47,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class GlobalExceptionHandler {
 
-    // ── 404 Not Found ─────────────────────────────────────────────────────────
+    // ── 404 not found ─────────────────────────────────────────────────────────
     @ExceptionHandler({
             UserNotFoundException.class,
             EventNotFoundException.class,

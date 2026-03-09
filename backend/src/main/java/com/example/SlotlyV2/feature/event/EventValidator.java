@@ -13,7 +13,6 @@ import lombok.RequiredArgsConstructor;
 @Component
 @RequiredArgsConstructor
 public class EventValidator {
-
     public void validateEventDates(OffsetDateTime start, OffsetDateTime end) {
         if (!end.isAfter(start)) {
             throw new InvalidEventException("Event end must be after start");
@@ -40,9 +39,10 @@ public class EventValidator {
     }
 
     public void validateNewCapacity(Integer newCapacity, Integer bookedSlots) {
-        if (newCapacity != null && bookedSlots < newCapacity) {
+        if (newCapacity != null && newCapacity < bookedSlots) {
             throw new InvalidEventException(
-                    "Cannot reduce capacity below current bookings");
+                    "Cannot reduce capacity to " + newCapacity +
+                            " — " + bookedSlots + " slots are already booked");
         }
     }
 }

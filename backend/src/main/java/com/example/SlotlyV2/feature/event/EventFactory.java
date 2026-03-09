@@ -1,7 +1,6 @@
 package com.example.SlotlyV2.feature.event;
 
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.stereotype.Component;
@@ -18,17 +17,16 @@ import com.example.SlotlyV2.feature.event.dto.EventRequest;
 import com.example.SlotlyV2.feature.recurrence.RecurrenceRules;
 import com.example.SlotlyV2.feature.recurrence.dto.RecurrenceRulesDTO;
 import com.example.SlotlyV2.feature.schedule.Schedule;
-import com.example.SlotlyV2.feature.user.UserService;
+import com.example.SlotlyV2.feature.user.User;
 
 import lombok.RequiredArgsConstructor;
 
 @Component
 @RequiredArgsConstructor
 public class EventFactory {
-    private final UserService userService;
     private final TimeZoneConverter timeZoneConverter;
 
-    public Event createFrom(EventRequest request, Schedule schedule) {
+    public Event createFrom(EventRequest request, Schedule schedule, User user) {
         AvailabilityRules availabilityRules = buildAvailabilityRules(
                 request.getAvailabilityRulesDTO());
 
@@ -38,7 +36,7 @@ public class EventFactory {
         Event.EventBuilder builder = Event.builder()
                 .eventName(request.getEventName())
                 .description(request.getDescription())
-                .host(userService.getCurrentUser())
+                .host(user)
                 .eventStart(utcStart)
                 .eventEnd(utcEnd)
                 .schedule(schedule)
@@ -59,28 +57,42 @@ public class EventFactory {
     }
 
     public AvailabilityRules buildAvailabilityRules(AvailabilityRulesDTO dto) {
-        return AvailabilityRules.builder()
-                .slotDurationMinutes(orDefault(dto.getSlotDurationMinutes(), 30))
-                .maxSlotsPerUser(orDefault(dto.getMaxSlotsPerUser(), 1))
-                .bufferMinutes(orDefault(dto.getBufferMinutes(), 0))
-                .minimumNoticeHours(orDefault(dto.getMinimumNoticeHours(), 0))
-                .maximumAdvanceDays(orDefault(dto.getMaximumAdvanceDays(), 90))
-                .maxCapacity(dto.getMaxCapacity())
-                .allowsCancellations(orDefault(dto.getAllowCancellations(), true))
-                .isPublic(orDefault(dto.getIsPublic(), true))
-                .build();
+        return buildAvailabilityRules(
+                dto.getSlotDurationMinutes(),
+                dto.getMaxSlotsPerUser(),
+                dto.getBufferMinutes(),
+                dto.getMinimumNoticeHours(),
+                dto.getMaximumAdvanceDays(),
+                dto.getMaxCapacity(),
+                dto.getAllowCancellations(),
+                dto.getIsPublic());
     }
 
     public AvailabilityRules buildAvailabilityRules(AvailabilityRulesUpdateRequest request) {
+        return buildAvailabilityRules(
+                request.getSlotDurationMinutes(),
+                request.getMaxSlotsPerUser(),
+                request.getBufferMinutes(),
+                request.getMinimumNoticeHours(),
+                request.getMaximumAdvanceDays(),
+                request.getMaxCapacity(),
+                request.getAllowCancellations(),
+                request.getIsPublic());
+    }
+
+    private AvailabilityRules buildAvailabilityRules(
+            Integer slotDuration, Integer maxSlotsPerUser, Integer buffer,
+            Integer minNotice, Integer maxAdvance, Integer maxCapacity,
+            Boolean allowCancellations, Boolean isPublic) {
         return AvailabilityRules.builder()
-                .slotDurationMinutes(request.getSlotDurationMinutes())
-                .maxSlotsPerUser(request.getMaxSlotsPerUser())
-                .bufferMinutes(request.getBufferMinutes())
-                .minimumNoticeHours(request.getMinimumNoticeHours())
-                .maximumAdvanceDays(request.getMaximumAdvanceDays())
-                .maxCapacity(request.getMaxCapacity())
-                .allowsCancellations(request.getAllowCancellations())
-                .isPublic(request.getIsPublic())
+                .slotDurationMinutes(orDefault(slotDuration, 30))
+                .maxSlotsPerUser(orDefault(maxSlotsPerUser, 1))
+                .bufferMinutes(orDefault(buffer, 0))
+                .minimumNoticeHours(orDefault(minNotice, 0))
+                .maximumAdvanceDays(orDefault(maxAdvance, 90))
+                .maxCapacity(maxCapacity)
+                .allowsCancellations(orDefault(allowCancellations, true))
+                .isPublic(orDefault(isPublic, true))
                 .build();
     }
 
@@ -101,18 +113,15 @@ public class EventFactory {
                 .event(event)
                 .build();
 
-        List<FormQuestion> fields = new ArrayList<>();
-        if (request != null && request.getFields() != null && !request.getFields().isEmpty()) {
-            fields = request.getFields().stream()
-                    .map(field -> FormQuestion.builder()
-                            .bookingForm(form)
-                            .label(field.getLabel())
-                            .fieldType(orDefault(field.getFieldType(), FieldType.TEXT))
-                            .required(field.isRequired())
-                            .displayOrder(orDefault(field.getDisplayOrder(), 0))
-                            .build())
-                    .toList();
-        }
+        List<FormQuestion> fields = request.getFields().stream()
+                .map(field -> FormQuestion.builder()
+                        .bookingForm(form)
+                        .label(field.getLabel())
+                        .fieldType(orDefault(field.getFieldType(), FieldType.TEXT))
+                        .required(field.isRequired())
+                        .displayOrder(orDefault(field.getDisplayOrder(), 0))
+                        .build())
+                .toList();
 
         form.setFields(fields);
         return form;

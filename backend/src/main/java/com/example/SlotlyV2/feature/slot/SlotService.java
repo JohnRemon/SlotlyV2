@@ -52,7 +52,7 @@ public class SlotService {
 
     public List<Slot> getSlots(Long eventId) {
         if (!eventRepository.existsById(eventId)) {
-            throw new EventNotFoundException("Event Not Found");
+            throw new EventNotFoundException("Event not found");
         }
 
         return slotRepository.findByEventId(eventId);
@@ -60,7 +60,7 @@ public class SlotService {
 
     public List<Slot> getAvailableSlotsByShareableId(String shareableId) {
         Event event = eventRepository.findByShareableIdAndDeletedAtIsNull(shareableId)
-                .orElseThrow(() -> new EventNotFoundException("Event Not Found"));
+                .orElseThrow(() -> new EventNotFoundException("Event not found"));
 
         if (!event.getAvailabilityRules().getIsPublic()) {
             throw new UnauthorizedAccessException("Event is private");

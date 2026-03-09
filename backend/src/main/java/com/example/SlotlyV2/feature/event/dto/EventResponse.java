@@ -9,23 +9,18 @@ import com.example.SlotlyV2.feature.booking_form.dto.BookingFormResponse;
 import com.example.SlotlyV2.feature.event.Event;
 import com.example.SlotlyV2.feature.recurrence.dto.RecurrenceRulesDTO;
 
-import lombok.RequiredArgsConstructor;
-import lombok.Value;
-
-@Value
-@RequiredArgsConstructor
 public class EventResponse {
-    private Long id;
-    private String eventName;
-    private String description;
-    private OffsetDateTime eventStart;
-    private OffsetDateTime eventEnd;
-    private AvailabilityRulesDTO availabilityRulesDTO;
-    private RecurrenceRulesDTO recurringRulesDTO;
-    private String shareableId;
-    private BookingFormResponse bookingForm;
-    private UUID scheduleId;
-    private Boolean scheduleIsDefault;
+    private final Long id;
+    private final String eventName;
+    private final String description;
+    private final OffsetDateTime eventStart;
+    private final OffsetDateTime eventEnd;
+    private final AvailabilityRulesDTO availabilityRules;
+    private final RecurrenceRulesDTO recurringRules;
+    private final String shareableId;
+    private final BookingFormResponse bookingForm;
+    private final UUID scheduleId;
+    private final Boolean scheduleIsDefault;
 
     public EventResponse(Event event, TimeZoneConverter timeZoneConverter) {
         this.id = event.getId();
@@ -33,7 +28,7 @@ public class EventResponse {
         this.description = event.getDescription();
         this.eventStart = timeZoneConverter.toUtc(event.getEventStart());
         this.eventEnd = timeZoneConverter.toUtc(event.getEventEnd());
-        this.availabilityRulesDTO = AvailabilityRulesDTO.builder()
+        this.availabilityRules = AvailabilityRulesDTO.builder()
                 .slotDurationMinutes(event.getAvailabilityRules().getSlotDurationMinutes())
                 .maxSlotsPerUser(event.getAvailabilityRules().getMaxSlotsPerUser())
                 .bufferMinutes(event.getAvailabilityRules().getBufferMinutes())
@@ -44,7 +39,7 @@ public class EventResponse {
                 .isPublic(event.getAvailabilityRules().getIsPublic())
                 .build();
 
-        this.recurringRulesDTO = event.getRecurrenceRules() != null
+        this.recurringRules = event.getRecurrenceRules() != null
                 ? RecurrenceRulesDTO.builder()
                         .recurrenceDayOfWeek(event.getRecurrenceRules().getRecurrenceDayOfWeek())
                         .recurrenceEndDate(event.getRecurrenceRules().getRecurrenceEndDate() != null
