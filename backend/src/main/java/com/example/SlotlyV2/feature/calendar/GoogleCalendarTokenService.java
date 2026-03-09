@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,16 +31,14 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @Slf4j
 public class GoogleCalendarTokenService {
+
+    private static final String TOKEN_URL = "https://oauth2.googleapis.com/token";
+    private static final Collection<String> SCOPES = List.of(CalendarScopes.CALENDAR);
+
     private final GoogleConfig config;
     private final NetHttpTransport httpTransport;
     private final JsonFactory jsonFactory;
     private final GoogleCalendarTokenRepository tokenRepository;
-
-    private static final String TOKEN_URL = "https://oauth2.googleapis.com/token";
-
-    private static final Collection<String> SCOPES = List.of(
-            CalendarScopes.CALENDAR,
-            CalendarScopes.CALENDAR_EVENTS);
 
     public String generateCalendarAuthorizationUrl(String state) {
         return new GoogleAuthorizationCodeRequestUrl(
@@ -77,24 +74,59 @@ public class GoogleCalendarTokenService {
             tokenRepository.save(token);
 
         } catch (IOException e) {
-            log.error("Failed to connect to calendar for user {}", user.getId(), e);
-            throw new GoogleCalendarException("Failed to connect to google calendar");
+            log.error("Failed to exchange authorization code userId={}", user.getId(), e);
+            throw new GoogleCalendarException("Failed to connect to Google Calendar");
         }
     }
 
     public Credential getCredentials(Long userId) throws IOException {
         GoogleCalendarToken token = tokenRepository.findByUserId(userId)
-                .orElseThrow(() -> new GoogleCalendarNotConnectedException("Please connect your google calendar"));
+                .orElseThrow(() -> new GoogleCalendarNotConnectedException(
+                        "Please connect your Google Calendar"));
 
         if (token.isExpired()) {
             token = refreshAccessToken(token);
         }
 
-        return buildCredentials(token);
+        return buildCredential(token);
+    }
+
+    public boolean isConnected(Long userId) {
+        return tokenRepository.existsByUserId(userId);
+    }
+
+    /**
+     * Checks whether the user's Google Calendar is connected and the token is
+     * usable. Unlike isConnected(), this also attempts a token refresh if expired.
+     * Used before fire-and-forget sync operations where we want to skip gracefully
+     * rather than throw.
+     */
+    public boolean isConnectedAndValid(Long userId) {
+        return tokenRepository.findByUserId(userId)
+                .map(token -> {
+                    if (!token.isExpired())
+                        return true;
+                    if (token.getRefreshToken() == null)
+                        return false;
+                    try {
+                        refreshAccessToken(token);
+                        return true;
+                    } catch (Exception e) {
+                        return false;
+                    }
+                })
+                .orElse(false);
     }
 
     @Transactional
-    public GoogleCalendarToken refreshAccessToken(GoogleCalendarToken token) {
+    public void disconnect(User user) {
+        tokenRepository.deleteByUserId(user.getId());
+    }
+
+    // ── Private helpers ───────────────────────────────────────────────────────
+
+    @Transactional
+    private GoogleCalendarToken refreshAccessToken(GoogleCalendarToken token) {
         if (token.getRefreshToken() == null) {
             throw new GoogleCalendarNotConnectedException(
                     "No refresh token available. Please reconnect your Google Calendar.");
@@ -109,73 +141,34 @@ public class GoogleCalendarTokenService {
                     config.getClientSecret())
                     .execute();
 
-            return updateTokens(token, tokenResponse);
+            token.setAccessToken(tokenResponse.getAccessToken());
+            token.setExpiresAt(calculateExpirationTime(tokenResponse.getExpiresInSeconds()));
+
+            if (tokenResponse.getRefreshToken() != null) {
+                token.setRefreshToken(tokenResponse.getRefreshToken());
+            }
+
+            return tokenRepository.save(token);
 
         } catch (TokenResponseException e) {
             if (e.getDetails() != null && "invalid_grant".equals(e.getDetails().getError())) {
-                log.warn("Refresh token revoked or expired for user {}. Deleting stored token.",
+                log.warn("Refresh token revoked or expired userId={} — deleting stored token",
                         token.getUser().getId());
-
                 tokenRepository.delete(token);
-
                 throw new GoogleCalendarNotConnectedException(
                         "Your Google Calendar connection has expired. Please reconnect your account.");
             }
 
-            log.error("Token error for user {}: {}", token.getUser().getId(), e.getMessage());
-            throw new GoogleCalendarException("Failed to refresh access token: " + e.getMessage());
+            log.error("Token refresh error userId={}", token.getUser().getId(), e);
+            throw new GoogleCalendarException("Failed to refresh access token");
 
         } catch (IOException e) {
-            log.error("Failed to refresh token for user {}", token.getUser().getId(), e);
+            log.error("Failed to refresh token userId={}", token.getUser().getId(), e);
             throw new GoogleCalendarException("Failed to refresh access token");
         }
     }
 
-    @Transactional
-    public void disconnect(User user) {
-        tokenRepository.deleteByUserId(user.getId());
-        log.info("Disconnected Google Calendar for user {}", user.getId());
-    }
-
-    public boolean isConnected(Long userId) {
-        return tokenRepository.existsByUserId(userId);
-    }
-
-    public boolean isConnectedAndValid(Long userId) {
-        Optional<GoogleCalendarToken> tokenOpt = tokenRepository.findByUserId(userId);
-        if (tokenOpt.isEmpty()) {
-            return false;
-        }
-
-        GoogleCalendarToken token = tokenOpt.get();
-
-        if (token.isExpired()) {
-            if (token.getRefreshToken() == null) {
-                return false;
-            }
-            try {
-                refreshAccessToken(token);
-            } catch (Exception e) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    private GoogleCalendarToken updateTokens(GoogleCalendarToken token, GoogleTokenResponse tokenResponse) {
-        token.setAccessToken(tokenResponse.getAccessToken());
-
-        if (tokenResponse.getRefreshToken() != null) {
-            token.setRefreshToken(tokenResponse.getRefreshToken());
-        }
-
-        token.setExpiresAt(calculateExpirationTime(tokenResponse.getExpiresInSeconds()));
-
-        return tokenRepository.save(token);
-    }
-
-    private Credential buildCredentials(GoogleCalendarToken token) {
+    private Credential buildCredential(GoogleCalendarToken token) {
         return new Credential.Builder(BearerToken.authorizationHeaderAccessMethod())
                 .setTransport(httpTransport)
                 .setJsonFactory(jsonFactory)
@@ -187,11 +180,13 @@ public class GoogleCalendarTokenService {
                 .setAccessToken(token.getAccessToken())
                 .setRefreshToken(token.getRefreshToken())
                 .setExpirationTimeMilliseconds(token.getExpiresAt().toInstant().toEpochMilli());
-
     }
 
     private OffsetDateTime calculateExpirationTime(Long expiresInSeconds) {
-        return OffsetDateTime.now()
-                .plusSeconds(expiresInSeconds != null ? expiresInSeconds : 3600);
+        if (expiresInSeconds == null) {
+            log.warn("Google token response missing expiresInSeconds — defaulting to 1 hour");
+            return OffsetDateTime.now().plusSeconds(3600);
+        }
+        return OffsetDateTime.now().plusSeconds(expiresInSeconds);
     }
 }

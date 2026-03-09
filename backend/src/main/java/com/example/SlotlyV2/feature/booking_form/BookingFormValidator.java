@@ -21,59 +21,53 @@ public class BookingFormValidator {
     private static final Pattern PHONE_PATTERN = Pattern.compile("^[+]?[0-9\\s\\-()]{7,20}$");
 
     public void validateAnswers(List<FormQuestion> fields, List<BookingFormAnswerRequest> answers) {
-        validateRequiredQuestions(fields, answers);
-        validateQuestionsExist(fields, answers);
-        validateFieldTypes(fields, answers);
-    }
-
-    private void validateRequiredQuestions(List<FormQuestion> fields, List<BookingFormAnswerRequest> answers) {
-        for (FormQuestion field : fields) {
-            if (field.isRequired()) {
-                BookingFormAnswerRequest answer = findAnswerForField(answers, field.getId());
-                if (answer == null || answer.getFieldResponse() == null || answer.getFieldResponse().trim().isEmpty()) {
-                    throw new InvalidFormResponseException("Required field '" + field.getLabel() + "' is missing");
-                }
-            }
-        }
-    }
-
-    private void validateQuestionsExist(List<FormQuestion> fields, List<BookingFormAnswerRequest> answers) {
         Map<UUID, FormQuestion> fieldMap = fields.stream()
                 .collect(Collectors.toMap(FormQuestion::getId, f -> f));
 
+        validateNoUnknownFields(fieldMap, answers);
+        validateRequiredFields(fields, answers);
+        validateFieldFormats(fieldMap, answers);
+    }
+
+    // ── Private validators ────────────────────────────────────────────────────
+
+    private void validateNoUnknownFields(Map<UUID, FormQuestion> fieldMap,
+            List<BookingFormAnswerRequest> answers) {
         for (BookingFormAnswerRequest answer : answers) {
             if (!fieldMap.containsKey(answer.getFieldId())) {
-                throw new InvalidFormResponseException("Invalid field ID: " + answer.getFieldId());
+                throw new InvalidFormResponseException("Unknown field id: " + answer.getFieldId());
             }
         }
     }
 
-    private void validateFieldTypes(List<FormQuestion> fields, List<BookingFormAnswerRequest> answers) {
-        Map<UUID, FormQuestion> fieldMap = fields.stream()
-                .collect(Collectors.toMap(FormQuestion::getId, f -> f));
+    private void validateRequiredFields(List<FormQuestion> fields, List<BookingFormAnswerRequest> answers) {
+        Map<UUID, String> answerMap = answers.stream()
+                .filter(a -> a.getFieldResponse() != null && !a.getFieldResponse().trim().isEmpty())
+                .collect(Collectors.toMap(BookingFormAnswerRequest::getFieldId,
+                        BookingFormAnswerRequest::getFieldResponse));
 
+        for (FormQuestion field : fields) {
+            if (field.isRequired() && !answerMap.containsKey(field.getId())) {
+                throw new InvalidFormResponseException(
+                        "Required field '" + field.getLabel() + "' is missing or empty");
+            }
+        }
+    }
+
+    private void validateFieldFormats(Map<UUID, FormQuestion> fieldMap,
+            List<BookingFormAnswerRequest> answers) {
         for (BookingFormAnswerRequest answer : answers) {
             FormQuestion field = fieldMap.get(answer.getFieldId());
-            if (field == null)
-                continue;
-
             String response = answer.getFieldResponse();
-            if (response == null || response.trim().isEmpty())
+
+            if (field == null || response == null || response.trim().isEmpty())
                 continue;
 
-            if (field.getFieldType() == FieldType.PHONE) {
-                if (!PHONE_PATTERN.matcher(response.trim()).matches()) {
-                    throw new InvalidFormResponseException(
-                            "Invalid phone number format for field '" + field.getLabel() + "'");
-                }
+            if (field.getFieldType() == FieldType.PHONE
+                    && !PHONE_PATTERN.matcher(response.trim()).matches()) {
+                throw new InvalidFormResponseException(
+                        "Invalid phone number format for field '" + field.getLabel() + "'");
             }
         }
-    }
-
-    private BookingFormAnswerRequest findAnswerForField(List<BookingFormAnswerRequest> answers, UUID fieldId) {
-        return answers.stream()
-                .filter(a -> a.getFieldId().equals(fieldId))
-                .findFirst()
-                .orElse(null);
     }
 }
