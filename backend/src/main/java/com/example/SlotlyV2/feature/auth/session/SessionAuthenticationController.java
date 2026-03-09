@@ -1,12 +1,14 @@
 package com.example.SlotlyV2.feature.auth.session;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.SlotlyV2.common.dto.ApiResponse;
+import com.example.SlotlyV2.common.dto.DataResponse;
 import com.example.SlotlyV2.common.rate_limiting.RateLimitHelper;
 import com.example.SlotlyV2.feature.auth.dto.SessionLoginRequest;
 import com.example.SlotlyV2.feature.user.User;
@@ -25,7 +27,7 @@ public class SessionAuthenticationController {
     private final RateLimitHelper rateLimitHelper;
 
     @PostMapping("/login")
-    public ApiResponse<UserResponse> login(
+    public DataResponse<UserResponse> login(
             @Valid @RequestBody SessionLoginRequest request,
             HttpServletRequest httpServletRequest,
             HttpServletResponse httpServletResponse) {
@@ -34,22 +36,20 @@ public class SessionAuthenticationController {
 
         User user = sessionAuthenticationService.login(request, httpServletRequest, httpServletResponse);
 
-        return new ApiResponse<>("Logged in successfully", new UserResponse(user));
+        return DataResponse.of(new UserResponse(user));
     }
 
     @PostMapping("/logout")
-    public ApiResponse<Void> logout(HttpServletRequest request, HttpServletResponse response) {
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void logout(HttpServletRequest request, HttpServletResponse response) {
         sessionAuthenticationService.logout(request, response);
-        return new ApiResponse<>("Logged out successfully", null);
+
     }
 
     @GetMapping("/me")
-    public ApiResponse<UserResponse> me() {
+    public DataResponse<UserResponse> me() {
         User user = sessionAuthenticationService.me();
 
-        if (user != null) {
-            return new ApiResponse<>("User fetched successfully", new UserResponse(user));
-        }
-        return new ApiResponse<>("No user logged in", null);
+        return DataResponse.of(new UserResponse(user));
     }
 }

@@ -1,6 +1,6 @@
 package com.example.SlotlyV2.common.exception;
 
-import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import com.example.SlotlyV2.common.dto.ApiResponse;
 import com.example.SlotlyV2.common.exception.auth.AccountAlreadyVerifiedException;
 import com.example.SlotlyV2.common.exception.auth.AccountNotVerifiedException;
 import com.example.SlotlyV2.common.exception.auth.GoogleOAuth2Exception;
@@ -37,6 +36,7 @@ import com.example.SlotlyV2.common.exception.slot.SlotNotFoundException;
 import com.example.SlotlyV2.common.exception.user.UserAlreadyExistsException;
 import com.example.SlotlyV2.common.exception.user.UserNotFoundException;
 import com.example.SlotlyV2.common.exception.user.UsernameAlreadyExistsException;
+import com.example.SlotlyV2.common.dto.ErrorResponse;
 
 import jakarta.persistence.OptimisticLockException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -47,18 +47,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler({
-            UserAlreadyExistsException.class,
-            UsernameAlreadyExistsException.class,
-            OptimisticLockException.class,
-            SlotAlreadyBookedException.class
-    })
-
-    @ResponseStatus(HttpStatus.CONFLICT)
-    public ApiResponse<Void> handleConflictExceptions(RuntimeException ex) {
-        return new ApiResponse<>(ex.getMessage(), null);
-    }
-
+    // ── 404 Not Found ─────────────────────────────────────────────────────────
     @ExceptionHandler({
             UserNotFoundException.class,
             EventNotFoundException.class,
@@ -68,23 +57,35 @@ public class GlobalExceptionHandler {
             BookingFormNotFoundException.class,
             QuestionNotFoundException.class
     })
-
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ApiResponse<Void> handleNotFoundExceptions(RuntimeException ex) {
-        return new ApiResponse<>(ex.getMessage(), null);
+    public ErrorResponse handleNotFound(RuntimeException ex, HttpServletRequest request) {
+        return ErrorResponse.of(ex.getMessage(), request.getRequestURI(), "NOT_FOUND", HttpStatus.NOT_FOUND);
     }
 
+    // ── 401 Unauthorized ──────────────────────────────────────────────────────
     @ExceptionHandler({
             InvalidCredentialsException.class,
             UnauthorizedAccessException.class,
             GoogleOAuth2Exception.class
-
     })
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    public ApiResponse<Void> handleUnauthorizeExceptions(RuntimeException ex) {
-        return new ApiResponse<>(ex.getMessage(), null);
+    public ErrorResponse handleUnauthorized(RuntimeException ex, HttpServletRequest request) {
+        return ErrorResponse.of(ex.getMessage(), request.getRequestURI(), "UNAUTHORIZED", HttpStatus.UNAUTHORIZED);
     }
 
+    // ── 409 Conflict ──────────────────────────────────────────────────────────
+    @ExceptionHandler({
+            UserAlreadyExistsException.class,
+            UsernameAlreadyExistsException.class,
+            SlotAlreadyBookedException.class,
+            OptimisticLockException.class
+    })
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorResponse handleConflict(RuntimeException ex, HttpServletRequest request) {
+        return ErrorResponse.of(ex.getMessage(), request.getRequestURI(), "CONFLICT", HttpStatus.CONFLICT);
+    }
+
+    // ── 400 Bad Request ───────────────────────────────────────────────────────
     @ExceptionHandler({
             InvalidEventException.class,
             SlotNotBookedException.class,
@@ -100,41 +101,52 @@ public class GlobalExceptionHandler {
             GoogleCalendarNotConnectedException.class,
             GoogleCalendarException.class
     })
-
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiResponse<Void> handleBadRequestExceptions(RuntimeException ex) {
-        return new ApiResponse<>(ex.getMessage(), null);
+    public ErrorResponse handleBadRequest(RuntimeException ex, HttpServletRequest request) {
+        return ErrorResponse.of(ex.getMessage(), request.getRequestURI(), "BAD_REQUEST", HttpStatus.BAD_REQUEST);
     }
 
-    @ExceptionHandler(RateLimitExceededException.class)
-    @ResponseStatus(HttpStatus.TOO_MANY_REQUESTS)
-    public ApiResponse<Void> handleRateLimitExceeded(RateLimitExceededException ex, HttpServletResponse response) {
-        response.setHeader("Retry-After", String.valueOf(ex.getRetryAfterSeconds()));
-        response.setHeader("X-Rate-Limit-Exceeded", "true");
-        log.warn("Rate limit exceeded: {}", ex.getMessage());
-        return new ApiResponse<>(ex.getMessage(), null);
-    }
-
-    @ExceptionHandler(Exception.class)
-    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public ApiResponse<Void> handleGenericException(Exception ex, HttpServletRequest request) {
-        log.error("Unhandled exception at {} for user {}:  {}",
-                request.getRequestURI(),
-                ex.getMessage(),
-                ex);
-        return new ApiResponse<>(
-                "This is an error from our side, please try again later \n Error message: " + ex.getMessage(), null);
-    }
-
+    // ── 400 Validation ────────────────────────────────────────────────────────
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiResponse<List<String>> handleValidationExceptions(MethodArgumentNotValidException ex) {
-        List<String> errors = ex.getBindingResult()
-                .getAllErrors()
+    public ErrorResponse handleValidation(MethodArgumentNotValidException ex, HttpServletRequest request) {
+        Map<String, String> details = ex.getBindingResult()
+                .getFieldErrors()
                 .stream()
-                .map(error -> error.getDefaultMessage())
-                .collect(Collectors.toList());
+                .collect(Collectors.toMap(
+                        error -> error.getField(),
+                        error -> error.getDefaultMessage(),
+                        (first, second) -> first));
 
-        return new ApiResponse<>("Invalid Arguments: " + errors, errors);
+        return ErrorResponse.of(
+                "Validation failed",
+                request.getRequestURI(),
+                "VALIDATION_ERROR",
+                HttpStatus.BAD_REQUEST,
+                details);
+    }
+
+    // ── 429 Rate Limit ────────────────────────────────────────────────────────
+    @ExceptionHandler(RateLimitExceededException.class)
+    @ResponseStatus(HttpStatus.TOO_MANY_REQUESTS)
+    public ErrorResponse handleRateLimit(RateLimitExceededException ex, HttpServletRequest request,
+            HttpServletResponse response) {
+        response.setHeader("Retry-After", String.valueOf(ex.getRetryAfterSeconds()));
+        response.setHeader("X-RateLimit-Limit", "true");
+        log.warn("Rate limit exceeded path={} message={}", request.getRequestURI(), ex.getMessage());
+        return ErrorResponse.of(ex.getMessage(), request.getRequestURI(), "RATE_LIMIT_EXCEEDED",
+                HttpStatus.TOO_MANY_REQUESTS);
+    }
+
+    // ── 500 Internal Server Error ─────────────────────────────────────────────
+    @ExceptionHandler(Exception.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ErrorResponse handleGeneric(Exception ex, HttpServletRequest request) {
+        log.error("Unhandled exception path={} message={}", request.getRequestURI(), ex.getMessage(), ex);
+        return ErrorResponse.of(
+                "An unexpected error occurred. Please try again later.",
+                request.getRequestURI(),
+                "INTERNAL_SERVER_ERROR",
+                HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

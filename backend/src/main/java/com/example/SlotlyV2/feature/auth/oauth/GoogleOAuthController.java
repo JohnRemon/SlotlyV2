@@ -5,7 +5,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.SlotlyV2.common.dto.ApiResponse;
+import com.example.SlotlyV2.common.dto.DataResponse;
 import com.example.SlotlyV2.common.rate_limiting.RateLimitHelper;
 import com.example.SlotlyV2.feature.auth.dto.GoogleLoginRequest;
 import com.example.SlotlyV2.feature.user.User;
@@ -24,7 +24,7 @@ public class GoogleOAuthController {
     private final RateLimitHelper rateLimitHelper;
 
     @PostMapping("/google")
-    public ApiResponse<UserResponse> login(
+    public DataResponse<UserResponse> login(
             @Valid @RequestBody GoogleLoginRequest request,
             HttpServletRequest httpServletRequest,
             HttpServletResponse httpServletResponse) {
@@ -36,6 +36,6 @@ public class GoogleOAuthController {
                 httpServletRequest,
                 httpServletResponse);
 
-        return new ApiResponse<>("Logged in successfully via Google", new UserResponse(user));
+        return DataResponse.of(new UserResponse(user));
     }
 }

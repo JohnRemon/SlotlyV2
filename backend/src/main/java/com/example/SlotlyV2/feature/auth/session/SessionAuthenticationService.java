@@ -41,7 +41,7 @@ public class SessionAuthenticationService {
             throw new UnauthorizedAccessException(e.getMessage());
         }
 
-        // validateLocalUser(user);
+        validateLocalUser(user);
         persistSession(authentication, httpServletRequest, httpServletResponse);
 
         return user;

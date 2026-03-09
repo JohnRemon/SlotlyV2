@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.SlotlyV2.common.dto.ApiResponse;
+import com.example.SlotlyV2.common.dto.DataResponse;
 import com.example.SlotlyV2.common.rate_limiting.RateLimitHelper;
 import com.example.SlotlyV2.common.util.TimeZoneConverter;
 import com.example.SlotlyV2.feature.booking.dto.BookingRequest;
@@ -35,26 +35,27 @@ public class BookingController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ApiResponse<BookingResponse> book(@Valid @RequestBody BookingRequest request) {
+    public DataResponse<BookingResponse> book(@Valid @RequestBody BookingRequest request) {
         rateLimitHelper.checkBookingRateLimit(request.getAttendeeEmail());
         Booking booking = bookingService.book(request);
-        return new ApiResponse<>("booking created successfully", new BookingResponse(booking, timeZoneConverter));
+        return DataResponse.of(new BookingResponse(booking, timeZoneConverter));
     }
 
     @PatchMapping("/{id}/cancel")
-    public ApiResponse<Void> cancel(@Valid @RequestBody CancelBookingRequest request, @PathVariable Long id) {
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void cancel(@Valid @RequestBody CancelBookingRequest request, @PathVariable Long id) {
         bookingService.cancel(request, id);
-        return new ApiResponse<Void>("booking cancelled successfully", null);
     }
 
     @PostMapping("/{id}/no-show")
-    public ApiResponse<Void> markNoShow(@PathVariable Long id) {
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void markNoShow(@PathVariable Long id) {
         bookingService.markNoShow(id);
-        return new ApiResponse<>("booking marked as no show successfully", null);
+
     }
 
     @GetMapping("/me")
-    public ApiResponse<List<BookingResponse>> getBookings() {
+    public DataResponse<List<BookingResponse>> getBookings() {
         User currentUser = userService.getCurrentUser();
         List<Booking> bookings = bookingService.getBookings(currentUser);
 
@@ -62,13 +63,13 @@ public class BookingController {
                 .map(booking -> new BookingResponse(booking, timeZoneConverter))
                 .toList();
 
-        return new ApiResponse<>("Bookings fetched successfully", bookingResponses);
+        return DataResponse.of(bookingResponses);
 
     }
 
     @GetMapping("/{id}")
-    public ApiResponse<BookingResponse> getBooking(@PathVariable Long id) {
+    public DataResponse<BookingResponse> getBooking(@PathVariable Long id) {
         Booking booking = bookingService.getBooking(id);
-        return new ApiResponse<>("Booking fetched successfully", new BookingResponse(booking, timeZoneConverter));
+        return DataResponse.of(new BookingResponse(booking, timeZoneConverter));
     }
 }

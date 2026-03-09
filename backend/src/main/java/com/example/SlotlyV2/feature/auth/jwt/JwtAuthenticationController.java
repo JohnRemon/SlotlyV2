@@ -5,7 +5,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.SlotlyV2.common.dto.ApiResponse;
+import com.example.SlotlyV2.common.dto.DataResponse;
 import com.example.SlotlyV2.common.rate_limiting.RateLimitHelper;
 import com.example.SlotlyV2.feature.auth.dto.JwtAuthenticationResponse;
 import com.example.SlotlyV2.feature.auth.dto.JwtLoginRequest;
@@ -25,16 +25,16 @@ public class JwtAuthenticationController {
     private final RateLimitHelper rateLimitHelper;
 
     @PostMapping("/jwt/login")
-    public ApiResponse<JwtAuthenticationResponse> login(@Valid @RequestBody JwtLoginRequest request,
+    public DataResponse<JwtAuthenticationResponse> login(@Valid @RequestBody JwtLoginRequest request,
             HttpServletRequest httpServletRequest) {
         rateLimitHelper.checkLoginRateLimit(httpServletRequest);
         JwtAuthenticationResponse authenticationResponse = jwtAuthenticationService.login(request);
-        return new ApiResponse<>("User logged in successfully using JWT", authenticationResponse);
+        return DataResponse.of(authenticationResponse);
     }
 
     @PostMapping("/jwt/refresh")
-    public ApiResponse<RefreshTokenResponse> refresh(@Valid @RequestBody RefreshTokenRequest request) {
+    public DataResponse<RefreshTokenResponse> refresh(@Valid @RequestBody RefreshTokenRequest request) {
         RefreshTokenResponse refreshTokenResponse = jwtAuthenticationService.refresh(request);
-        return new ApiResponse<>("Token refreshed successfully", refreshTokenResponse);
+        return DataResponse.of(refreshTokenResponse);
     }
 }

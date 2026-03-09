@@ -25,5 +25,5 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     // Check if shareableId exists
     boolean existsByShareableId(String shareableId);
 
-    List<Event> findByScheduleAndDeletedAtIsNull(Schedule schedule);
+    Page<Event> findByScheduleAndDeletedAtIsNull(Schedule schedule, Pageable pageable);
 }

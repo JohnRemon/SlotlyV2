@@ -40,7 +40,7 @@ public class EventValidator {
     }
 
     public void validateNewCapacity(Integer newCapacity, Integer bookedSlots) {
-        if (newCapacity != null && bookedSlots > newCapacity) {
+        if (newCapacity != null && bookedSlots < newCapacity) {
             throw new InvalidEventException(
                     "Cannot reduce capacity below current bookings");
         }

@@ -7,7 +7,6 @@ import java.util.UUID;
 
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,7 +16,6 @@ import com.example.SlotlyV2.common.exception.event.EventNotFoundException;
 import com.example.SlotlyV2.common.exception.schedule.InvalidScheduleException;
 import com.example.SlotlyV2.common.exception.schedule.ScheduleNotFoundException;
 import com.example.SlotlyV2.common.util.TimeZoneConverter;
-import com.example.SlotlyV2.feature.availability.AvailabilityRules;
 import com.example.SlotlyV2.feature.availability.dto.AvailabilityRulesUpdateRequest;
 import com.example.SlotlyV2.feature.booking.Booking;
 import com.example.SlotlyV2.feature.booking.BookingRepository;
@@ -31,11 +29,11 @@ import com.example.SlotlyV2.feature.email.dto.EventCancelledEmailDTO;
 import com.example.SlotlyV2.feature.email.event.EventCancelledEvent;
 import com.example.SlotlyV2.feature.event.dto.EventRequest;
 import com.example.SlotlyV2.feature.event.dto.EventResponse;
+import com.example.SlotlyV2.feature.event.dto.PublicEventResponse;
 import com.example.SlotlyV2.feature.schedule.Schedule;
 import com.example.SlotlyV2.feature.schedule.ScheduleRepository;
 import com.example.SlotlyV2.feature.slot.SlotRepository;
 import com.example.SlotlyV2.feature.slot.SlotService;
-import com.example.SlotlyV2.feature.user.User;
 import com.example.SlotlyV2.feature.user.UserService;
 
 import lombok.RequiredArgsConstructor;
@@ -54,106 +52,74 @@ public class EventService {
     private final UserService userService;
     private final ApplicationEventPublisher eventPublisher;
     private final TimeZoneConverter timeZoneConverter;
-
     private final EventValidator eventValidator;
     private final EventFactory eventFactory;
 
     @Transactional
-    public Event createEvent(EventRequest request) {
-        // Verify Start and End Dates
+    public EventResponse createEvent(EventRequest request) {
         eventValidator.validateEventDates(request.getEventStart(), request.getEventEnd());
-
-        // Fetch default schedule
-        Schedule defaultSchedule = scheduleRepository.findByUserAndIsDefaultTrue(userService.getCurrentUser())
-                .orElseThrow(() -> new InvalidScheduleException("No default schedule found"));
-
-        // Create the Event
-        Event event = eventFactory.createFrom(request, defaultSchedule);
-        event = eventRepository.save(event);
-
-        // Generate slots
+        Schedule defaultSchedule = getDefaultSchedule();
+        Event event = eventRepository.save(eventFactory.createFrom(request, defaultSchedule));
         slotService.generateSlots(event, defaultSchedule);
-
-        return event;
+        log.info("Event created eventId={} userId={}", event.getId(), userService.getCurrentUser().getId());
+        return toResponse(event);
     }
 
     @Transactional
-    public Event createRecurringEvent(EventRequest request) {
-        // Validate the Event
+    public EventResponse createRecurringEvent(EventRequest request) {
         eventValidator.validateEventDates(request.getEventStart(), request.getEventEnd());
         eventValidator.validateRecurringEventRules(request);
-
-        // Fetch default schedule
-        Schedule defaultSchedule = scheduleRepository.findByUserAndIsDefaultTrue(userService.getCurrentUser())
-                .orElseThrow(() -> new InvalidScheduleException("No default schedule found"));
-
-        // Create the event
-        Event event = eventFactory.createFrom(request, defaultSchedule);
-        event = eventRepository.save(event);
-
-        // Generate slots
+        Schedule defaultSchedule = getDefaultSchedule();
+        Event event = eventRepository.save(eventFactory.createFrom(request, defaultSchedule));
         slotService.generateSlotsRecurring(event, defaultSchedule);
-
-        return event;
+        log.info("Recurring event created eventId={} userId={}", event.getId(), userService.getCurrentUser().getId());
+        return toResponse(event);
     }
 
-    public Page<EventResponse> getEvents(User host, Pageable pageable) {
-        Page<Event> eventPage = eventRepository.findByHostAndDeletedAtIsNull(host, pageable);
-
-        List<EventResponse> responses = eventPage.getContent().stream()
-                .map(event -> new EventResponse(event, timeZoneConverter))
-                .toList();
-
-        return new PageImpl<>(responses, pageable, eventPage.getTotalElements());
+    public Page<EventResponse> getEvents(Pageable pageable) {
+        return eventRepository.findByHostAndDeletedAtIsNull(userService.getCurrentUser(), pageable)
+                .map(this::toResponse);
     }
 
-    public Event getEventById(Long id) {
-        return findAndAuthorizeEvent(id);
+    public EventResponse getEventById(Long id) {
+        return toResponse(findAndAuthorizeEvent(id));
     }
 
-    public Event getEventByShareableId(String shareableId) {
+    public PublicEventResponse getPublicEvent(String shareableId) {
         Event event = eventRepository.findByShareableIdAndDeletedAtIsNull(shareableId)
-                .orElseThrow(() -> new EventNotFoundException("Event Not Found"));
+                .orElseThrow(() -> new EventNotFoundException("Event not found"));
 
-        return event;
+        return new PublicEventResponse(event, timeZoneConverter);
     }
 
-    public List<Event> getEventsByScheduleId(UUID id) {
-        Schedule schedule = scheduleRepository.findById(id)
+    public Page<EventResponse> getEventsByScheduleId(UUID scheduleId, Pageable pageable) {
+        Schedule schedule = scheduleRepository.findById(scheduleId)
                 .orElseThrow(() -> new ScheduleNotFoundException("Schedule not found"));
 
-        return eventRepository.findByScheduleAndDeletedAtIsNull(schedule);
+        return eventRepository.findByScheduleAndDeletedAtIsNull(schedule, pageable)
+                .map(this::toResponse);
     }
 
     @Transactional
-    public Event updateEvent(EventRequest request, Long id) {
+    public EventResponse updateEvent(EventRequest request, Long id) {
         Event event = findAndAuthorizeEvent(id);
-
         validateNewCapacity(request, event);
-
         updateEventDetails(request, event);
-
         slotService.regenerateFutureSlots(event);
-
-        return eventRepository.save(event);
+        return toResponse(eventRepository.save(event));
     }
 
     @Transactional
-    public Event updateAvailabilityRules(AvailabilityRulesUpdateRequest request, Long id) {
+    public EventResponse updateAvailabilityRules(AvailabilityRulesUpdateRequest request, Long id) {
         Event event = findAndAuthorizeEvent(id);
-
-        AvailabilityRules newRules = eventFactory.buildAvailabilityRules(request);
-        event.setAvailabilityRules(newRules);
-
+        event.setAvailabilityRules(eventFactory.buildAvailabilityRules(request));
         slotService.regenerateFutureSlots(event);
-
-        return eventRepository.save(event);
+        return toResponse(eventRepository.save(event));
     }
 
     @Transactional
-    public Event updateBookingForm(BookingFormUpdateRequest request, Long id) {
+    public EventResponse updateBookingForm(BookingFormUpdateRequest request, Long id) {
         Event event = findAndAuthorizeEvent(id);
-
         BookingForm bookingForm = event.getBookingForm();
 
         if (request.getFields() != null) {
@@ -164,21 +130,20 @@ public class EventService {
                         .label(fieldReq.getLabel())
                         .fieldType(fieldReq.getFieldType() != null ? fieldReq.getFieldType() : FieldType.TEXT)
                         .required(fieldReq.isRequired())
-                        .displayOrder(fieldReq.getDisplayOrder() != null ? fieldReq.getDisplayOrder()
+                        .displayOrder(fieldReq.getDisplayOrder() != null
+                                ? fieldReq.getDisplayOrder()
                                 : bookingForm.getFields().size())
                         .build();
                 bookingForm.getFields().add(field);
             }
         }
 
-        event.setBookingForm(bookingForm);
-        return eventRepository.save(event);
+        return toResponse(eventRepository.save(event));
     }
 
     @Transactional
-    public Event updateEventSchedule(UUID scheduleId, Long id) {
+    public EventResponse updateEventSchedule(UUID scheduleId, Long id) {
         Event event = findAndAuthorizeEvent(id);
-
         Schedule schedule = scheduleRepository.findById(scheduleId)
                 .orElseThrow(() -> new ScheduleNotFoundException("Schedule not found"));
 
@@ -187,11 +152,8 @@ public class EventService {
         }
 
         event.setSchedule(schedule);
-        eventRepository.save(event);
-
         slotService.regenerateFutureSlots(event);
-
-        return event;
+        return toResponse(eventRepository.save(event));
     }
 
     @Transactional
@@ -199,17 +161,16 @@ public class EventService {
         Event event = findAndAuthorizeEvent(id);
         OffsetDateTime nowUtc = OffsetDateTime.now(ZoneOffset.UTC);
 
-        List<Booking> upcomingBookings = bookingRepository.findByEventIdAndSlotEndTimeGreaterThanEqual(event.getId(),
-                nowUtc);
+        List<Booking> upcomingBookings = bookingRepository
+                .findByEventIdAndSlotEndTimeGreaterThanEqual(event.getId(), nowUtc);
         List<Long> upcomingBookingIds = upcomingBookings.stream().map(Booking::getId).toList();
 
-        // Build Cancellation Email
         EventCancelledEmailDTO data = new EventCancelledEmailDTO(
                 event.getId(),
                 event.getEventName(),
                 upcomingBookings.stream()
                         .filter(Booking::isActive)
-                        .map(booking -> booking.getAttendeeEmail())
+                        .map(Booking::getAttendeeEmail)
                         .distinct()
                         .toList());
 
@@ -217,25 +178,25 @@ public class EventService {
             bookingGoogleEventRepository.deleteByBookingIdIn(upcomingBookingIds);
             bookingRepository.deleteAll(upcomingBookings);
         }
-        slotRepository.deleteByEventIdAndEndTimeGreaterThanEqual(event.getId(), nowUtc);
 
+        slotRepository.deleteByEventIdAndEndTimeGreaterThanEqual(event.getId(), nowUtc);
         event.markDeleted(nowUtc);
         eventRepository.save(event);
         eventPublisher.publishEvent(new EventCancelledEvent(data));
+        log.info("Event deleted eventId={} userId={}", event.getId(), userService.getCurrentUser().getId());
     }
+
+    // ── Private helpers ───────────────────────────────────────────────────────
 
     private Event findAndAuthorizeEvent(Long id) {
         Event event = eventRepository.findByIdAndDeletedAtIsNull(id)
-                .orElseThrow(() -> new EventNotFoundException("Event Not Found"));
+                .orElseThrow(() -> new EventNotFoundException("Event not found"));
 
-        validateHost(event);
-        return event;
-    }
-
-    private void validateHost(Event event) {
         if (!event.getHost().getId().equals(userService.getCurrentUser().getId())) {
-            throw new UnauthorizedAccessException("You are not authorized to access other user's event");
+            throw new UnauthorizedAccessException("You are not authorized to access this event");
         }
+
+        return event;
     }
 
     private void validateNewCapacity(EventRequest request, Event event) {
@@ -246,9 +207,15 @@ public class EventService {
     private void updateEventDetails(EventRequest request, Event event) {
         event.setEventName(request.getEventName());
         event.setDescription(request.getDescription());
-        // event.setTimeZone(request.getTimeZone());
-        event.setAvailabilityRules(
-                eventFactory.buildAvailabilityRules(request.getAvailabilityRulesDTO()));
+        event.setAvailabilityRules(eventFactory.buildAvailabilityRules(request.getAvailabilityRulesDTO()));
     }
 
+    private Schedule getDefaultSchedule() {
+        return scheduleRepository.findByUserAndIsDefaultTrue(userService.getCurrentUser())
+                .orElseThrow(() -> new InvalidScheduleException("No default schedule found"));
+    }
+
+    private EventResponse toResponse(Event event) {
+        return new EventResponse(event, timeZoneConverter);
+    }
 }

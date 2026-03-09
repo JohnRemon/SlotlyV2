@@ -4,26 +4,32 @@ import java.util.List;
 
 import org.springframework.data.domain.Page;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import lombok.Builder;
 import lombok.Value;
 
 @Value
+@Builder
 public class PagedResponse<T> {
-    private List<T> content;
-    private int page;
-    private int size;
-    private long totalElements;
-    private int totalPages;
-    private boolean first;
-    private boolean last;
+    List<T> content;
+
+    @JsonProperty("page")
+    PageMetadata metadata;
 
     public static <T> PagedResponse<T> of(Page<T> page) {
-        return new PagedResponse<>(
-                page.getContent(),
-                page.getNumber(),
-                page.getSize(),
-                page.getTotalElements(),
-                page.getTotalPages(),
-                page.isFirst(),
-                page.isLast());
+        PageMetadata metadata = PageMetadata.builder()
+                .number(page.getNumber())
+                .size(page.getSize())
+                .totalElements(page.getTotalElements())
+                .totalPages(page.getTotalPages())
+                .first(page.isFirst())
+                .last(page.isLast())
+                .build();
+
+        return PagedResponse.<T>builder()
+                .content(page.getContent())
+                .metadata(metadata)
+                .build();
     }
 }

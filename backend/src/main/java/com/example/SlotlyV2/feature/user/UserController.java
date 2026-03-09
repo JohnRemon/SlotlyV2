@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.SlotlyV2.common.dto.ApiResponse;
+import com.example.SlotlyV2.common.dto.DataResponse;
 import com.example.SlotlyV2.common.rate_limiting.RateLimitHelper;
 import com.example.SlotlyV2.feature.auth.VerificationTokenService;
 import com.example.SlotlyV2.feature.user.dto.RegisterRequest;
@@ -28,19 +28,18 @@ public class UserController {
 
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
-    public ApiResponse<UserResponse> registerUser(@Valid @RequestBody RegisterRequest request,
+    public DataResponse<UserResponse> registerUser(
+            @Valid @RequestBody RegisterRequest request,
             HttpServletRequest httpServletRequest) {
-        rateLimitHelper.checkRegisterRateLimit(httpServletRequest);
 
+        rateLimitHelper.checkRegisterRateLimit(httpServletRequest);
         User user = userService.registerUser(request);
-        return new ApiResponse<>("User registered successfully. Please check your email to verify your account.",
-                new UserResponse(user));
+        return DataResponse.of(new UserResponse(user));
     }
 
     @PostMapping("/verify-email")
-    public ApiResponse<Void> verifyEmail(@RequestParam String token) {
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void verifyEmail(@RequestParam String token) {
         verificationTokenService.verifyEmailVerificationToken(token);
-        return new ApiResponse<>("Account verified successfully. Please login into your account", null);
     }
-
 }
