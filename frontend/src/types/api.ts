@@ -4,12 +4,16 @@ export interface DataResponse<T> {
 
 export interface PagedResponse<T> {
     data: T[];
-    meta: {
-        currentPage: number;
-        totalPages: number;
-        totalElements: number;
-        pageSize: number;
-    };
+    meta: PageMetadata;
+}
+
+export interface PageMetadata {
+    number: number;
+    size = 10;
+    totalElements: number;
+    totalPages: number;
+    first: boolean;
+    last: boolean;
 }
 
 export interface ErrorResponse {

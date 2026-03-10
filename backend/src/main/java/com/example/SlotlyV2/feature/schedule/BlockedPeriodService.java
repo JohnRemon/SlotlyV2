@@ -3,13 +3,18 @@ package com.example.SlotlyV2.feature.schedule;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.SlotlyV2.common.exception.schedule.BlockedPeriodNotFoundException;
 import com.example.SlotlyV2.common.exception.schedule.InvalidScheduleException;
+import com.example.SlotlyV2.feature.event.Event;
+import com.example.SlotlyV2.feature.event.EventRepository;
 import com.example.SlotlyV2.feature.schedule.dto.BlockedPeriodRequest;
 import com.example.SlotlyV2.feature.schedule.dto.BlockedPeriodResponse;
+import com.example.SlotlyV2.feature.slot.SlotService;
 import com.example.SlotlyV2.feature.user.User;
 import com.example.SlotlyV2.feature.user.UserService;
 
@@ -22,7 +27,9 @@ import lombok.extern.slf4j.Slf4j;
 public class BlockedPeriodService {
 
     private final BlockedPeriodRepository blockedPeriodRepository;
+    private final EventRepository eventRepository;
     private final UserService userService;
+    private final SlotService slotService;
 
     @Transactional(readOnly = true)
     public BlockedPeriodResponse getBlockedPeriod(UUID id) {
@@ -31,12 +38,10 @@ public class BlockedPeriodService {
     }
 
     @Transactional(readOnly = true)
-    public List<BlockedPeriodResponse> getBlockedPeriods() {
+    public Page<BlockedPeriodResponse> getBlockedPeriods(Pageable pageable) {
         User currentUser = userService.getCurrentUser();
-        return blockedPeriodRepository.findByUserId(currentUser.getId())
-                .stream()
-                .map(this::toResponse)
-                .toList();
+        return blockedPeriodRepository.findByUserId(currentUser.getId(), pageable)
+                .map(this::toResponse);
     }
 
     @Transactional
@@ -67,6 +72,20 @@ public class BlockedPeriodService {
         log.info("Blocked period created userId={} start={} end={}",
                 currentUser.getId(), request.getStartTime(), request.getEndTime());
         return toResponse(blockedPeriodRepository.save(blockedPeriod));
+    }
+
+    // TODO: find if there is a better way to do this
+    @Transactional
+    public void deleteBlockedPeriod(UUID id) {
+        BlockedPeriod blockedPeriod = blockedPeriodRepository.findById(id)
+                .orElseThrow(() -> new BlockedPeriodNotFoundException("Blocked period not found"));
+
+        List<Event> affectedEvents = eventRepository.findByHostAndDeletedAtIsNull(blockedPeriod.getUser());
+        for (Event affectedEvent : affectedEvents) {
+            slotService.regenerateFutureSlots(affectedEvent);
+        }
+
+        blockedPeriodRepository.delete(blockedPeriod);
     }
 
     private BlockedPeriodResponse toResponse(BlockedPeriod blockedPeriod) {

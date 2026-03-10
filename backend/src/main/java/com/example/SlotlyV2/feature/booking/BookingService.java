@@ -2,6 +2,8 @@ package com.example.SlotlyV2.feature.booking;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -58,15 +60,16 @@ public class BookingService {
     }
 
     @Transactional
-    public void cancel(CancelBookingRequest request, Long bookingId) {
-        Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new BookingNotFoundException("Booking not found with id: " + bookingId));
+    public void cancel(CancelBookingRequest request) {
+        Booking booking = bookingRepository.findById(request.getBookingid())
+                .orElseThrow(
+                        () -> new BookingNotFoundException("Booking not found with id: " + request.getBookingid()));
 
         slotValidator.validateSlotForCancellation(booking, request.getAttendeeEmail());
         booking.cancel(request.getCancellationReason());
         bookingEventPublisher.publishCancellationEvents(booking);
 
-        log.info("Booking cancelled bookingId={} attendeeEmail={}", bookingId, request.getAttendeeEmail());
+        log.info("Booking cancelled bookingId={} attendeeEmail={}", request.getBookingid(), request.getAttendeeEmail());
     }
 
     @Transactional
@@ -80,12 +83,10 @@ public class BookingService {
     }
 
     @Transactional(readOnly = true)
-    public List<BookingResponse> getMyBookings() {
+    public Page<BookingResponse> getMyBookings(Pageable pageable) {
         User currentUser = userService.getCurrentUser();
-        return bookingRepository.findByAttendeeEmail(currentUser.getEmail())
-                .stream()
-                .map(this::toResponse)
-                .toList();
+        return bookingRepository.findByAttendeeEmail(currentUser.getEmail(), pageable)
+                .map(this::toResponse);
     }
 
     @Transactional(readOnly = true)

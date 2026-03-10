@@ -1,62 +1,43 @@
-import type { Booking, CreateBookingRequest } from "../types/Booking";
+import type { DataResponse, PagedResponse } from "@/types/api";
 import API from "../../../lib/api";
-import type { PublicEvent, Slot } from "../../booking-page/types/BookingSlots";
+import type {
+    Booking,
+    CancelBookingRequest,
+    CreateBookingRequest,
+} from "../types/Booking";
 
 export const createBooking = async (
     payload: CreateBookingRequest,
-): Promise<Booking> => {
+): Promise<DataResponse<Booking>> => {
     const res = await API.post("/api/v1/bookings", payload);
     return res.data.data;
 };
 
-export const getBooking = async (id: number): Promise<Booking> => {
-    const res = await API.get(`/api/v1/bookings/${id}`);
-    return res.data.data;
-};
-
-export const getBookings = async (): Promise<Booking[]> => {
-    const res = await API.get("/api/v1/bookings/me");
-    return res.data.data;
-};
-
-export const cancelBooking = async (
+export const getBooking = async (
     id: number,
-    attendeeEmail: string,
-    reason: string,
-): Promise<void> => {
-    await API.patch(`/api/v1/bookings/${id}/cancel`, {
-        attendeeEmail,
-        cancellationReason: reason,
+): Promise<DataResponse<Booking>> => {
+    const res = await API.get("/api/v1/bookings", { params: { id } });
+    return res.data.data;
+};
+
+export const getBookings = async (
+    page = 0,
+    size = 10,
+): Promise<PagedResponse<Booking>> => {
+    const res = await API.get("/api/v1/bookings/me", {
+        params: { page, size },
     });
+    return res.data.content;
 };
 
-export const noShow = async (id: number): Promise<void> => {
-    await API.post(`/api/v1/bookings/${id}/no-show`);
+export const cancelBooking = async (payload: CancelBookingRequest) => {
+    await API.patch("/api/v1/bookings/cancel", payload);
 };
 
-export const getPublicEvent = async (
-    shareableId: string,
-): Promise<PublicEvent> => {
-    const res = await API.get(`/api/v1/events/public/${shareableId}`);
-    return res.data.data;
-};
-
-export const getAvailableSlots = async (
-    shareableId: string,
-): Promise<Slot[]> => {
-    const res = await API.get(`/api/v1/events/public/${shareableId}/slots`);
-    return res.data.data;
-};
-
-export const getAvailableSlotsByDate = async (
-    shareableId: string,
-    date: string,
-): Promise<Slot[]> => {
-    const res = await API.get(`/api/v1/events/public/${shareableId}/slots`, {
+export const noShow = async (id: number) => {
+    await API.post("/api/v1/bookings/no-show", {
         params: {
-            date,
-            timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            id,
         },
     });
-    return res.data.data;
 };

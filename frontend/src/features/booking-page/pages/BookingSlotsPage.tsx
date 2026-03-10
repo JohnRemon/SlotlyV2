@@ -1,17 +1,16 @@
 import axios from "axios";
 import { useCallback, useEffect, useState } from "react";
-import toast from "react-hot-toast";
 import { useParams } from "react-router";
-import {
-    getAvailableSlotsByDate,
-    getPublicEvent,
-} from "../../bookings/api/BookingsApi";
 import { BookingForm } from "../components/BookingForm";
 import { EventPanel } from "../components/BookingPanel";
 import { BookingSuccess } from "../components/BookingSucces";
 import { SlotsPanel } from "../components/SlotsPanel";
-import type { PublicEvent, Slot } from "../types/BookingSlots";
 import { CalendarPanel } from "../components/CalendarPanel";
+import { getPublicEvent } from "@/features/events/api/EventsApi";
+import type { PublicEvent } from "@/features/events/types/Event";
+import type { Slot } from "@/features/slots/types/Slots";
+import { toast } from "sonner";
+import { getAvailableSlots } from "@/features/slots/api/SlotsApi";
 
 const formatDate = (iso: string) =>
     new Date(iso).toLocaleDateString("en-US", {
@@ -58,7 +57,7 @@ const BookingPage = () => {
             setShowForm(false);
             setLoadingSlots(true);
             try {
-                const data = await getAvailableSlotsByDate(shareableId, date);
+                const data = await getAvailableSlots(shareableId, date);
                 setSlots(data);
             } catch (error) {
                 if (axios.isAxiosError(error)) {

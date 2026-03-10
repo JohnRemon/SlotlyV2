@@ -4,6 +4,7 @@ export async function login(email: string, password: string) {
     return api.post("/api/v1/auth/login", { email, password });
 }
 
+// TODO: pass timezone for google auth
 export async function loginWithGoogle(idToken: string) {
     return api.post("/api/v1/auth/google", { idToken });
 }

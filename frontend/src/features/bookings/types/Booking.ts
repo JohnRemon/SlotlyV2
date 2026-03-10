@@ -1,3 +1,5 @@
+import type { BookingFormSubmissionRequest } from "@/features/booking-page/types/BookingForms";
+
 export type BookingStatus = "CONFIRMED" | "CANCELLED" | "NO_SHOW" | "PAST";
 export type BookingTab = "CONFIRMED" | "CANCELLED" | "NO_SHOW" | "PAST";
 export type FieldStatus = "TEXT" | "PHONE";
@@ -20,38 +22,6 @@ export interface Booking {
     createdAt?: string;
 }
 
-export interface BookingFormAnswerRequest {
-    fieldId: string;
-    fieldResponse: string;
-}
-
-export interface BookingFormSubmissionRequest {
-    answers: BookingFormAnswerRequest[];
-}
-
-export interface BookingFormFieldRequest {
-    label: string;
-    fieldType: FieldStatus;
-    required: boolean;
-    displayOrder: number;
-}
-
-export interface BookingFormFieldResponse {
-    id: string;
-    label: string;
-    fieldType: FieldStatus;
-    required: boolean;
-    displayOrder: number;
-}
-
-export interface BookingFormRequest {
-    fields: BookingFormFieldRequest[];
-}
-
-export interface BookingFormResponse {
-    fields: BookingFormFieldResponse[];
-}
-
 export interface CreateBookingRequest {
     eventId: number;
     slotId: number;
@@ -59,4 +29,10 @@ export interface CreateBookingRequest {
     attendeeEmail: string;
     notes?: string;
     formSubmission?: BookingFormSubmissionRequest;
+}
+
+export interface CancelBookingRequest {
+    bookingId: number;
+    attendeeEmail: string;
+    cancellationReason: string;
 }

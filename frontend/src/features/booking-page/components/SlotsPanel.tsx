@@ -1,4 +1,4 @@
-import type { Slot } from "../types/BookingSlots";
+import type { Slot } from "@/features/slots/types/Slots";
 
 interface SlotsPanelProps {
     slots: Slot[];

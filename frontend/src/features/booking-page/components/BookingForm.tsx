@@ -1,8 +1,10 @@
-import { useState } from "react";
-import toast from "react-hot-toast";
-import { createBooking } from "../../bookings/api/BookingsApi";
-import type { PublicEvent, Slot, FormField } from "../types/BookingSlots";
+import { createBooking } from "@/features/bookings/api/BookingsApi";
+import type { PublicEvent } from "@/features/events/types/Event";
+import type { Slot } from "@/features/slots/types/Slots";
 import axios from "axios";
+import { useState } from "react";
+import { toast } from "sonner";
+import type { FormField } from "../types/BookingForms";
 
 interface BookingFormProps {
     event: PublicEvent;

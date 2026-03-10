@@ -1,7 +1,8 @@
 import type {
-    BookingFormRequest,
     BookingFormResponse,
-} from "../../bookings/types/Booking";
+    FormField,
+    BookingFormRequest,
+} from "@/features/booking-page/types/BookingForms";
 
 export type RecurrenceFrequency = "DAILY" | "WEEKLY" | "MONTHLY" | "CUSTOM";
 export type RecurrenceEndType = "NEVER" | "OCCURRENCES" | "DATE";
@@ -34,6 +35,24 @@ export interface Event {
     bookingForm: BookingFormResponse;
     scheduleId: string;
     scheduleIsDefault: boolean;
+}
+
+export interface PublicEvent {
+    id: number;
+    eventName: string;
+    description?: string;
+    eventStart: string;
+    eventEnd: string;
+    host: {
+        firstName: string;
+        lastName: string;
+    };
+    availabilityRulesDTO: {
+        slotDurationMinutes: number;
+    };
+    bookingForm?: {
+        fields: FormField[];
+    };
 }
 
 export interface EventRequest {

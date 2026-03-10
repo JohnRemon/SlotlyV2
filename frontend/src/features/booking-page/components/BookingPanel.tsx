@@ -1,5 +1,5 @@
+import type { PublicEvent } from "@/features/events/types/Event";
 import { Clock, Globe, FileText } from "lucide-react";
-import type { PublicEvent } from "../types/BookingSlots";
 
 interface EventPanelProps {
     event: PublicEvent;

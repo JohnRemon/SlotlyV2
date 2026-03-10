@@ -6,6 +6,8 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -54,14 +56,12 @@ public class SlotService {
     }
 
     @Transactional(readOnly = true)
-    public List<SlotResponse> getSlots(Long eventId) {
+    public Page<SlotResponse> getSlots(Long eventId, Pageable pageable) {
         if (!eventRepository.existsById(eventId)) {
             throw new EventNotFoundException("Event not found with id: " + eventId);
         }
-        return slotRepository.findByEventId(eventId)
-                .stream()
-                .map(this::toResponse)
-                .toList();
+        return slotRepository.findByEventId(eventId, pageable)
+                .map(this::toResponse);
     }
 
     @Transactional(readOnly = true)
@@ -71,7 +71,8 @@ public class SlotService {
     }
 
     @Transactional(readOnly = true)
-    public List<SlotResponse> getAvailableSlots(String shareableId, LocalDate date, String timeZone) {
+    public Page<SlotResponse> getAvailableSlots(String shareableId, LocalDate date, String timeZone,
+            Pageable pageable) {
         Event event = eventRepository.findByShareableIdAndDeletedAtIsNull(shareableId)
                 .orElseThrow(() -> new EventNotFoundException("Event not found"));
 
@@ -79,23 +80,18 @@ public class SlotService {
             throw new EventNotFoundException("Event not found"); // don't leak existence of private events
         }
 
-        List<Slot> available = slotRepository.findByEvent(event)
-                .stream()
-                .filter(Slot::isAvailable)
-                .toList();
-
         if (date == null || timeZone == null) {
-            return available.stream().map(this::toResponse).toList();
+            return slotRepository.findByEventAndBookingIsNull(event, pageable)
+                    .map(this::toResponse);
         }
 
         ZoneId zone = ZoneId.of(timeZone);
-        return available.stream()
-                .filter(slot -> slot.getStartTime()
-                        .atZoneSameInstant(zone)
-                        .toLocalDate()
-                        .equals(date))
-                .map(this::toResponse)
-                .toList();
+        OffsetDateTime start = date.atStartOfDay(zone).toOffsetDateTime();
+        OffsetDateTime end = date.plusDays(1).atStartOfDay(zone).toOffsetDateTime();
+
+        return slotRepository.findByEventAndBookingIsNullAndStartTimeBetween(
+                event, start, end, pageable)
+                .map(this::toResponse);
     }
 
     // Called internally — returns raw Slot for booking logic

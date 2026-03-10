@@ -2,6 +2,7 @@ package com.example.SlotlyV2.feature.booking.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -13,6 +14,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CancelBookingRequest {
+    @NotNull(message = "Booking ID is required")
+    private Long bookingid;
+
     @Email(message = "Valid email is required")
     @NotBlank(message = "Attendee email is required")
     private String attendeeEmail;
