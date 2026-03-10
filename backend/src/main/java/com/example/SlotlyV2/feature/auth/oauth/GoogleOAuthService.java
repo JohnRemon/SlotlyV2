@@ -17,6 +17,7 @@ import com.example.SlotlyV2.common.exception.auth.GoogleOAuth2Exception;
 import com.example.SlotlyV2.feature.auth.enums.AuthProvider;
 import com.example.SlotlyV2.feature.schedule.ScheduleService;
 import com.example.SlotlyV2.feature.user.User;
+import com.example.SlotlyV2.feature.user.UserFactory;
 import com.example.SlotlyV2.feature.user.UserRepository;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken.Payload;
@@ -37,8 +38,9 @@ public class GoogleOAuthService {
     private final NetHttpTransport httpTransport;
     private final JsonFactory jsonFactory;
     private final UserRepository userRepository;
-    private final ScheduleService scheduleService;
+    private final UserFactory userFactory;
     private final SecurityContextRepository securityContextRepository;
+    private final ScheduleService scheduleService;
 
     @Transactional
     public User login(String idTokenString, HttpServletRequest request,
@@ -57,6 +59,8 @@ public class GoogleOAuthService {
         return user;
     }
 
+    // ── Private helpers ───────────────────────────────────────────────────────
+
     private User findOrCreateOAuthUser(String email, String googleId, String firstName, String lastName) {
         return userRepository.findByEmail(email)
                 .map(existingUser -> updateExistingUser(existingUser, googleId))
@@ -64,19 +68,10 @@ public class GoogleOAuthService {
     }
 
     private User createNewGoogleUser(String email, String googleId, String firstName, String lastName) {
-        User user = User.builder()
-                .email(email)
-                .googleId(googleId)
-                .firstName(firstName)
-                .lastName(lastName)
-                .authProvider(AuthProvider.GOOGLE)
-                .timeZone("UTC")
-                .isVerified(true)
-                .build();
-
+        User user = userFactory.createFrom(email, googleId, firstName, lastName);
         user = userRepository.save(user);
         scheduleService.createDefaultScheduleForUser(user);
-
+        log.info("User registered using google userId={} email={}", user.getId(), user.getEmail());
         return user;
     }
 
@@ -115,7 +110,7 @@ public class GoogleOAuthService {
 
             Payload payload = idToken.getPayload();
 
-            if (!Boolean.TRUE.equals(payload.getEmailVerified())) {
+            if (!payload.getEmailVerified()) {
                 throw new GoogleOAuth2Exception("Google account email is not verified");
             }
 

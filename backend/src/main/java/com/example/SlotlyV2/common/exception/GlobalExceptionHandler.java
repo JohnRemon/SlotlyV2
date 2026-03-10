@@ -15,7 +15,6 @@ import com.example.SlotlyV2.common.exception.auth.ForbiddenException;
 import com.example.SlotlyV2.common.exception.auth.GoogleOAuth2Exception;
 import com.example.SlotlyV2.common.exception.auth.InvalidCredentialsException;
 import com.example.SlotlyV2.common.exception.auth.InvalidTokenException;
-import com.example.SlotlyV2.common.exception.auth.PasswordMismatchException;
 import com.example.SlotlyV2.common.exception.auth.RateLimitExceededException;
 import com.example.SlotlyV2.common.exception.auth.TokenAlreadyExpiredException;
 import com.example.SlotlyV2.common.exception.auth.UnauthorizedAccessException;
@@ -102,7 +101,6 @@ public class GlobalExceptionHandler {
             AccountNotVerifiedException.class,
             InvalidTokenException.class,
             TokenAlreadyExpiredException.class,
-            PasswordMismatchException.class,
             InvalidSlotException.class,
             InvalidScheduleException.class,
             InvalidFormResponseException.class,

@@ -3,7 +3,6 @@ package com.example.SlotlyV2.feature.user;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,7 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class UserService {
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
+    private final UserFactory userFactory;
     private final ApplicationEventPublisher eventPublisher;
     private final VerificationTokenService verificationTokenService;
     private final ScheduleService scheduleService;
@@ -37,16 +36,10 @@ public class UserService {
             throw new UserAlreadyExistsException("An account with this email already exists");
         }
 
-        User user = userRepository.save(User.builder()
-                .email(request.getEmail())
-                .password(passwordEncoder.encode(request.getPassword()))
-                .firstName(request.getFirstName())
-                .lastName(request.getLastName())
-                .timeZone(request.getTimeZone())
-                .isVerified(false)
-                .build());
-
+        User user = userFactory.createFrom(request);
+        userRepository.save(user);
         scheduleService.createDefaultScheduleForUser(user);
+
         publishVerificationEmail(user);
 
         log.info("User registered userId={} email={}", user.getId(), user.getEmail());

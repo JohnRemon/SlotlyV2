@@ -23,6 +23,7 @@ import com.example.SlotlyV2.common.dto.PagedResponse;
 import com.example.SlotlyV2.feature.schedule.dto.ScheduleRequest;
 import com.example.SlotlyV2.feature.schedule.dto.ScheduleResponse;
 import com.example.SlotlyV2.feature.schedule.dto.UpdateScheduleRequest;
+import com.example.SlotlyV2.feature.user.UserService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -33,46 +34,47 @@ import lombok.RequiredArgsConstructor;
 public class ScheduleController {
 
     private final ScheduleService scheduleService;
+    private final UserService userService;
 
     @GetMapping
     public PagedResponse<ScheduleResponse> getSchedules(
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        return PagedResponse.of(scheduleService.getSchedules(pageable));
+        return PagedResponse.of(scheduleService.getSchedules(userService.getCurrentUser(), pageable));
     }
 
     @GetMapping("/{id}")
     public DataResponse<ScheduleResponse> getScheduleById(@PathVariable UUID id) {
-        return DataResponse.of(scheduleService.getSchedule(id));
+        return DataResponse.of(scheduleService.getSchedule(userService.getCurrentUser(), id));
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public DataResponse<ScheduleResponse> createSchedule(@Valid @RequestBody ScheduleRequest request) {
-        return DataResponse.of(scheduleService.createSchedule(request));
+        return DataResponse.of(scheduleService.createSchedule(userService.getCurrentUser(), request));
     }
 
     @PutMapping("/{id}")
     public DataResponse<ScheduleResponse> updateSchedule(
             @Valid @RequestBody UpdateScheduleRequest request,
             @PathVariable UUID id) {
-        return DataResponse.of(scheduleService.updateSchedule(request, id));
+        return DataResponse.of(scheduleService.updateSchedule(userService.getCurrentUser(), request, id));
     }
 
     @PatchMapping("/{id}/name")
     public DataResponse<ScheduleResponse> updateScheduleName(
             @PathVariable UUID id,
             @RequestParam String name) {
-        return DataResponse.of(scheduleService.updateScheduleName(name, id));
+        return DataResponse.of(scheduleService.updateScheduleName(userService.getCurrentUser(), name, id));
     }
 
     @PatchMapping("/{id}/default")
     public DataResponse<ScheduleResponse> setDefaultSchedule(@PathVariable UUID id) {
-        return DataResponse.of(scheduleService.updateDefaultSchedule(id));
+        return DataResponse.of(scheduleService.updateDefaultSchedule(userService.getCurrentUser(), id));
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteSchedule(@PathVariable UUID id) {
-        scheduleService.deleteSchedule(id);
+        scheduleService.deleteSchedule(userService.getCurrentUser(), id);
     }
 }

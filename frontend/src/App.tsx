@@ -1,21 +1,19 @@
 import { Route, Routes } from "react-router";
-import LoginPage from "./features/auth/pages/LoginPage.tsx";
-import DashboardPage from "./pages/DashboardPage.tsx";
-import BookingsPage from "./features/bookings/pages/BookingsPage.tsx";
-import ProfilePage from "./pages/ProfilePage.tsx";
-import SettingsPage from "./pages/SettingsPage.tsx";
-import HomePage from "./pages/HomePage.tsx";
-import RegisterPage from "./features/auth/pages/RegisterPage.tsx";
-import ForgotPasswordPage from "./features/auth/pages/ForgotPasswordPage.tsx";
-import ResetPasswordPage from "./features/auth/pages/ResetPasswordPage.tsx";
-import EventsPage from "./features/events/pages/EventsPage.tsx";
-import BookingSlotsPage from "./features/booking-page/pages/BookingSlotsPage.tsx";
-import ProtectedRoute from "./components/routing/ProtectedRoute.tsx";
-import EventDetailPage from "./features/events/pages/EventDetailsPage.tsx";
-import SchedulesPage from "./features/schedule/pages/SchedulesPage.tsx";
-import ScheduleDetailPage from "./features/schedule/pages/ScheduleDetailPage.tsx";
-import { SchedulesProvider } from "./features/schedule/context/SchedulesContext.tsx";
-import AppsPage from "./features/apps/pages/AppsPage.tsx";
+import AppsPage from "./features/apps/pages/AppsPage";
+import ForgotPasswordPage from "./features/auth/pages/ForgotPasswordPage";
+import LoginPage from "./features/auth/pages/LoginPage";
+import RegisterPage from "./features/auth/pages/RegisterPage";
+import ResetPasswordPage from "./features/auth/pages/ResetPasswordPage";
+import BookingSlotsPage from "./features/booking-page/pages/BookingSlotsPage";
+import BookingsPage from "./features/bookings/pages/BookingsPage";
+import EventDetailPage from "./features/events/pages/EventDetailsPage";
+import EventsPage from "./features/events/pages/EventsPage";
+import ProtectedRoute from "./components/common/ProtectedRoute";
+import SchedulesProvider from "./features/schedule/context/SchedulesContext";
+import ScheduleDetailPage from "./features/schedule/pages/ScheduleDetailPage";
+import SchedulesPage from "./features/schedule/pages/SchedulesPage";
+import HomePage from "./pages/HomePage";
+import DashboardPage from "./pages/DashboardPage";
 
 function App() {
     return (
@@ -43,8 +41,8 @@ function App() {
                         />
                     </Route>
                     <Route path="/apps" element={<AppsPage />} />
-                    <Route path="/me" element={<ProfilePage />} />
-                    <Route path="/settings" element={<SettingsPage />} />
+                    {/* <Route path="/me" element={<ProfilePage />} /> */}
+                    {/* <Route path="/settings" element={<SettingsPage />} /> */}
                 </Route>
             </Route>
         </Routes>

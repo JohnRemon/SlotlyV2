@@ -22,7 +22,6 @@ import com.example.SlotlyV2.feature.schedule.dto.ScheduleResponse;
 import com.example.SlotlyV2.feature.schedule.dto.UpdateScheduleRequest;
 import com.example.SlotlyV2.feature.slot.SlotService;
 import com.example.SlotlyV2.feature.user.User;
-import com.example.SlotlyV2.feature.user.UserService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,33 +34,28 @@ public class ScheduleService {
     private final ScheduleRepository scheduleRepository;
     private final EventRepository eventRepository;
     private final SlotService slotService;
-    private final UserService userService;
 
     @Transactional(readOnly = true)
-    public ScheduleResponse getSchedule(UUID id) {
-        User currentUser = userService.getCurrentUser();
-        return toResponse(findAndAuthorizeSchedule(currentUser, id));
+    public ScheduleResponse getSchedule(User user, UUID id) {
+        return toResponse(findAndAuthorizeSchedule(user, id));
     }
 
     @Transactional(readOnly = true)
-    public Page<ScheduleResponse> getSchedules(Pageable pageable) {
-        User currentUser = userService.getCurrentUser();
-        return scheduleRepository.findAllByUser(currentUser, pageable)
+    public Page<ScheduleResponse> getSchedules(User user, Pageable pageable) {
+        return scheduleRepository.findAllByUser(user, pageable)
                 .map(this::toResponse);
     }
 
     @Transactional
-    public ScheduleResponse createSchedule(ScheduleRequest request) {
-        User currentUser = userService.getCurrentUser();
-        Schedule schedule = buildScheduleWithDefaults(currentUser, request.getName(), false);
-        log.info("Schedule created scheduleId={} userId={}", schedule.getId(), currentUser.getId());
+    public ScheduleResponse createSchedule(User user, ScheduleRequest request) {
+        Schedule schedule = buildScheduleWithDefaults(user, request.getName(), false);
+        log.info("Schedule created scheduleId={} userId={}", schedule.getId(), user.getId());
         return toResponse(schedule);
     }
 
     @Transactional
-    public ScheduleResponse updateSchedule(UpdateScheduleRequest request, UUID id) {
-        User currentUser = userService.getCurrentUser();
-        Schedule schedule = findAndAuthorizeSchedule(currentUser, id);
+    public ScheduleResponse updateSchedule(User user, UpdateScheduleRequest request, UUID id) {
+        Schedule schedule = findAndAuthorizeSchedule(user, id);
 
         Map<Integer, DailyScheduleRequest> requestMap = request.getDays().stream()
                 .collect(Collectors.toMap(DailyScheduleRequest::getDayOfWeek, d -> d));
@@ -85,40 +79,37 @@ public class ScheduleService {
         eventRepository.findByScheduleAndDeletedAtIsNull(schedule)
                 .forEach(slotService::regenerateFutureSlots);
 
-        log.info("Schedule updated scheduleId={} userId={}", id, currentUser.getId());
+        log.info("Schedule updated scheduleId={} userId={}", id, user.getId());
         return toResponse(schedule);
     }
 
     @Transactional
-    public ScheduleResponse updateScheduleName(String name, UUID id) {
-        User currentUser = userService.getCurrentUser();
-        Schedule schedule = findAndAuthorizeSchedule(currentUser, id);
+    public ScheduleResponse updateScheduleName(User user, String name, UUID id) {
+        Schedule schedule = findAndAuthorizeSchedule(user, id);
         schedule.setName(name);
-        log.info("Schedule renamed scheduleId={} userId={}", id, currentUser.getId());
+        log.info("Schedule renamed scheduleId={} userId={}", id, user.getId());
         return toResponse(scheduleRepository.save(schedule));
     }
 
     @Transactional
-    public ScheduleResponse updateDefaultSchedule(UUID id) {
-        User currentUser = userService.getCurrentUser();
+    public ScheduleResponse updateDefaultSchedule(User user, UUID id) {
 
-        Schedule currentDefault = scheduleRepository.findByUserAndIsDefaultTrue(currentUser)
+        Schedule currentDefault = scheduleRepository.findByUserAndIsDefaultTrue(user)
                 .orElseThrow(() -> new ScheduleNotFoundException("Default schedule not found"));
         currentDefault.setIsDefault(false);
         scheduleRepository.save(currentDefault);
 
-        Schedule schedule = findAndAuthorizeSchedule(currentUser, id);
+        Schedule schedule = findAndAuthorizeSchedule(user, id);
         schedule.setIsDefault(true);
-        log.info("Default schedule updated scheduleId={} userId={}", id, currentUser.getId());
+        log.info("Default schedule updated scheduleId={} userId={}", id, user.getId());
         return toResponse(scheduleRepository.save(schedule));
     }
 
     @Transactional
-    public void deleteSchedule(UUID id) {
-        User currentUser = userService.getCurrentUser();
-        Schedule schedule = findAndAuthorizeSchedule(currentUser, id);
+    public void deleteSchedule(User user, UUID id) {
+        Schedule schedule = findAndAuthorizeSchedule(user, id);
 
-        if (scheduleRepository.countByUser(currentUser) == 1) {
+        if (scheduleRepository.countByUser(user) == 1) {
             throw new InvalidScheduleException("Cannot delete the only schedule");
         }
 
@@ -127,7 +118,7 @@ public class ScheduleService {
         }
 
         scheduleRepository.delete(schedule);
-        log.info("Schedule deleted scheduleId={} userId={}", id, currentUser.getId());
+        log.info("Schedule deleted scheduleId={} userId={}", id, user.getId());
     }
 
     // Called during user registration — no auth context available
