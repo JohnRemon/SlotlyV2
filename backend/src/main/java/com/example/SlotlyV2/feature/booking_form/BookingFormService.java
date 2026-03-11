@@ -1,12 +1,12 @@
 package com.example.SlotlyV2.feature.booking_form;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.SlotlyV2.common.exception.auth.ForbiddenException;
-import com.example.SlotlyV2.common.exception.booking_form.BookingFormAlreadyExists;
 import com.example.SlotlyV2.common.exception.booking_form.BookingFormNotFoundException;
 import com.example.SlotlyV2.common.exception.event.EventNotFoundException;
 import com.example.SlotlyV2.feature.booking_form.dto.BookingFormFieldRequest;
@@ -30,27 +30,6 @@ public class BookingFormService {
     private final UserService userService;
 
     @Transactional
-    public BookingFormResponse createForm(Long eventId, BookingFormRequest request) {
-        User currentUser = userService.getCurrentUser();
-        Event event = findAndAuthorizeEvent(currentUser, eventId);
-
-        if (event.getBookingForm() != null) {
-            throw new BookingFormAlreadyExists("Event already has a booking form");
-        }
-
-        BookingForm form = BookingForm.builder()
-                .event(event)
-                .fields(List.of())
-                .build();
-
-        form.setFields(buildFields(request, form));
-        event.setBookingForm(form);
-
-        log.info("Booking form created eventId={} userId={}", eventId, currentUser.getId());
-        return toResponse(bookingFormRepository.save(form));
-    }
-
-    @Transactional
     public BookingFormResponse updateForm(Long eventId, BookingFormRequest request) {
         User currentUser = userService.getCurrentUser();
         Event event = findAndAuthorizeEvent(currentUser, eventId);
@@ -65,7 +44,7 @@ public class BookingFormService {
             form.getFields().clear();
         }
 
-        form.setFields(buildFields(request, form));
+        form.getFields().addAll(buildFields(request, form));
         event.setBookingForm(form);
 
         log.info("Booking form updated eventId={} userId={}", eventId, currentUser.getId());
@@ -91,7 +70,7 @@ public class BookingFormService {
                 .orElseThrow(() -> new BookingFormNotFoundException("Booking form not found")));
     }
 
-    // ── Private helpers ───────────────────────────────────────────────────────
+    // -- Private helpers -------------------------------------------------------
 
     private Event findAndAuthorizeEvent(User user, Long eventId) {
         Event event = eventRepository.findByIdAndDeletedAtIsNull(eventId)
@@ -108,7 +87,7 @@ public class BookingFormService {
     private List<FormQuestion> buildFields(BookingFormRequest request, BookingForm form) {
         return request.getFields().stream()
                 .map(q -> buildField(q, form))
-                .toList();
+                .collect(Collectors.toList());
     }
 
     private FormQuestion buildField(BookingFormFieldRequest dto, BookingForm form) {

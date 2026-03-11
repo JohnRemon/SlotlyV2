@@ -35,10 +35,10 @@ public class EventRequest {
     private OffsetDateTime eventEnd;
 
     @Valid
-    private AvailabilityRulesDTO availabilityRulesDTO;
+    private AvailabilityRulesDTO availabilityRules;
 
     @Valid
-    private RecurrenceRulesDTO recurrenceRulesDTO;
+    private RecurrenceRulesDTO recurrenceRules;
 
     @Valid
     private BookingFormRequest bookingForm;

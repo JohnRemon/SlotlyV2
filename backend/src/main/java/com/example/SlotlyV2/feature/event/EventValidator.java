@@ -26,14 +26,14 @@ public class EventValidator {
     }
 
     public void validateRecurringEventRules(EventRequest request) {
-        if (request.getRecurrenceRulesDTO().getRecurrenceEndDate() != null
-                && !request.getRecurrenceRulesDTO().getRecurrenceEndDate()
+        if (request.getRecurrenceRules().getRecurrenceEndDate() != null
+                && !request.getRecurrenceRules().getRecurrenceEndDate()
                         .isAfter(request.getEventStart())) {
             throw new InvalidEventException("Recurrence end date must be after event start");
         }
 
-        if (request.getRecurrenceRulesDTO().getRecurrenceFrequency() == RecurrenceFrequency.WEEKLY
-                && request.getRecurrenceRulesDTO().getRecurrenceDayOfWeek() == null) {
+        if (request.getRecurrenceRules().getRecurrenceFrequency() == RecurrenceFrequency.WEEKLY
+                && request.getRecurrenceRules().getRecurrenceDayOfWeek() == null) {
             throw new InvalidEventException("Day of week is required for weekly recurrence");
         }
     }

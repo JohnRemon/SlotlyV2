@@ -3,6 +3,9 @@ package com.example.SlotlyV2.feature.user.dto;
 
 import com.example.SlotlyV2.feature.user.User;
 
+import lombok.Value;
+
+@Value
 public class PublicUserResponse {
     private final String firstName;
     private final String lastName;

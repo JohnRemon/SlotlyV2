@@ -59,7 +59,7 @@ public class UserService {
         return (User) auth.getPrincipal();
     }
 
-    // ── Private helpers ───────────────────────────────────────────────────────
+    // -- Private helpers -------------------------------------------------------
 
     private void publishVerificationEmail(User user) {
         String token = verificationTokenService.generateEmailVerificationToken(user);

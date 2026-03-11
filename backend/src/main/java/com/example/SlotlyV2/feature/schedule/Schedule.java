@@ -44,20 +44,4 @@ public class Schedule {
 
     @Builder.Default
     private Boolean isDefault = false;
-
-    public UUID getId() {
-        return id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public List<DailySchedule> getDailySchedules() {
-        return dailySchedules;
-    }
-
-    public Boolean getIsDefault() {
-        return isDefault;
-    }
 }

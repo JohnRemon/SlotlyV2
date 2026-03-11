@@ -1,13 +1,10 @@
 package com.example.SlotlyV2.feature.booking_form;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.SlotlyV2.common.dto.DataResponse;
@@ -23,14 +20,6 @@ import lombok.RequiredArgsConstructor;
 public class BookingFormController {
     private final BookingFormService bookingFormService;
 
-    @PostMapping("/{eventId}/booking-form")
-    @ResponseStatus(HttpStatus.CREATED)
-    public DataResponse<BookingFormResponse> createBookingForm(
-            @PathVariable Long eventId,
-            @Valid @RequestBody BookingFormRequest request) {
-        return DataResponse.of(bookingFormService.createForm(eventId, request));
-    }
-
     @PutMapping("/{eventId}/booking-form")
     public DataResponse<BookingFormResponse> updateBookingForm(
             @PathVariable Long eventId,
@@ -43,7 +32,8 @@ public class BookingFormController {
         return DataResponse.of(bookingFormService.getForm(eventId));
     }
 
-    @GetMapping("/share/{shareableId}/booking-form")
+    // TODO: fix mapping in frontend
+    @GetMapping("/{shareableId}/booking-form/public")
     public DataResponse<BookingFormResponse> getPublicBookingForm(@PathVariable String shareableId) {
         return DataResponse.of(bookingFormService.getPublicForm(shareableId));
     }

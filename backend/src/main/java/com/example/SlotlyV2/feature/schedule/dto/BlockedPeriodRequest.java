@@ -25,5 +25,5 @@ public class BlockedPeriodRequest {
     private String reason;
 
     @NotNull(message = "recurrence is required")
-    private boolean isRecurring;
+    private Boolean isRecurring;
 }

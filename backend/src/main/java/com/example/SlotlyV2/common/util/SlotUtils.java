@@ -1,9 +1,11 @@
 package com.example.SlotlyV2.common.util;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -38,12 +40,20 @@ public class SlotUtils {
         Integer slotDuration = event.getAvailabilityRules().getSlotDurationMinutes();
         Integer buffer = event.getAvailabilityRules().getBufferMinutes();
 
+        User host = event.getHost();
+
+        List<BlockedPeriod> blockedPeriods = blockedPeriodRepository
+                .findByUserIdAndEndTimeAfterAndStartTimeBefore(host.getId(), start, end);
+
+        List<com.google.api.services.calendar.model.Event> calendarEvents = googleCalendarService
+                .getUpcomingEvents(host, start, end);
+
         while (currentStart.plusMinutes(slotDuration).isBefore(end)
                 || currentStart.plusMinutes(slotDuration).equals(end)) {
 
             OffsetDateTime slotEnd = currentStart.plusMinutes(slotDuration);
 
-            if (isValidSlot(schedule, event.getHost(), currentStart, slotDuration)) {
+            if (isValidSlot(schedule, event.getHost(), currentStart, slotDuration, blockedPeriods, calendarEvents)) {
                 Slot slot = Slot.builder()
                         .event(event)
                         .startTime(currentStart)
@@ -120,7 +130,9 @@ public class SlotUtils {
         };
     }
 
-    private boolean isValidSlot(Schedule schedule, User user, OffsetDateTime start, Integer slotDuration) {
+    private boolean isValidSlot(Schedule schedule, User user, OffsetDateTime start, Integer slotDuration,
+            List<BlockedPeriod> blockedPeriods, List<com.google.api.services.calendar.model.Event> calendarEvents) {
+
         ZoneId userZone = ZoneId.of(user.getTimeZone());
         Integer dayOfWeek = start.atZoneSameInstant(userZone).getDayOfWeek().getValue();
 
@@ -146,14 +158,22 @@ public class SlotUtils {
             return false;
         }
 
-        List<BlockedPeriod> blocks = blockedPeriodRepository
-                .findByUserIdAndEndTimeAfterAndStartTimeBefore(user.getId(), start, end);
+        boolean blockedByPeriod = blockedPeriods.stream()
+                .anyMatch(b -> b.getStartTime().isBefore(end) && b.getEndTime().isAfter(start));
 
-        if (!blocks.isEmpty()) {
+        if (blockedByPeriod) {
             return false;
         }
 
-        List<com.google.api.services.calendar.model.Event> events = googleCalendarService.getUpcomingEvents(user, start, end);
-        return events.isEmpty();
+        boolean blockedByCalendar = calendarEvents.stream()
+                .anyMatch(e -> {
+                    OffsetDateTime eventStart = OffsetDateTime
+                            .ofInstant(Instant.ofEpochMilli(e.getStart().getDateTime().getValue()), ZoneOffset.UTC);
+                    OffsetDateTime eventEnd = OffsetDateTime
+                            .ofInstant(Instant.ofEpochMilli(e.getEnd().getDateTime().getValue()), ZoneOffset.UTC);
+                    return eventStart.isBefore(end) && eventEnd.isAfter(start);
+                });
+
+        return !blockedByCalendar;
     }
 }

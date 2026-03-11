@@ -115,7 +115,7 @@ public class EventService {
         User currentUser = userService.getCurrentUser();
         Event event = findAndAuthorizeEvent(currentUser, id);
         int booked = bookingRepository.countByEventAndStatus(event, BookingStatus.CONFIRMED);
-        eventValidator.validateNewCapacity(request.getAvailabilityRulesDTO().getMaxCapacity(), booked);
+        eventValidator.validateNewCapacity(request.getAvailabilityRules().getMaxCapacity(), booked);
         updateEventDetails(request, event);
         slotService.regenerateFutureSlots(event);
         log.info("Event updated eventId={} userId={}", event.getId(), currentUser.getId());
@@ -201,7 +201,7 @@ public class EventService {
         log.info("Event deleted eventId={} userId={}", event.getId(), currentUser.getId());
     }
 
-    // ── Private helpers ───────────────────────────────────────────────────────
+    // -- Private helpers -------------------------------------------------------
 
     private Event findAndAuthorizeEvent(User user, Long id) {
         Event event = eventRepository.findByIdAndDeletedAtIsNull(id)
@@ -229,7 +229,7 @@ public class EventService {
     private void updateEventDetails(EventRequest request, Event event) {
         event.setEventName(request.getEventName());
         event.setDescription(request.getDescription());
-        event.setAvailabilityRules(eventFactory.buildAvailabilityRules(request.getAvailabilityRulesDTO()));
+        event.setAvailabilityRules(eventFactory.buildAvailabilityRules(request.getAvailabilityRules()));
     }
 
     private Schedule getDefaultSchedule(User user) {

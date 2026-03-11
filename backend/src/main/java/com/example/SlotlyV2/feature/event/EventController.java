@@ -21,7 +21,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.SlotlyV2.common.dto.DataResponse;
 import com.example.SlotlyV2.common.dto.PagedResponse;
 import com.example.SlotlyV2.feature.availability.dto.AvailabilityRulesUpdateRequest;
-import com.example.SlotlyV2.feature.booking_form.dto.BookingFormUpdateRequest;
 import com.example.SlotlyV2.feature.event.dto.EventRequest;
 import com.example.SlotlyV2.feature.event.dto.EventResponse;
 import com.example.SlotlyV2.feature.event.dto.PublicEventResponse;
@@ -33,6 +32,7 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/v1/events")
 @RequiredArgsConstructor
 public class EventController {
+
     private final EventService eventService;
 
     @PostMapping
@@ -54,7 +54,7 @@ public class EventController {
     }
 
     @GetMapping("/{id}")
-    public DataResponse<EventResponse> getEventById(@PathVariable Long id) {
+    public DataResponse<EventResponse> getEvent(@PathVariable Long id) {
         return DataResponse.of(eventService.getEventById(id));
     }
 
@@ -65,30 +65,23 @@ public class EventController {
         return PagedResponse.of(eventService.getEventsByScheduleId(scheduleId, pageable));
     }
 
-    @GetMapping("/public/{shareableId}")
-    public DataResponse<PublicEventResponse> getPublicEvent(@PathVariable String shareableId) {
+    @GetMapping("/public")
+    public DataResponse<PublicEventResponse> getPublicEvent(@RequestParam String shareableId) {
         return DataResponse.of(eventService.getPublicEvent(shareableId));
     }
 
     @PutMapping("/{id}")
     public DataResponse<EventResponse> updateEvent(
-            @Valid @RequestBody EventRequest request,
-            @PathVariable Long id) {
+            @PathVariable Long id,
+            @Valid @RequestBody EventRequest request) {
         return DataResponse.of(eventService.updateEvent(request, id));
     }
 
     @PatchMapping("/{id}/availability-rules")
     public DataResponse<EventResponse> updateAvailabilityRules(
-            @Valid @RequestBody AvailabilityRulesUpdateRequest request,
-            @PathVariable Long id) {
+            @PathVariable Long id,
+            @Valid @RequestBody AvailabilityRulesUpdateRequest request) {
         return DataResponse.of(eventService.updateAvailabilityRules(request, id));
-    }
-
-    @PatchMapping("/{id}/booking-form")
-    public DataResponse<EventResponse> updateBookingForm(
-            @RequestBody BookingFormUpdateRequest request,
-            @PathVariable Long id) {
-        return DataResponse.of(eventService.updateBookingForm(request, id));
     }
 
     @PatchMapping("/{id}/schedule")

@@ -9,6 +9,9 @@ import com.example.SlotlyV2.feature.booking_form.dto.BookingFormResponse;
 import com.example.SlotlyV2.feature.event.Event;
 import com.example.SlotlyV2.feature.recurrence.dto.RecurrenceRulesDTO;
 
+import lombok.Value;
+
+@Value
 public class EventResponse {
     private final Long id;
     private final String eventName;

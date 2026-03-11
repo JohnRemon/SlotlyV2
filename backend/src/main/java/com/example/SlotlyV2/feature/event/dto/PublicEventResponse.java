@@ -7,6 +7,9 @@ import com.example.SlotlyV2.feature.booking_form.dto.BookingFormResponse;
 import com.example.SlotlyV2.feature.event.Event;
 import com.example.SlotlyV2.feature.user.dto.PublicUserResponse;
 
+import lombok.Value;
+
+@Value
 public class PublicEventResponse {
     private final String eventName;
     private final String description;

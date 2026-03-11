@@ -60,20 +60,20 @@ public class BookingService {
     }
 
     @Transactional
-    public void cancel(CancelBookingRequest request) {
-        Booking booking = bookingRepository.findById(request.getBookingid())
+    public void cancelBooking(Long id, CancelBookingRequest request) {
+        Booking booking = bookingRepository.findById(id)
                 .orElseThrow(
-                        () -> new BookingNotFoundException("Booking not found with id: " + request.getBookingid()));
+                        () -> new BookingNotFoundException("Booking not found with id: " + id));
 
         slotValidator.validateSlotForCancellation(booking, request.getAttendeeEmail());
         booking.cancel(request.getCancellationReason());
         bookingEventPublisher.publishCancellationEvents(booking);
 
-        log.info("Booking cancelled bookingId={} attendeeEmail={}", request.getBookingid(), request.getAttendeeEmail());
+        log.info("Booking cancelled bookingId={} attendeeEmail={}", id, request.getAttendeeEmail());
     }
 
     @Transactional
-    public void markNoShow(Long id) {
+    public void markBookingNoShow(Long id) {
         Booking booking = bookingRepository.findById(id)
                 .orElseThrow(() -> new BookingNotFoundException("Booking not found with id: " + id));
 
@@ -83,7 +83,7 @@ public class BookingService {
     }
 
     @Transactional(readOnly = true)
-    public Page<BookingResponse> getMyBookings(Pageable pageable) {
+    public Page<BookingResponse> getBookings(Pageable pageable) {
         User currentUser = userService.getCurrentUser();
         return bookingRepository.findByAttendeeEmail(currentUser.getEmail(), pageable)
                 .map(this::toResponse);
@@ -95,7 +95,7 @@ public class BookingService {
                 .orElseThrow(() -> new BookingNotFoundException("Booking not found with id: " + id)));
     }
 
-    // ── Private helpers ───────────────────────────────────────────────────────
+    // -- Private helpers -------------------------------------------------------
 
     private Booking buildBooking(BookingRequest request, Slot slot) {
         Booking booking = Booking.builder()

@@ -123,7 +123,7 @@ public class GoogleCalendarTokenService {
         tokenRepository.deleteByUserId(user.getId());
     }
 
-    // ── Private helpers ───────────────────────────────────────────────────────
+    // -- Private helpers -------------------------------------------------------
 
     @Transactional
     private GoogleCalendarToken refreshAccessToken(GoogleCalendarToken token) {

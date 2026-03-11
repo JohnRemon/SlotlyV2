@@ -32,7 +32,7 @@ public class BlockedPeriodService {
     private final SlotService slotService;
 
     @Transactional(readOnly = true)
-    public BlockedPeriodResponse getBlockedPeriod(UUID id) {
+    public BlockedPeriodResponse getBlockedPeriodById(UUID id) {
         return toResponse(blockedPeriodRepository.findById(id)
                 .orElseThrow(() -> new BlockedPeriodNotFoundException("Blocked period not found with id: " + id)));
     }
@@ -66,7 +66,7 @@ public class BlockedPeriodService {
                 .startTime(request.getStartTime())
                 .endTime(request.getEndTime())
                 .reason(request.getReason())
-                .isRecurring(request.isRecurring())
+                .isRecurring(request.getIsRecurring())
                 .build();
 
         log.info("Blocked period created userId={} start={} end={}",
@@ -74,18 +74,16 @@ public class BlockedPeriodService {
         return toResponse(blockedPeriodRepository.save(blockedPeriod));
     }
 
-    // TODO: find if there is a better way to do this
     @Transactional
     public void deleteBlockedPeriod(UUID id) {
         BlockedPeriod blockedPeriod = blockedPeriodRepository.findById(id)
                 .orElseThrow(() -> new BlockedPeriodNotFoundException("Blocked period not found"));
 
+        blockedPeriodRepository.delete(blockedPeriod);
         List<Event> affectedEvents = eventRepository.findByHostAndDeletedAtIsNull(blockedPeriod.getUser());
         for (Event affectedEvent : affectedEvents) {
             slotService.regenerateFutureSlots(affectedEvent);
         }
-
-        blockedPeriodRepository.delete(blockedPeriod);
     }
 
     private BlockedPeriodResponse toResponse(BlockedPeriod blockedPeriod) {

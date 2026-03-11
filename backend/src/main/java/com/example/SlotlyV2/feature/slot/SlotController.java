@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -19,26 +20,28 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/v1/slots")
 @RequiredArgsConstructor
 public class SlotController {
+
     private final SlotService slotService;
 
     @GetMapping
-    public PagedResponse<SlotResponse> getSlots(@RequestParam Long eventId,
-            @PageableDefault(size = 20, page = 0, sort = "startTime") Pageable pageable) {
-        return PagedResponse.of(slotService.getSlots(eventId, pageable));
+    public PagedResponse<SlotResponse> getSlots(
+            @RequestParam Long eventId,
+            @RequestParam String timeZone,
+            @PageableDefault(size = 20, sort = "startTime") Pageable pageable) {
+        return PagedResponse.of(slotService.getSlots(eventId, pageable, timeZone));
     }
 
-    @GetMapping
-    public DataResponse<SlotResponse> getSlotById(@RequestParam Long id) {
-        return DataResponse.of(slotService.getSlotById(id));
+    @GetMapping("/{id}")
+    public DataResponse<SlotResponse> getSlotById(@PathVariable Long id, String timeZone) {
+        return DataResponse.of(slotService.getSlotById(id, timeZone));
     }
 
     @GetMapping("/available")
     public PagedResponse<SlotResponse> getAvailableSlots(
             @RequestParam String shareableId,
+            @RequestParam String timeZone,
             @RequestParam(required = false) LocalDate date,
-            @RequestParam(required = false) String timeZone,
-            @PageableDefault(size = 20, page = 0, sort = "startTime") Pageable pageable) {
+            @PageableDefault(size = 20, sort = "startTime") Pageable pageable) {
         return PagedResponse.of(slotService.getAvailableSlots(shareableId, date, timeZone, pageable));
-
     }
 }

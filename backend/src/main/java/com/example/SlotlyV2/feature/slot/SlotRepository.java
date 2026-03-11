@@ -40,4 +40,8 @@ public interface SlotRepository extends JpaRepository<Slot, Long> {
     @Transactional
     @Modifying
     void deleteByEventIdAndEndTimeGreaterThanEqual(Long eventId, OffsetDateTime dateTime);
+
+    @Transactional
+    @Modifying
+    void deleteByEventAndStartTimeGreaterThanEqualAndBookingIsNull(Event event, OffsetDateTime effectiveStart);
 }

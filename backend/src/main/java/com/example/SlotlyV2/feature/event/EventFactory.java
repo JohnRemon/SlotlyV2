@@ -1,6 +1,7 @@
 package com.example.SlotlyV2.feature.event;
 
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.stereotype.Component;
@@ -28,7 +29,7 @@ public class EventFactory {
 
     public Event createFrom(EventRequest request, Schedule schedule, User user) {
         AvailabilityRules availabilityRules = buildAvailabilityRules(
-                request.getAvailabilityRulesDTO());
+                request.getAvailabilityRules());
 
         OffsetDateTime utcStart = timeZoneConverter.toUtc(request.getEventStart());
         OffsetDateTime utcEnd = timeZoneConverter.toUtc(request.getEventEnd());
@@ -42,8 +43,8 @@ public class EventFactory {
                 .schedule(schedule)
                 .availabilityRules(availabilityRules);
 
-        if (request.getRecurrenceRulesDTO() != null) {
-            RecurrenceRules recurrenceRules = buildRecurrenceRules(request.getRecurrenceRulesDTO());
+        if (request.getRecurrenceRules() != null) {
+            RecurrenceRules recurrenceRules = buildRecurrenceRules(request.getRecurrenceRules());
 
             builder.isRecurring(true)
                     .recurrenceRules(recurrenceRules);
@@ -113,15 +114,18 @@ public class EventFactory {
                 .event(event)
                 .build();
 
-        List<FormQuestion> fields = request.getFields().stream()
-                .map(field -> FormQuestion.builder()
-                        .bookingForm(form)
-                        .label(field.getLabel())
-                        .fieldType(orDefault(field.getFieldType(), FieldType.TEXT))
-                        .required(field.isRequired())
-                        .displayOrder(orDefault(field.getDisplayOrder(), 0))
-                        .build())
-                .toList();
+        List<FormQuestion> fields = new ArrayList<>();
+        if (request != null) {
+            fields.stream()
+                    .map(field -> FormQuestion.builder()
+                            .bookingForm(form)
+                            .label(field.getLabel())
+                            .fieldType(orDefault(field.getFieldType(), FieldType.TEXT))
+                            .required(field.isRequired())
+                            .displayOrder(orDefault(field.getDisplayOrder(), 0))
+                            .build())
+                    .toList();
+        }
 
         form.setFields(fields);
         return form;

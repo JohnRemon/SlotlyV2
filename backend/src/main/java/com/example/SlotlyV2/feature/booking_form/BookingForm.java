@@ -44,7 +44,6 @@ public class BookingForm {
     private Event event;
 
     @OneToMany(mappedBy = "bookingForm", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
     @OrderBy("displayOrder ASC")
     private List<FormQuestion> fields = new ArrayList<>();
 

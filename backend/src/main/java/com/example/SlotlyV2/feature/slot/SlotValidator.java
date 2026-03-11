@@ -1,4 +1,4 @@
-// ── SlotController.java ───────────────────────────────────────────────────────
+// -- SlotController.java -------------------------------------------------------
 package com.example.SlotlyV2.feature.slot;
 
 import java.time.OffsetDateTime;
@@ -39,7 +39,7 @@ public class SlotValidator {
         validateAttendeeEmail(booking, attendeeEmail);
     }
 
-    // ── Private validators ────────────────────────────────────────────────────
+    // -- Private validators ----------------------------------------------------
 
     private void validateNotInPast(Slot slot) {
         if (slot.getStartTime().isBefore(OffsetDateTime.now(ZoneOffset.UTC))) {

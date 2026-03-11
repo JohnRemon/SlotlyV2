@@ -4,6 +4,9 @@ import java.util.List;
 
 import com.example.SlotlyV2.feature.booking_form.BookingForm;
 
+import lombok.Value;
+
+@Value
 public class BookingFormResponse {
     private List<BookingFormFieldResponse> fields;
 

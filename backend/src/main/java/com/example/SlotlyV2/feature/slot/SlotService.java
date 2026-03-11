@@ -4,7 +4,7 @@ import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
-import java.util.List;
+
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -19,6 +19,7 @@ import com.example.SlotlyV2.feature.event.Event;
 import com.example.SlotlyV2.feature.event.EventRepository;
 import com.example.SlotlyV2.feature.event.strategy.RecurrenceStrategy;
 import com.example.SlotlyV2.feature.event.strategy.RecurrenceStrategyFactory;
+import com.example.SlotlyV2.feature.schedule.DailySchedule;
 import com.example.SlotlyV2.feature.schedule.Schedule;
 import com.example.SlotlyV2.feature.slot.dto.SlotResponse;
 
@@ -56,18 +57,18 @@ public class SlotService {
     }
 
     @Transactional(readOnly = true)
-    public Page<SlotResponse> getSlots(Long eventId, Pageable pageable) {
+    public Page<SlotResponse> getSlots(Long eventId, Pageable pageable, String timeZone) {
         if (!eventRepository.existsById(eventId)) {
             throw new EventNotFoundException("Event not found with id: " + eventId);
         }
         return slotRepository.findByEventId(eventId, pageable)
-                .map(this::toResponse);
+                .map(slot -> toResponse(slot, timeZone));
     }
 
     @Transactional(readOnly = true)
-    public SlotResponse getSlotById(Long slotId) {
+    public SlotResponse getSlotById(Long slotId, String timeZone) {
         return toResponse(slotRepository.findById(slotId)
-                .orElseThrow(() -> new SlotNotFoundException("Slot not found with id: " + slotId)));
+                .orElseThrow(() -> new SlotNotFoundException("Slot not found with id: " + slotId)), timeZone);
     }
 
     @Transactional(readOnly = true)
@@ -82,7 +83,7 @@ public class SlotService {
 
         if (date == null || timeZone == null) {
             return slotRepository.findByEventAndBookingIsNull(event, pageable)
-                    .map(this::toResponse);
+                    .map(slot -> toResponse(slot, timeZone));
         }
 
         ZoneId zone = ZoneId.of(timeZone);
@@ -91,7 +92,7 @@ public class SlotService {
 
         return slotRepository.findByEventAndBookingIsNullAndStartTimeBetween(
                 event, start, end, pageable)
-                .map(this::toResponse);
+                .map(slot -> toResponse(slot, timeZone));
     }
 
     // Called internally — returns raw Slot for booking logic
@@ -100,32 +101,82 @@ public class SlotService {
                 .orElseThrow(() -> new SlotNotFoundException("Slot not found with id: " + slotId));
     }
 
+    @Transactional
     public void regenerateFutureSlots(Event event) {
+        Schedule schedule = event.getSchedule();
         OffsetDateTime nowUtc = OffsetDateTime.now(ZoneOffset.UTC);
-        OffsetDateTime effectiveStart = nowUtc.isAfter(event.getEventStart())
-                ? nowUtc
-                : event.getEventStart();
+        OffsetDateTime eventStartUtc = timeZoneConverter.toUtc(event.getEventStart());
+
+        OffsetDateTime effectiveStart;
+
+        if (nowUtc.isBefore(eventStartUtc)) {
+            effectiveStart = eventStartUtc;
+        } else {
+            effectiveStart = findNextScheduledStart(nowUtc, event);
+        }
 
         deleteUnbookedSlots(event, effectiveStart);
 
         if (effectiveStart.isBefore(event.getEventEnd())) {
-            generateSlots(event, event.getSchedule(), effectiveStart, event.getEventEnd());
+            generateSlots(event, schedule, effectiveStart, event.getEventEnd());
         }
     }
 
-    public void deleteUnbookedSlots(Event event, OffsetDateTime effectiveStart) {
-        List<Slot> unbookedSlots = slotRepository.findByEvent(event)
-                .stream()
-                .filter(slot -> slot.getStartTime().isAfter(effectiveStart))
-                .filter(slot -> slot.getBooking() == null || !slot.getBooking().isActive())
-                .toList();
+    private OffsetDateTime findNextScheduledStart(OffsetDateTime nowUtc, Event event) {
+        int currentDayOfWeek = nowUtc.getDayOfWeek().getValue();
 
-        slotRepository.deleteAll(unbookedSlots);
+        // find the daily schedule of today
+        DailySchedule todaySchedule = event.getSchedule().getDailySchedules().stream()
+                .filter(day -> day.getDayOfWeek().equals(currentDayOfWeek) && day.isAvailable())
+                .findFirst()
+                .orElse(null);
+
+        // if found
+        if (todaySchedule != null) {
+            // use the date of the nowUtc and the time of the day start time
+            OffsetDateTime todayStart = nowUtc.toLocalDate()
+                    .atTime(todaySchedule.getStartTime())
+                    .atOffset(ZoneOffset.UTC);
+
+            // if its after nowUtc return
+            if (todayStart.isAfter(nowUtc)) {
+                return todayStart;
+            }
+        }
+
+        // if its not then find the next available day
+        for (int i = 1; i <= 7; i++) {
+            // same logic as above just for the next day
+            OffsetDateTime nextDate = nowUtc.plusDays(i);
+            int nextDayOfWeek = nextDate.getDayOfWeek().getValue();
+
+            DailySchedule nextSchedule = event.getSchedule().getDailySchedules().stream()
+                    .filter(ds -> ds.getDayOfWeek().equals(nextDayOfWeek) && ds.isAvailable())
+                    .findFirst()
+                    .orElse(null);
+
+            if (nextSchedule != null) {
+                return nextDate.toLocalDate()
+                        .atTime(nextSchedule.getStartTime())
+                        .atOffset(ZoneOffset.UTC);
+            }
+
+            if (i == 7) {
+                return event.getEventEnd().plusDays(1);
+            }
+        }
+
+        return event.getEventEnd().plusDays(1);
     }
 
-    // ── Private helpers ───────────────────────────────────────────────────────
+    @Transactional
+    public void deleteUnbookedSlots(Event event, OffsetDateTime effectiveStart) {
+        slotRepository.deleteByEventAndStartTimeGreaterThanEqualAndBookingIsNull(event, effectiveStart);
+    }
 
-    private SlotResponse toResponse(Slot slot) {
-        return new SlotResponse(slot, timeZoneConverter);
+    // -- Private helpers -------------------------------------------------------
+
+    private SlotResponse toResponse(Slot slot, String timeZone) {
+        return new SlotResponse(slot, timeZoneConverter, timeZone);
     }
 }

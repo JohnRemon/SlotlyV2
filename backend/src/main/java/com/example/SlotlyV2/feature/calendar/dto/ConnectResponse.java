@@ -1,8 +1,8 @@
 package com.example.SlotlyV2.feature.calendar.dto;
 
-import lombok.Data;
+import lombok.Value;
 
-@Data
+@Value
 public class ConnectResponse {
     private final String authorizationUrl;
 }

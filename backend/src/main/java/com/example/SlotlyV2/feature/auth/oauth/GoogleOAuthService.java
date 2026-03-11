@@ -59,7 +59,7 @@ public class GoogleOAuthService {
         return user;
     }
 
-    // ── Private helpers ───────────────────────────────────────────────────────
+    // -- Private helpers -------------------------------------------------------
 
     private User findOrCreateOAuthUser(String email, String googleId, String firstName, String lastName) {
         return userRepository.findByEmail(email)

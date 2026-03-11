@@ -8,6 +8,9 @@ import com.example.SlotlyV2.feature.booking.Booking;
 import com.example.SlotlyV2.feature.booking.BookingStatus;
 import com.example.SlotlyV2.feature.booking_form.dto.BookingFormAnswerResponse;
 
+import lombok.Value;
+
+@Value
 public class BookingResponse {
     private final Long id;
     private final String attendeeName;

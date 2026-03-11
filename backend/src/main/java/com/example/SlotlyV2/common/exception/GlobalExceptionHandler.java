@@ -5,10 +5,12 @@ import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import com.example.SlotlyV2.common.dto.ErrorResponse;
 import com.example.SlotlyV2.common.exception.auth.AccountAlreadyVerifiedException;
 import com.example.SlotlyV2.common.exception.auth.AccountNotVerifiedException;
 import com.example.SlotlyV2.common.exception.auth.ForbiddenException;
@@ -19,6 +21,7 @@ import com.example.SlotlyV2.common.exception.auth.RateLimitExceededException;
 import com.example.SlotlyV2.common.exception.auth.TokenAlreadyExpiredException;
 import com.example.SlotlyV2.common.exception.auth.UnauthorizedAccessException;
 import com.example.SlotlyV2.common.exception.booking.BookingNotFoundException;
+import com.example.SlotlyV2.common.exception.booking_form.BookingFormAlreadyExists;
 import com.example.SlotlyV2.common.exception.booking_form.BookingFormNotFoundException;
 import com.example.SlotlyV2.common.exception.booking_form.InvalidFormResponseException;
 import com.example.SlotlyV2.common.exception.booking_form.QuestionNotFoundException;
@@ -36,7 +39,6 @@ import com.example.SlotlyV2.common.exception.slot.SlotNotFoundException;
 import com.example.SlotlyV2.common.exception.user.UserAlreadyExistsException;
 import com.example.SlotlyV2.common.exception.user.UserNotFoundException;
 import com.example.SlotlyV2.common.exception.user.UsernameAlreadyExistsException;
-import com.example.SlotlyV2.common.dto.ErrorResponse;
 
 import jakarta.persistence.OptimisticLockException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -47,7 +49,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class GlobalExceptionHandler {
 
-    // ── 404 not found ─────────────────────────────────────────────────────────
+    // -- 404 not found ---------------------------------------------------------
     @ExceptionHandler({
             UserNotFoundException.class,
             EventNotFoundException.class,
@@ -62,7 +64,7 @@ public class GlobalExceptionHandler {
         return ErrorResponse.of(ex.getMessage(), request.getRequestURI(), "NOT_FOUND", HttpStatus.NOT_FOUND);
     }
 
-    // ── 401 Unauthorized ──────────────────────────────────────────────────────
+    // -- 401 Unauthorized ------------------------------------------------------
     @ExceptionHandler({
             InvalidCredentialsException.class,
             UnauthorizedAccessException.class,
@@ -73,26 +75,27 @@ public class GlobalExceptionHandler {
         return ErrorResponse.of(ex.getMessage(), request.getRequestURI(), "UNAUTHORIZED", HttpStatus.UNAUTHORIZED);
     }
 
-    // ── 403 Forbidden ──────────────────────────────────────────────────────
+    // -- 403 Forbidden ------------------------------------------------------
     @ExceptionHandler(ForbiddenException.class)
     @ResponseStatus(HttpStatus.FORBIDDEN)
     public ErrorResponse handleForbidden(RuntimeException ex, HttpServletRequest request) {
         return ErrorResponse.of(ex.getMessage(), request.getRequestURI(), "FORBIDDEN", HttpStatus.FORBIDDEN);
     }
 
-    // ── 409 Conflict ──────────────────────────────────────────────────────────
+    // -- 409 Conflict ----------------------------------------------------------
     @ExceptionHandler({
             UserAlreadyExistsException.class,
             UsernameAlreadyExistsException.class,
             SlotAlreadyBookedException.class,
-            OptimisticLockException.class
+            OptimisticLockException.class,
+            BookingFormAlreadyExists.class
     })
     @ResponseStatus(HttpStatus.CONFLICT)
     public ErrorResponse handleConflict(RuntimeException ex, HttpServletRequest request) {
         return ErrorResponse.of(ex.getMessage(), request.getRequestURI(), "CONFLICT", HttpStatus.CONFLICT);
     }
 
-    // ── 400 Bad Request ───────────────────────────────────────────────────────
+    // -- 400 Bad Request -------------------------------------------------------
     @ExceptionHandler({
             InvalidEventException.class,
             SlotNotBookedException.class,
@@ -112,7 +115,18 @@ public class GlobalExceptionHandler {
         return ErrorResponse.of(ex.getMessage(), request.getRequestURI(), "BAD_REQUEST", HttpStatus.BAD_REQUEST);
     }
 
-    // ── 400 Validation ────────────────────────────────────────────────────────
+    // -- 400 Bad Request (Missing parameter) ------------------------------------
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleMissingParams(MissingServletRequestParameterException ex, HttpServletRequest request) {
+        return ErrorResponse.of(
+                "Required parameter is missing: " + ex.getParameterName(),
+                request.getRequestURI(),
+                "MISSING_PARAMETER",
+                HttpStatus.BAD_REQUEST);
+    }
+
+    // -- 400 Validation --------------------------------------------------------
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleValidation(MethodArgumentNotValidException ex, HttpServletRequest request) {
@@ -132,7 +146,7 @@ public class GlobalExceptionHandler {
                 details);
     }
 
-    // ── 429 Rate Limit ────────────────────────────────────────────────────────
+    // -- 429 Rate Limit --------------------------------------------------------
     @ExceptionHandler(RateLimitExceededException.class)
     @ResponseStatus(HttpStatus.TOO_MANY_REQUESTS)
     public ErrorResponse handleRateLimit(RateLimitExceededException ex, HttpServletRequest request,
@@ -144,7 +158,7 @@ public class GlobalExceptionHandler {
                 HttpStatus.TOO_MANY_REQUESTS);
     }
 
-    // ── 500 Internal Server Error ─────────────────────────────────────────────
+    // -- 500 Internal Server Error ---------------------------------------------
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ErrorResponse handleGeneric(Exception ex, HttpServletRequest request) {

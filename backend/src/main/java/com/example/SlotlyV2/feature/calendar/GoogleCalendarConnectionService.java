@@ -84,7 +84,7 @@ public class GoogleCalendarConnectionService {
         return new ConnectionStatus(tokenService.isConnected(currentUser.getId()));
     }
 
-    // ── Private helpers ───────────────────────────────────────────────────────
+    // -- Private helpers -------------------------------------------------------
 
     private String generateSecureState() {
         return new BigInteger(130, SECURE_RANDOM).toString(32);

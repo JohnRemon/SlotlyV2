@@ -29,7 +29,7 @@ public class BookingFormValidator {
         validateFieldFormats(fieldMap, answers);
     }
 
-    // ── Private validators ────────────────────────────────────────────────────
+    // -- Private validators ----------------------------------------------------
 
     private void validateNoUnknownFields(Map<UUID, FormQuestion> fieldMap,
             List<BookingFormAnswerRequest> answers) {

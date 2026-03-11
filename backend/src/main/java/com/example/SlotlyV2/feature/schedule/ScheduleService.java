@@ -54,7 +54,7 @@ public class ScheduleService {
     }
 
     @Transactional
-    public ScheduleResponse updateSchedule(User user, UpdateScheduleRequest request, UUID id) {
+    public ScheduleResponse updateScheduleDays(User user, UpdateScheduleRequest request, UUID id) {
         Schedule schedule = findAndAuthorizeSchedule(user, id);
 
         Map<Integer, DailyScheduleRequest> requestMap = request.getDays().stream()
@@ -74,7 +74,7 @@ public class ScheduleService {
             day.setAvailable(updated.getIsAvailable());
         }
 
-        scheduleRepository.save(schedule);
+        scheduleRepository.saveAndFlush(schedule);
 
         eventRepository.findByScheduleAndDeletedAtIsNull(schedule)
                 .forEach(slotService::regenerateFutureSlots);
@@ -96,6 +96,11 @@ public class ScheduleService {
 
         Schedule currentDefault = scheduleRepository.findByUserAndIsDefaultTrue(user)
                 .orElseThrow(() -> new ScheduleNotFoundException("Default schedule not found"));
+
+        if (currentDefault.getId().equals(id)) {
+            throw new InvalidScheduleException("This schedule is already the default schedule");
+        }
+
         currentDefault.setIsDefault(false);
         scheduleRepository.save(currentDefault);
 
@@ -126,7 +131,7 @@ public class ScheduleService {
         buildScheduleWithDefaults(user, "Working hours", true);
     }
 
-    // ── Private helpers ───────────────────────────────────────────────────────
+    // -- Private helpers -------------------------------------------------------
 
     private Schedule findAndAuthorizeSchedule(User user, UUID id) {
         Schedule schedule = scheduleRepository.findById(id)
@@ -146,8 +151,8 @@ public class ScheduleService {
         for (int i = 1; i <= 5; i++) {
             dailySchedules.add(buildDay(i, LocalTime.of(9, 0), LocalTime.of(17, 0), true));
         }
-        dailySchedules.add(buildDay(6, LocalTime.of(0, 0), LocalTime.of(0, 0), false));
-        dailySchedules.add(buildDay(7, LocalTime.of(0, 0), LocalTime.of(0, 0), false));
+        dailySchedules.add(buildDay(6, null, null, false));
+        dailySchedules.add(buildDay(7, null, null, false));
 
         Schedule schedule = Schedule.builder()
                 .user(user)
