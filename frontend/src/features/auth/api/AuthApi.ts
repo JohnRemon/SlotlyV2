@@ -23,9 +23,8 @@ export const AuthApi = {
     register: (payload: RegisterRequest) =>
         API.post("/api/v1/users/register", payload),
 
-    getCurrentUser: () => {
-        API.get<DataResponse<UserResponse>>("/api/v1/auth/me");
-    },
+    getCurrentUser: () =>
+        API.get<DataResponse<UserResponse>>("/api/v1/auth/me"),
 
     forgotPassword: (payload: PasswordResetRequest) =>
         API.post("/api/v1/password-reset/request", payload),

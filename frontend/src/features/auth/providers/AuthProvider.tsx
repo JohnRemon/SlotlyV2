@@ -1,46 +1,47 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import { AuthApi } from "../api/AuthApi";
+import type { UserResponse } from "../types/Auth";
 import { AuthContext } from "../context/AuthContext";
-import {
-    getcurrentuser,
-    logout as logoutUser,
-    login as loginUser,
-    loginWithGoogle as loginUserWithGoogle,
-} from "../api/AuthApi";
-import type { User } from "../types/AuthContextType";
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-    const [user, setUser] = useState<User | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
+    const [user, setUser] = useState<UserResponse | null>(null);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        getcurrentuser()
-            .then((currentUser) => {
-                setUser(currentUser ?? null);
+        AuthApi.getCurrentUser()
+            .then((response) => {
+                setUser(response.data.data);
             })
-            .catch(() => setUser(null))
-            .finally(() => setIsLoading(false));
+            .catch(() => {
+                setUser(null);
+            })
+            .finally(() => {
+                setLoading(false);
+            });
     }, []);
 
     const login = async (email: string, password: string) => {
-        const currentUser = await loginUser(email, password);
-        setUser(currentUser.data.data);
+        await AuthApi.login({ email, password });
+        const response = await AuthApi.getCurrentUser();
+        setUser(response.data.data);
     };
 
     const loginWithGoogle = async (idToken: string) => {
-        const currentUser = await loginUserWithGoogle(idToken);
-        setUser(currentUser.data.data);
+        await AuthApi.loginWithGoogle(idToken);
+        const response = await AuthApi.getCurrentUser();
+        setUser(response.data.data);
     };
 
     const logout = async () => {
-        logoutUser();
+        await AuthApi.logout();
         setUser(null);
     };
 
     return (
         <AuthContext.Provider
-            value={{ user, isLoading, login, loginWithGoogle, logout }}
+            value={{ user, loading, login, loginWithGoogle, logout, setUser }}
         >
             {children}
         </AuthContext.Provider>
     );
-}
+};
