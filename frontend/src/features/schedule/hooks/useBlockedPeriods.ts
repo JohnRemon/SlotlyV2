@@ -1,37 +1,49 @@
-import { useEffect, useState } from "react";
-import type {
-    BlockedPeriod,
-    BlockedPeriodRequest,
-} from "../types/BlockedPeriod";
-import {
-    createBlockedPeriod,
-    deleteBlockedPeriod,
-    getBlockedPeriods,
-} from "../api/BlockedPeriodsApi";
-import toast from "react-hot-toast";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { BlockedPeriodsApi } from "../api/BlockedPeriodsApi";
 
-export const useBlockedPeriods = () => {
-    const [blockedPeriods, setBlockedPeriods] = useState<BlockedPeriod[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+export const blockedPeriodKeys = {
+    all: ["blocked-periods"] as const,
+    paged: (page: number, size: number) =>
+        ["blocked-periods", { page, size }] as const,
+    detail: (id: string) => ["blocked-periods", id] as const,
+};
 
-    useEffect(() => {
-        getBlockedPeriods()
-            .then(setBlockedPeriods)
-            .catch((error) => toast.error(error.response?.data?.message))
-            .finally(() => setIsLoading(false));
-    }, []);
+export const useBlockedPeriods = (page = 0, size = 10) => {
+    return useQuery({
+        queryKey: blockedPeriodKeys.paged(page, size),
+        queryFn: () => BlockedPeriodsApi.getAll(page, size),
+        select: (response) => response.data.content,
+    });
+};
 
-    const create = async (request: BlockedPeriodRequest) => {
-        const newBlockedPeriod = await createBlockedPeriod(request);
-        setBlockedPeriods((prev) => [newBlockedPeriod, ...prev]);
-    };
+export const useBlockedPeriod = (id: string) => {
+    return useQuery({
+        queryKey: blockedPeriodKeys.detail(id),
+        queryFn: () => BlockedPeriodsApi.getById(id),
+        select: (response) => response.data.data,
+        enabled: !!id,
+    });
+};
 
-    const remove = async (id: string) => {
-        await deleteBlockedPeriod(id);
-        setBlockedPeriods((prev) =>
-            prev.filter((blockedPeriod) => blockedPeriod.id != id),
-        );
-    };
+export const useCreateBlockedPeriod = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: BlockedPeriodsApi.create,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: blockedPeriodKeys.all });
+        },
+    });
+};
 
-    return { blockedPeriods, isLoading, create, remove };
+export const useDeleteBlockedPeriod = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (id: string) => BlockedPeriodsApi.delete(id),
+        onSuccess: (_, id) => {
+            queryClient.invalidateQueries({ queryKey: blockedPeriodKeys.all });
+            queryClient.removeQueries({
+                queryKey: blockedPeriodKeys.detail(id),
+            });
+        },
+    });
 };

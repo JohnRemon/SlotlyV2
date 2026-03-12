@@ -3,13 +3,13 @@ export interface DataResponse<T> {
 }
 
 export interface PagedResponse<T> {
-    data: T[];
-    meta: PageMetadata;
+    content: T[];
+    page: PageMetadata;
 }
 
 export interface PageMetadata {
     number: number;
-    size = 10;
+    size: number;
     totalElements: number;
     totalPages: number;
     first: boolean;

@@ -1,10 +1,12 @@
 import axios from "axios";
+import { useCallback } from "react";
 import { toast } from "sonner";
 
 export const useApiError = () => {
-    return (error: unknown, fallback = "Something went wrong") => {
+    return useCallback((error: unknown, fallback = "Something went wrong") => {
         if (axios.isAxiosError(error)) {
-            toast.error(error.response?.data?.message ?? fallback);
+            const message = error.response?.data?.message ?? fallback;
+            toast.error(message);
         }
-    };
+    }, []);
 };

@@ -1,11 +1,11 @@
 import type { FieldStatus } from "@/features/bookings/types/Booking";
 
-export interface FormField {
-    id: string;
-    label: string;
-    fieldType: "TEXT" | "TEXTAREA" | "NUMBER";
-    required: boolean;
-    displayOrder: number;
+export interface BookingFormRequest {
+    fields: BookingFormFieldRequest[];
+}
+
+export interface BookingFormResponse {
+    fields: BookingFormFieldResponse[];
 }
 
 export interface BookingFormAnswerRequest {
@@ -13,8 +13,9 @@ export interface BookingFormAnswerRequest {
     fieldResponse: string;
 }
 
-export interface BookingFormSubmissionRequest {
-    answers: BookingFormAnswerRequest[];
+export interface BookingFormAnswerResponse {
+    fieldLabel: string;
+    fieldResponse: string;
 }
 
 export interface BookingFormFieldRequest {
@@ -32,10 +33,6 @@ export interface BookingFormFieldResponse {
     displayOrder: number;
 }
 
-export interface BookingFormRequest {
-    fields: BookingFormFieldRequest[];
-}
-
-export interface BookingFormResponse {
-    fields: BookingFormFieldResponse[];
+export interface BookingFormSubmissionRequest {
+    answers: BookingFormAnswerRequest[];
 }

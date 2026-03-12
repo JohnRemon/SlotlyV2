@@ -1,43 +1,31 @@
 import type { DataResponse, PagedResponse } from "@/types/api";
-import API from "../../../lib/api";
+import API from "@/lib/api";
 import type {
-    Booking,
+    BookingResponse,
     CancelBookingRequest,
     CreateBookingRequest,
 } from "../types/Booking";
 
-export const createBooking = async (
-    payload: CreateBookingRequest,
-): Promise<DataResponse<Booking>> => {
-    const res = await API.post("/api/v1/bookings", payload);
-    return res.data.data;
-};
+const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-export const getBooking = async (
-    id: number,
-): Promise<DataResponse<Booking>> => {
-    const res = await API.get("/api/v1/bookings", { params: { id } });
-    return res.data.data;
-};
+export const BookingsApi = {
+    getAll: (page = 0, size = 10) =>
+        API.get<PagedResponse<BookingResponse>>("/api/v1/bookings", {
+            params: { page, size, timeZone },
+        }),
 
-export const getBookings = async (
-    page = 0,
-    size = 10,
-): Promise<PagedResponse<Booking>> => {
-    const res = await API.get("/api/v1/bookings/me", {
-        params: { page, size },
-    });
-    return res.data.content;
-};
+    getById: (id: number) =>
+        API.get<DataResponse<BookingResponse>>(`/api/v1/bookings/${id}`, {
+            params: { timeZone },
+        }),
 
-export const cancelBooking = async (payload: CancelBookingRequest) => {
-    await API.patch("/api/v1/bookings/cancel", payload);
-};
+    create: (payload: CreateBookingRequest) =>
+        API.post<DataResponse<BookingResponse>>("/api/v1/bookings", payload, {
+            params: { timeZone },
+        }),
 
-export const noShow = async (id: number) => {
-    await API.post("/api/v1/bookings/no-show", {
-        params: {
-            id,
-        },
-    });
+    noShow: (id: number) => API.post(`/api/v1/bookings/${id}/no-show`),
+
+    cancel: (id: number, payload: CancelBookingRequest) =>
+        API.patch(`/api/v1/bookings/${id}/cancel`, payload),
 };

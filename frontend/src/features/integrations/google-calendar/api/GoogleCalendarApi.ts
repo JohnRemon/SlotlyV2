@@ -1,22 +1,24 @@
+import type { DataResponse } from "@/types/api";
 import API from "../../../../lib/api";
+import type {
+    ConnectionStatus,
+    ConnectResponse,
+    ExchangeRequest,
+} from "../types/Calendar";
 
-export const getConnectionStatus = async (): Promise<boolean> => {
-    const res = await API.get("/api/v1/calendar/google/status");
-    return res.data.data.connected;
-};
+export const GoogleCalendarApi = {
+    initiateConnection: () =>
+        API.get<DataResponse<ConnectResponse>>(
+            "/api/v1/calendar/google/connect",
+        ),
 
-export const initiateConnection = async (): Promise<string> => {
-    const res = await API.get("/api/v1/calendar/google/connect");
-    return res.data.data.authorizationUrl;
-};
+    exchangeAuthorizationCode: (payload: ExchangeRequest) =>
+        API.post("/api/v1/calendar/google/exchange", payload),
 
-export const exchangeAuthorizationCode = async (
-    code: string,
-    state: string,
-): Promise<void> => {
-    await API.post("/api/v1/calendar/google/exchange", { code, state });
-};
+    getConnectionStatus: () =>
+        API.get<DataResponse<ConnectionStatus>>(
+            "/api/v1/calendar/google/status",
+        ),
 
-export const disconnectCalendar = async (): Promise<void> => {
-    await API.delete("/api/v1/calendar/google/disconnect");
+    disconnectCalendar: () => API.delete("/api/v1/calendar/google/disconnect"),
 };

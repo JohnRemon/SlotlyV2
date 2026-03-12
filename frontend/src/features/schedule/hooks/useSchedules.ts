@@ -1,59 +1,97 @@
-import { useEffect, useState } from "react";
-import type {
-    Schedule,
-    ScheduleRequest,
-    UpdateScheduleRequest,
-} from "../types/Schedule";
-import {
-    createSchedule,
-    deleteSchedule,
-    getSchedules,
-    updateDefaultSchedule,
-    updateSchedule,
-} from "../api/SchedulesApi";
-import toast from "react-hot-toast";
-import { sortSchedules, upsertSchedule } from "../utils/scheduleState";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { SchedulesApi } from "../api/SchedulesApi";
+import type { UpdateScheduleRequest } from "../types/Schedule";
 
-export const useSchedules = () => {
-    const [schedules, setSchedules] = useState<Schedule[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+export const scheduleKeys = {
+    all: ["schedules"] as const,
+    paged: (page: number, size: number) =>
+        ["schedules", { page, size }] as const,
+    detail: (id: string) => ["schedules", id] as const,
+};
 
-    useEffect(() => {
-        getSchedules()
-            .then((data) => setSchedules(sortSchedules(data)))
-            .catch((error) => toast.error(error.response?.data?.message))
-            .finally(() => setIsLoading(false));
-    }, []);
+export const useSchedules = (page = 0, size = 10) => {
+    return useQuery({
+        queryKey: scheduleKeys.paged(page, size),
+        queryFn: () => SchedulesApi.getAll(page, size),
+        select: (response) => response.data.content,
+    });
+};
 
-    const create = async (request: ScheduleRequest) => {
-        const newSchedule = await createSchedule(request);
-        setSchedules((prev) => sortSchedules(upsertSchedule(prev, newSchedule)));
-        return newSchedule;
-    };
+export const useSchedule = (id: string) => {
+    return useQuery({
+        queryKey: scheduleKeys.detail(id),
+        queryFn: () => SchedulesApi.getById(id),
+        select: (response) => response.data.data,
+        enabled: !!id,
+    });
+};
 
-    const update = async (request: UpdateScheduleRequest, id: string) => {
-        const updatedSchedule = await updateSchedule(request, id);
-        setSchedules((prev) => sortSchedules(upsertSchedule(prev, updatedSchedule)));
-    };
+export const useCreateSchedule = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: SchedulesApi.create,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: scheduleKeys.all });
+        },
+    });
+};
 
-    const setDefault = async (id: string) => {
-        const updated = await updateDefaultSchedule(id);
-        setSchedules((prev) =>
-            prev
-                .map((s) => ({ ...s, isDefault: s.id === id }))
-                .sort((a, b) => (b.isDefault ? 1 : 0) - (a.isDefault ? 1 : 0)),
-        );
-        return updated;
-    };
+export const useUpdateScheduleName = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ id, name }: { id: string; name: string }) =>
+            SchedulesApi.updateName(id, name),
+        onSuccess: (_, { id }) => {
+            queryClient.invalidateQueries({
+                queryKey: scheduleKeys.detail(id),
+            });
+        },
+    });
+};
 
-    const remove = async (id: string) => {
-        await deleteSchedule(id);
-        setSchedules((prev) =>
-            prev
-                .filter((s) => s.id !== id)
-                .sort((a, b) => (b.isDefault ? 1 : 0) - (a.isDefault ? 1 : 0)),
-        );
-    };
+export const useUpdateScheduleDays = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({
+            id,
+            request,
+        }: {
+            id: string;
+            request: UpdateScheduleRequest;
+        }) => SchedulesApi.updateDays(id, request),
+        onSuccess: (_, { id }) => {
+            queryClient.invalidateQueries({
+                queryKey: scheduleKeys.detail(id),
+            });
+            queryClient.invalidateQueries({
+                queryKey: scheduleKeys.all,
+            });
+        },
+    });
+};
 
-    return { schedules, isLoading, create, update, remove, setDefault };
+export const useUpdateScheduleDefault = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (id: string) => SchedulesApi.updateDefault(id),
+        onSuccess: (_, id) => {
+            queryClient.invalidateQueries({
+                queryKey: scheduleKeys.detail(id),
+            });
+            queryClient.invalidateQueries({
+                queryKey: scheduleKeys.all,
+            });
+        },
+    });
+};
+
+export const useDeleteSchedule = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (id: string) => SchedulesApi.delete(id),
+        onSuccess: (_, id) => {
+            queryClient.invalidateQueries({ queryKey: scheduleKeys.all });
+            queryClient.removeQueries({ queryKey: scheduleKeys.detail(id) });
+        },
+    });
 };

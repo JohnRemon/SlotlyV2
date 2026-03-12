@@ -1,56 +1,65 @@
-import { useEffect, useState } from "react";
-import type { Booking } from "../types/Booking";
-import {
-    cancelBooking,
-    getBookings,
-    noShow as markAsNoShow,
-} from "../api/BookingsApi";
-import toast from "react-hot-toast";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { BookingsApi } from "../api/BookingsApi";
+import type { CancelBookingRequest } from "../types/Booking";
 
-export const useBookings = () => {
-    const [bookings, setBookings] = useState<Booking[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+export const bookingKeys = {
+    all: ["bookings"] as const,
+    paged: (page: number, size: number) =>
+        ["bookings", { page, size }] as const,
+    detail: (id: number) => ["bookings", id] as const,
+};
 
-    useEffect(() => {
-        getBookings()
-            .then(setBookings)
-            .catch((error) => toast.error(error.response?.data?.message))
-            .finally(() => setIsLoading(false));
-    }, []);
+export const useBookings = (page = 0, size = 10) => {
+    return useQuery({
+        queryKey: bookingKeys.paged(page, size),
+        queryFn: () => BookingsApi.getAll(page, size),
+        select: (response) => response.data.content,
+    });
+};
 
-    const cancel = async (
-        id: number,
-        attendeeEmail: string,
-        reason: string,
-    ) => {
-        await cancelBooking(id, attendeeEmail, reason);
-        setBookings((prev) =>
-            prev.map((booking) =>
-                booking.id === id
-                    ? {
-                          ...booking,
-                          bookingStatus: "CANCELLED",
-                          cancellationReason: reason,
-                      }
-                    : booking,
-            ),
-        );
-    };
+export const useBooking = (id: number) => {
+    return useQuery({
+        queryKey: bookingKeys.detail(id),
+        queryFn: () => BookingsApi.getById(id),
+        select: (response) => response.data.data,
+        enabled: !!id,
+    });
+};
 
-    const noShow = async (id: number) => {
-        await markAsNoShow(id);
+export const useCreateBooking = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: BookingsApi.create,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: bookingKeys.all });
+        },
+    });
+};
 
-        setBookings((prevBookings) =>
-            prevBookings.map((booking) =>
-                booking.id === id
-                    ? {
-                          ...booking,
-                          bookingStatus: "NO_SHOW",
-                      }
-                    : booking,
-            ),
-        );
-    };
+export const useNoShow = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (id: number) => BookingsApi.noShow(id),
+        onSuccess: (_, id) => {
+            queryClient.invalidateQueries({ queryKey: bookingKeys.detail(id) });
+            queryClient.invalidateQueries({ queryKey: bookingKeys.all });
+        },
+    });
+};
 
-    return { bookings, isLoading, cancel, noShow };
+export const useCancelBooking = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({
+            id,
+            request,
+        }: {
+            id: number;
+            request: CancelBookingRequest;
+        }) => BookingsApi.cancel(id, request),
+        onSuccess: (_, { id }) => {
+            queryClient.invalidateQueries({ queryKey: bookingKeys.detail(id) });
+            queryClient.invalidateQueries({ queryKey: bookingKeys.all });
+        },
+    });
 };

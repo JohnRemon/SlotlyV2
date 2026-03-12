@@ -1,44 +1,46 @@
 import type {
-    BookingFormResponse,
-    FormField,
     BookingFormRequest,
+    BookingFormResponse,
 } from "@/features/booking-page/types/BookingForms";
 
 export type RecurrenceFrequency = "DAILY" | "WEEKLY" | "MONTHLY" | "CUSTOM";
 export type RecurrenceEndType = "NEVER" | "OCCURRENCES" | "DATE";
 
-export interface Event {
+export interface AvailabilityRules {
+    slotDurationMinutes: number;
+    maxSlotsPerUser?: number;
+    bufferMinutes?: number;
+    minimumNoticeHours?: number;
+    maximumAdvanceDays?: number;
+    maxCapacity?: number;
+    allowsCancellations?: boolean;
+    isPublic?: boolean;
+}
+
+export interface RecurringRules {
+    recurrenceFrequency: RecurrenceFrequency;
+    interval: number;
+    recurrenceDayOfWeek: number;
+    recurrenceEndType: RecurrenceEndType;
+    recurrenceOccurrences: number;
+    recurrenceEndDate: string;
+}
+
+export interface EventResponse {
     id: number;
     eventName: string;
     description?: string;
     eventStart: string;
     eventEnd: string;
-    availabilityRulesDTO: {
-        slotDurationMinutes: number;
-        maxSlotsPerUser: number;
-        bufferMinutes: number;
-        minimumNoticeHours: number;
-        maximumAdvanceDays: number;
-        maxCapacity: number;
-        allowCancellations: boolean;
-        isPublic: boolean;
-    };
-    recurringRulesDTO?: {
-        recurrenceFrequency: RecurrenceFrequency;
-        interval: number;
-        recurrenceDayOfWeek: number;
-        recurrenceEndType: RecurrenceEndType;
-        recurrenceOccurrences: number;
-        recurrenceEndDate: string;
-    };
     shareableId: string;
-    bookingForm: BookingFormResponse;
     scheduleId: string;
     scheduleIsDefault: boolean;
+    availabilityRules: AvailabilityRules;
+    recurringRules?: RecurringRules;
+    bookingForm?: BookingFormResponse;
 }
 
-export interface PublicEvent {
-    id: number;
+export interface PublicEventResponse {
     eventName: string;
     description?: string;
     eventStart: string;
@@ -47,11 +49,9 @@ export interface PublicEvent {
         firstName: string;
         lastName: string;
     };
-    availabilityRulesDTO: {
-        slotDurationMinutes: number;
-    };
-    bookingForm?: {
-        fields: FormField[];
+    slotDurationMinutes: number;
+    bookingForm: {
+        fields: BookingFormResponse;
     };
 }
 
@@ -60,38 +60,18 @@ export interface EventRequest {
     description?: string;
     eventStart: string;
     eventEnd: string;
-    availabilityRulesDTO: {
-        slotDurationMinutes: number;
-        maxSlotsPerUser?: number;
-        bufferMinutes?: number;
-        minimumNoticeHours?: number;
-        maximumAdvanceDays?: number;
-        maxCapacity?: number;
-        allowCancellations?: boolean;
-        isPublic?: boolean;
-    };
-    recurringRulesDTO?: {
-        recurrenceFrequency: RecurrenceFrequency;
-        interval: number;
-        recurrenceDayOfWeek: number;
-        recurrenceEndType: RecurrenceEndType;
-        recurrenceOccurrences: number;
-        recurrenceEndDate: string;
-    };
+    availabilityRules: Partial<AvailabilityRules>;
+    recurringRules?: RecurringRules;
     bookingForm?: BookingFormRequest;
 }
 
 export interface AvailabilityRulesUpdateRequest {
-    eventName?: string;
-    description?: string;
-    eventStart?: string;
-    eventEnd?: string;
     slotDurationMinutes?: number;
     bufferMinutes?: number;
     minimumNoticeHours?: number;
     maximumAdvanceDays?: number;
     maxCapacity?: number;
     maxSlotsPerUser?: number;
-    allowCancellations?: boolean;
+    allowsCancellations?: boolean;
     isPublic?: boolean;
 }

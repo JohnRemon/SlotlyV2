@@ -1,34 +1,29 @@
 import type { DataResponse, PagedResponse } from "@/types/api";
 import API from "../../../lib/api";
 import type {
-    BlockedPeriod,
     BlockedPeriodRequest,
+    BlockedPeriodResponse,
 } from "../types/BlockedPeriod";
 
-export const getBlockedPeriods = async (
-    page = 0,
-    size = 10,
-): Promise<PagedResponse<BlockedPeriod>> => {
-    const res = await API.get("/api/v1/blocked-periods", {
-        params: { page, size },
-    });
-    return res.data.content;
-};
+export const BlockedPeriodsApi = {
+    getAll: (page = 0, size = 10) =>
+        API.get<PagedResponse<BlockedPeriodResponse>>(
+            "/api/v1/blocked-periods",
+            {
+                params: { page, size },
+            },
+        ),
 
-export const getBlockedPeriod = async (
-    id: string,
-): Promise<DataResponse<BlockedPeriod>> => {
-    const res = await API.get("/api/v1/blocked-periods", { params: { id } });
-    return res.data.data;
-};
+    getById: (id: string) =>
+        API.get<DataResponse<BlockedPeriodResponse>>(
+            `/api/v1/blocked-periods/${id}`,
+        ),
 
-export const createBlockedPeriod = async (
-    request: BlockedPeriodRequest,
-): Promise<DataResponse<BlockedPeriod>> => {
-    const res = await API.post("/api/v1/blocked-periods", request);
-    return res.data.data;
-};
+    create: (payload: BlockedPeriodRequest) =>
+        API.post<DataResponse<BlockedPeriodResponse>>(
+            "/api/v1/blocked-periods",
+            payload,
+        ),
 
-export const deleteBlockedPeriod = async (id: string) => {
-    await API.delete("/api/v1/blocked-periods", { params: { id } });
+    delete: (id: string) => API.delete(`/api/v1/blocked-periods/${id}`),
 };

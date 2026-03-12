@@ -1,95 +1,72 @@
+import API from "@/lib/api";
+import type {
+    BookingFormRequest,
+    BookingFormResponse,
+} from "@/features/booking-page/types/BookingForms";
 import type { DataResponse, PagedResponse } from "@/types/api";
-import API from "../../../lib/api";
 import type {
     AvailabilityRulesUpdateRequest,
-    Event,
     EventRequest,
-    PublicEvent,
+    EventResponse,
+    PublicEventResponse,
 } from "../types/Event";
-import type { BookingFormRequest } from "@/features/booking-page/types/BookingForms";
 
-export const createEvent = async (
-    payload: EventRequest,
-): Promise<DataResponse<Event>> => {
-    const res = await API.post("/api/v1/events", payload);
-    return res.data.data;
-};
+export const EventsApi = {
+    getAll: (page = 0, size = 10) =>
+        API.get<PagedResponse<EventResponse>>("/api/v1/events", {
+            params: { page, size },
+        }),
 
-export const createRecurringEvent = async (
-    payload: EventRequest,
-): Promise<DataResponse<Event>> => {
-    const res = await API.post("/api/v1/events/recurring", payload);
-    return res.data.data;
-};
+    getById: (id: number) =>
+        API.get<DataResponse<EventResponse>>(`/api/v1/events/${id}`),
 
-export const getEvents = async (
-    page = 0,
-    size = 10,
-): Promise<PagedResponse<Event>> => {
-    const res = await API.get("/api/v1/events", { params: { page, size } });
-    return res.data.content;
-};
+    getByScheduleId: (scheduleId: string, page = 0, size = 10) =>
+        API.get<PagedResponse<EventResponse>>("/api/v1/events/by-schedule", {
+            params: { scheduleId, page, size },
+        }),
 
-export const getEventsBySchedule = async (
-    id: string,
-    page = 0,
-    size = 10,
-): Promise<PagedResponse<Event>> => {
-    const res = await API.get("/api/v1/events/by-schedule", {
-        params: { id, page, size },
-    });
-    return res.data.content;
-};
+    getByShareableId: (shareableId: string) =>
+        API.get<DataResponse<PublicEventResponse>>("/api/v1/events/public", {
+            params: { shareableId },
+        }),
 
-export const getEvent = async (id: number): Promise<DataResponse<Event>> => {
-    const res = await API.get(`/api/v1/events/${id}`);
-    return res.data.data;
-};
+    create: (data: EventRequest) =>
+        API.post<DataResponse<EventResponse>>("/api/v1/events", data),
 
-export const getPublicEvent = async (
-    shareableId: string,
-): Promise<DataResponse<PublicEvent>> => {
-    const res = await API.get(`/api/v1/events/public/${shareableId}`);
-    return res.data.data;
-};
+    update: (id: number, data: EventRequest) =>
+        API.put<DataResponse<EventResponse>>(`/api/v1/events/${id}`, data),
 
-export const updateEvent = async (
-    payload: EventRequest,
-    id: number,
-): Promise<DataResponse<Event>> => {
-    const res = await API.put(`/api/v1/events/${id}`, payload);
-    return res.data.data;
-};
+    updateAvailabilityRules: (
+        id: number,
+        data: AvailabilityRulesUpdateRequest,
+    ) =>
+        API.patch<DataResponse<EventResponse>>(
+            `/api/v1/events/${id}/availability-rules`,
+            data,
+        ),
 
-export const updateBookingForm = async (
-    payload: BookingFormRequest,
-    id: number,
-): Promise<DataResponse<Event>> => {
-    const res = await API.patch(`/api/v1/events/${id}/booking-form`, payload);
-    return res.data.data;
-};
+    updateSchedule: (id: number, scheduleId: string) =>
+        API.patch<DataResponse<EventResponse>>(
+            `/api/v1/events/${id}/schedule`,
+            null,
+            {
+                params: { scheduleId },
+            },
+        ),
 
-export const updateAvailabilityRules = async (
-    payload: AvailabilityRulesUpdateRequest,
-    id: number,
-): Promise<DataResponse<Event>> => {
-    const res = await API.patch(
-        `/api/v1/events/${id}/availability-rules`,
-        payload,
-    );
-    return res.data.data;
-};
+    updateVisibility: (id: number, isPublic: boolean) =>
+        API.patch<DataResponse<EventResponse>>(
+            `/api/v1/events/${id}/availability-rules`,
+            {
+                isPublic,
+            },
+        ),
 
-export const updateSchedule = async (
-    id: number,
-    scheduleId: string,
-): Promise<DataResponse<Event>> => {
-    const res = await API.patch(`/api/v1/events/${id}/schedule`, null, {
-        params: { scheduleId },
-    });
-    return res.data.data;
-};
+    updateBookingForm: (eventId: number, data: BookingFormRequest) =>
+        API.put<DataResponse<BookingFormResponse>>(
+            `/api/v1/events/${eventId}/booking-form`,
+            data,
+        ),
 
-export const deleteEvent = async (id: number) => {
-    await API.delete(`/api/v1/events/${id}`);
+    delete: (id: number) => API.delete(`/api/v1/events/${id}`),
 };

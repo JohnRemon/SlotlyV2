@@ -1,8 +1,5 @@
-import type { User } from "../../profile/types/User";
-
-export interface BlockedPeriod {
+export interface BlockedPeriodResponse {
     id: string;
-    user: User;
     startTime: string;
     endTime: string;
     reason?: string;
@@ -10,13 +7,6 @@ export interface BlockedPeriod {
 }
 
 export interface BlockedPeriodRequest {
-    startTime: string;
-    endTime: string;
-    reason?: string;
-    isRecurring: string;
-}
-
-export interface BlockedPeriodResponse {
     startTime: string;
     endTime: string;
     reason?: string;
