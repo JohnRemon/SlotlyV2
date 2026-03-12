@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.SlotlyV2.common.dto.DataResponse;
 import com.example.SlotlyV2.common.rate_limiting.RateLimitHelper;
-import com.example.SlotlyV2.feature.auth.dto.SessionLoginRequest;
+import com.example.SlotlyV2.feature.auth.dto.LoginRequest;
 import com.example.SlotlyV2.feature.user.User;
 import com.example.SlotlyV2.feature.user.dto.UserResponse;
 
@@ -28,7 +28,7 @@ public class SessionAuthenticationController {
 
     @PostMapping("/login")
     public DataResponse<UserResponse> login(
-            @Valid @RequestBody SessionLoginRequest request,
+            @Valid @RequestBody LoginRequest request,
             HttpServletRequest httpServletRequest,
             HttpServletResponse httpServletResponse) {
 
@@ -49,7 +49,6 @@ public class SessionAuthenticationController {
     @GetMapping("/me")
     public DataResponse<UserResponse> me() {
         User user = sessionAuthenticationService.me();
-
         return DataResponse.of(new UserResponse(user));
     }
 }

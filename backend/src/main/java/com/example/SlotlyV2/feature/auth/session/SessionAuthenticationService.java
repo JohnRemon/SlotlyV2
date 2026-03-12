@@ -14,7 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.SlotlyV2.common.exception.auth.AccountNotVerifiedException;
 import com.example.SlotlyV2.common.exception.auth.InvalidCredentialsException;
 import com.example.SlotlyV2.common.exception.auth.UnauthorizedAccessException;
-import com.example.SlotlyV2.feature.auth.dto.SessionLoginRequest;
+import com.example.SlotlyV2.feature.auth.dto.LoginRequest;
 import com.example.SlotlyV2.feature.user.User;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -28,7 +28,7 @@ public class SessionAuthenticationService {
     private final AuthenticationManager authenticationManager;
 
     @Transactional(readOnly = true)
-    public User login(SessionLoginRequest request, HttpServletRequest httpServletRequest,
+    public User login(LoginRequest request, HttpServletRequest httpServletRequest,
             HttpServletResponse httpServletResponse) {
 
         Authentication authentication;

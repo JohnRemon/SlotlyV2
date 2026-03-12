@@ -35,18 +35,6 @@ public class EventController {
 
     private final EventService eventService;
 
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public DataResponse<EventResponse> createEvent(@Valid @RequestBody EventRequest request) {
-        return DataResponse.of(eventService.createEvent(request));
-    }
-
-    @PostMapping("/recurring")
-    @ResponseStatus(HttpStatus.CREATED)
-    public DataResponse<EventResponse> createRecurringEvent(@Valid @RequestBody EventRequest request) {
-        return DataResponse.of(eventService.createRecurringEvent(request));
-    }
-
     @GetMapping
     public PagedResponse<EventResponse> getEvents(
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
@@ -54,7 +42,7 @@ public class EventController {
     }
 
     @GetMapping("/{id}")
-    public DataResponse<EventResponse> getEvent(@PathVariable Long id) {
+    public DataResponse<EventResponse> getEventById(@PathVariable Long id) {
         return DataResponse.of(eventService.getEventById(id));
     }
 
@@ -66,8 +54,20 @@ public class EventController {
     }
 
     @GetMapping("/public")
-    public DataResponse<PublicEventResponse> getPublicEvent(@RequestParam String shareableId) {
+    public DataResponse<PublicEventResponse> getEventByShareableId(@RequestParam String shareableId) {
         return DataResponse.of(eventService.getPublicEvent(shareableId));
+    }
+
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public DataResponse<EventResponse> createEvent(@Valid @RequestBody EventRequest request) {
+        return DataResponse.of(eventService.createEvent(request));
+    }
+
+    @PostMapping("/recurring")
+    @ResponseStatus(HttpStatus.CREATED)
+    public DataResponse<EventResponse> createRecurringEvent(@Valid @RequestBody EventRequest request) {
+        return DataResponse.of(eventService.createRecurringEvent(request));
     }
 
     @PutMapping("/{id}")

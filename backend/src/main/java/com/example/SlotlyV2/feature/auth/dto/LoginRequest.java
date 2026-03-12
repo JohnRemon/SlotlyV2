@@ -6,7 +6,7 @@ import jakarta.validation.constraints.Size;
 import lombok.Value;
 
 @Value
-public class SessionLoginRequest {
+public class LoginRequest {
 
     @Email(message = "Please provide a valid email")
     @NotBlank(message = "Email is required")

@@ -4,16 +4,27 @@ import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import lombok.Builder;
 import lombok.Value;
 
 @Value
 @Builder
 public class ErrorResponse {
-    String message;
-    String path;
+    @JsonProperty(index = 0)
     String code;
+
+    @JsonProperty(index = 5)
+    String message;
+
+    @JsonProperty(index = 10)
+    String path;
+
+    @JsonProperty(index = 15)
     int status;
+
+    @JsonProperty(index = 20)
     Map<String, String> details;
 
     public static ErrorResponse of(String message, String path, String code, HttpStatus status) {

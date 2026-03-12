@@ -5,7 +5,6 @@ import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -78,12 +77,7 @@ public class SlotService {
                 .orElseThrow(() -> new EventNotFoundException("Event not found"));
 
         if (!event.getAvailabilityRules().getIsPublic()) {
-            throw new EventNotFoundException("Event not found"); // don't leak existence of private events
-        }
-
-        if (date == null || timeZone == null) {
-            return slotRepository.findByEventAndBookingIsNull(event, pageable)
-                    .map(slot -> toResponse(slot, timeZone));
+            throw new EventNotFoundException("Event not found");
         }
 
         ZoneId zone = ZoneId.of(timeZone);
@@ -95,7 +89,6 @@ public class SlotService {
                 .map(slot -> toResponse(slot, timeZone));
     }
 
-    // Called internally — returns raw Slot for booking logic
     public Slot getRawSlotById(Long slotId) {
         return slotRepository.findById(slotId)
                 .orElseThrow(() -> new SlotNotFoundException("Slot not found with id: " + slotId));

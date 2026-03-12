@@ -40,7 +40,7 @@ public class SlotController {
     public PagedResponse<SlotResponse> getAvailableSlots(
             @RequestParam String shareableId,
             @RequestParam String timeZone,
-            @RequestParam(required = false) LocalDate date,
+            @RequestParam LocalDate date,
             @PageableDefault(size = 20, sort = "startTime") Pageable pageable) {
         return PagedResponse.of(slotService.getAvailableSlots(shareableId, date, timeZone, pageable));
     }

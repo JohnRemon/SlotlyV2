@@ -45,7 +45,7 @@ public class BookingService {
     private final TimeZoneConverter timeZoneConverter;
 
     @Transactional
-    public BookingResponse book(BookingRequest request) {
+    public BookingResponse book(BookingRequest request, String timeZone) {
         Slot slot = slotRepository.findById(request.getSlotId())
                 .orElseThrow(() -> new SlotNotFoundException("Slot not found with id: " + request.getSlotId()));
 
@@ -56,7 +56,7 @@ public class BookingService {
 
         log.info("Booking created bookingId={} slotId={} attendeeEmail={}",
                 booking.getId(), slot.getId(), booking.getAttendeeEmail());
-        return toResponse(booking);
+        return toResponse(booking, timeZone);
     }
 
     @Transactional
@@ -83,16 +83,16 @@ public class BookingService {
     }
 
     @Transactional(readOnly = true)
-    public Page<BookingResponse> getBookings(Pageable pageable) {
+    public Page<BookingResponse> getBookings(Pageable pageable, String timeZone) {
         User currentUser = userService.getCurrentUser();
         return bookingRepository.findByAttendeeEmail(currentUser.getEmail(), pageable)
-                .map(this::toResponse);
+                .map(booking -> toResponse(booking, timeZone));
     }
 
     @Transactional(readOnly = true)
-    public BookingResponse getBooking(Long id) {
+    public BookingResponse getBooking(Long id, String timeZone) {
         return toResponse(bookingRepository.findById(id)
-                .orElseThrow(() -> new BookingNotFoundException("Booking not found with id: " + id)));
+                .orElseThrow(() -> new BookingNotFoundException("Booking not found with id: " + id)), timeZone);
     }
 
     // -- Private helpers -------------------------------------------------------
@@ -134,7 +134,7 @@ public class BookingService {
                 .build();
     }
 
-    private BookingResponse toResponse(Booking booking) {
-        return new BookingResponse(booking, timeZoneConverter);
+    private BookingResponse toResponse(Booking booking, String timeZone) {
+        return new BookingResponse(booking, timeZoneConverter, timeZone);
     }
 }

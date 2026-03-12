@@ -40,14 +40,14 @@ public class GoogleCalendarController {
         connectionService.exchangeCode(request.getCode(), request.getState(), httpRequest);
     }
 
+    @GetMapping("/status")
+    public DataResponse<ConnectionStatus> getConnectionStatus() {
+        return DataResponse.of(connectionService.getConnectionStatus());
+    }
+
     @DeleteMapping("/disconnect")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void disconnect() {
         connectionService.disconnect();
-    }
-
-    @GetMapping("/status")
-    public DataResponse<ConnectionStatus> getConnectionStatus() {
-        return DataResponse.of(connectionService.getConnectionStatus());
     }
 }

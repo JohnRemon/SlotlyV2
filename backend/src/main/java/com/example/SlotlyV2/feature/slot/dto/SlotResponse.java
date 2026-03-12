@@ -12,8 +12,10 @@ import lombok.Value;
 public class SlotResponse {
     @JsonProperty(index = 0)
     private final Long id;
+
     @JsonProperty(index = 5)
     private final OffsetDateTime startTime;
+
     @JsonProperty(index = 10)
     private final OffsetDateTime endTime;
 

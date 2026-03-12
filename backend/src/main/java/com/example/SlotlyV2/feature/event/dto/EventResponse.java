@@ -8,21 +8,43 @@ import com.example.SlotlyV2.feature.availability.dto.AvailabilityRulesDTO;
 import com.example.SlotlyV2.feature.booking_form.dto.BookingFormResponse;
 import com.example.SlotlyV2.feature.event.Event;
 import com.example.SlotlyV2.feature.recurrence.dto.RecurrenceRulesDTO;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import lombok.Value;
 
 @Value
 public class EventResponse {
+    @JsonProperty(index = 0)
     private final Long id;
+
+    @JsonProperty(index = 5)
     private final String eventName;
+
+    @JsonProperty(index = 10)
     private final String description;
+
+    @JsonProperty(index = 15)
     private final OffsetDateTime eventStart;
+
+    @JsonProperty(index = 20)
     private final OffsetDateTime eventEnd;
+
+    @JsonProperty(index = 25)
     private final AvailabilityRulesDTO availabilityRules;
+
+    @JsonProperty(index = 30)
     private final RecurrenceRulesDTO recurringRules;
+
+    @JsonProperty(index = 35)
     private final String shareableId;
+
+    @JsonProperty(index = 40)
     private final BookingFormResponse bookingForm;
+
+    @JsonProperty(index = 45)
     private final UUID scheduleId;
+
+    @JsonProperty(index = 50)
     private final Boolean scheduleIsDefault;
 
     public EventResponse(Event event, TimeZoneConverter timeZoneConverter) {
@@ -55,9 +77,7 @@ public class EventResponse {
                 : null;
 
         this.shareableId = event.getShareableId();
-        this.bookingForm = event.getBookingForm() != null
-                ? new BookingFormResponse(event.getBookingForm())
-                : null;
+        this.bookingForm = new BookingFormResponse(event.getBookingForm());
         this.scheduleId = event.getSchedule().getId();
         this.scheduleIsDefault = event.getSchedule().getIsDefault();
     }

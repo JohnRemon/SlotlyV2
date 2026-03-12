@@ -25,13 +25,13 @@ public class UserFactory {
                 AuthProvider.LOCAL);
     }
 
-    public User createFrom(String email, String googleId, String firstName, String lastName) {
+    public User createFrom(String email, String googleId, String firstName, String lastName, String timeZone) {
         return createFrom(
                 email,
                 null,
                 firstName,
                 lastName,
-                "UTC",
+                timeZone,
                 true,
                 googleId,
                 AuthProvider.GOOGLE);

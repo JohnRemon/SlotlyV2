@@ -43,7 +43,7 @@ public class GoogleOAuthService {
     private final ScheduleService scheduleService;
 
     @Transactional
-    public User login(String idTokenString, HttpServletRequest request,
+    public User login(String idTokenString, String timeZone, HttpServletRequest request,
             HttpServletResponse response) {
 
         Payload payload = verifyGoogleToken(idTokenString);
@@ -53,7 +53,7 @@ public class GoogleOAuthService {
         String firstName = (String) payload.get("given_name");
         String lastName = (String) payload.get("family_name");
 
-        User user = findOrCreateOAuthUser(email, googleId, firstName, lastName);
+        User user = findOrCreateOAuthUser(email, googleId, firstName, lastName, timeZone);
         persistSession(user, request, response);
 
         return user;
@@ -61,14 +61,16 @@ public class GoogleOAuthService {
 
     // -- Private helpers -------------------------------------------------------
 
-    private User findOrCreateOAuthUser(String email, String googleId, String firstName, String lastName) {
+    private User findOrCreateOAuthUser(String email, String googleId, String firstName, String lastName,
+            String timeZone) {
         return userRepository.findByEmail(email)
                 .map(existingUser -> updateExistingUser(existingUser, googleId))
-                .orElseGet(() -> createNewGoogleUser(email, googleId, firstName, lastName));
+                .orElseGet(() -> createNewGoogleUser(email, googleId, firstName, lastName, timeZone));
     }
 
-    private User createNewGoogleUser(String email, String googleId, String firstName, String lastName) {
-        User user = userFactory.createFrom(email, googleId, firstName, lastName);
+    private User createNewGoogleUser(String email, String googleId, String firstName, String lastName,
+            String timeZone) {
+        User user = userFactory.createFrom(email, googleId, firstName, lastName, timeZone);
         user = userRepository.save(user);
         scheduleService.createDefaultScheduleForUser(user);
         log.info("User registered using google userId={} email={}", user.getId(), user.getEmail());

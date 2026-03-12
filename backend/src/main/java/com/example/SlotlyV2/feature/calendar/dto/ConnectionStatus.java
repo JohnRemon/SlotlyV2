@@ -4,5 +4,5 @@ import lombok.Data;
 
 @Data
 public class ConnectionStatus {
-    private final boolean connected;
+    private final Boolean status;
 }
