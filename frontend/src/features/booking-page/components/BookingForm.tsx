@@ -66,8 +66,8 @@ export const BookingForm = ({
     const [isLoading, setIsLoading] = useState(false);
 
     const fields: BookingFormFieldResponse[] = useMemo(
-        () => event.bookingForm?.fields.fields ?? [],
-        [event.bookingForm?.fields.fields],
+        () => event.bookingForm?.fields ?? [],
+        [event.bookingForm?.fields],
     );
 
     const orderedFields = useMemo(
@@ -81,8 +81,7 @@ export const BookingForm = ({
     );
 
     const defaultAnswers = useMemo(
-        () =>
-            Object.fromEntries(orderedFields.map((field) => [field.id, ""])),
+        () => Object.fromEntries(orderedFields.map((field) => [field.id, ""])),
         [orderedFields],
     );
 
@@ -183,30 +182,26 @@ export const BookingForm = ({
                 </FormFieldWrapper>
 
                 {orderedFields.map((field) => (
-                        <FormFieldWrapper
-                            key={field.id}
+                    <FormFieldWrapper
+                        key={field.id}
+                        id={`booking-field-${field.id}`}
+                        label={field.label}
+                        required={field.required}
+                        hint={
+                            errors.answers?.[field.id]?.message ? (
+                                <span className="text-destructive">
+                                    {errors.answers[field.id]?.message}
+                                </span>
+                            ) : undefined
+                        }
+                    >
+                        <Input
                             id={`booking-field-${field.id}`}
-                            label={field.label}
-                            required={field.required}
-                            hint={
-                                errors.answers?.[field.id]?.message ? (
-                                    <span className="text-destructive">
-                                        {errors.answers[field.id]?.message}
-                                    </span>
-                                ) : undefined
-                            }
-                        >
-                            <Input
-                                id={`booking-field-${field.id}`}
-                                type={
-                                    field.fieldType === "PHONE"
-                                        ? "tel"
-                                        : "text"
-                                }
-                                {...register(`answers.${field.id}`)}
-                            />
-                        </FormFieldWrapper>
-                    ))}
+                            type={field.fieldType === "PHONE" ? "tel" : "text"}
+                            {...register(`answers.${field.id}`)}
+                        />
+                    </FormFieldWrapper>
+                ))}
 
                 <div className="flex gap-2 pt-2">
                     <Button

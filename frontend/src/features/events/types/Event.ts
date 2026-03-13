@@ -50,9 +50,7 @@ export interface PublicEventResponse {
         lastName: string;
     };
     slotDurationMinutes: number;
-    bookingForm: {
-        fields: BookingFormResponse;
-    };
+    bookingForm: BookingFormResponse;
 }
 
 export interface EventRequest {

@@ -1,112 +1,15 @@
 import axios from "axios";
-import {
-    CheckIcon,
-    ExternalLinkIcon,
-    Loader2Icon,
-    UnplugIcon,
-} from "lucide-react";
+import { Loader2Icon } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { toast } from "sonner";
 import { useSearchParams } from "react-router";
+import { toast } from "sonner";
 import { GoogleCalendarApi } from "../../integrations/google-calendar/api/GoogleCalendarApi";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-    Card,
-    CardAction,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card";
+import GoogleCalendarCard from "../components/GoogleCalendarCard";
 
 type Tab = "install" | "installed";
-
-// -- Google Calendar SVG icon --------------------------------------------------
-const GoogleCalendarIcon = () => (
-    <img
-        src="https://upload.wikimedia.org/wikipedia/commons/a/a5/Google_Calendar_icon_%282020%29.svg"
-        alt="Google Calendar"
-        className="w-8 h-8"
-    />
-);
-
-interface GoogleCalendarCardProps {
-    connected: boolean;
-    onConnect: () => void;
-    onDisconnect: () => void;
-    isLoading: boolean;
-}
-
-// -- App card ------------------------------------------------------------------
-const GoogleCalendarCard = ({
-    connected,
-    onConnect,
-    onDisconnect,
-    isLoading,
-}: GoogleCalendarCardProps) => (
-    <Card className="bg-card/60">
-        <CardHeader className="border-b">
-            <CardTitle className="flex items-center gap-2">
-                <span className="inline-flex size-10 items-center justify-center rounded-xl bg-muted ring-1 ring-border">
-                    <GoogleCalendarIcon />
-                </span>
-                <span className="flex items-center gap-2">
-                    Google Calendar
-                    <a
-                        href="https://calendar.google.com"
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center text-muted-foreground hover:text-foreground"
-                        aria-label="Open Google Calendar"
-                    >
-                        <ExternalLinkIcon className="size-4" />
-                    </a>
-                </span>
-                {connected && (
-                    <Badge variant="secondary" className="gap-1">
-                        <CheckIcon className="size-3.5" />
-                        Connected
-                    </Badge>
-                )}
-            </CardTitle>
-            <CardDescription>
-                Sync your bookings with Google Calendar and block time
-                automatically based on your calendar events.
-            </CardDescription>
-            <CardAction>
-                {connected ? (
-                    <Button
-                        type="button"
-                        variant="outline"
-                        className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-                        disabled={isLoading}
-                        onClick={onDisconnect}
-                    >
-                        {isLoading ? (
-                            <Loader2Icon className="size-4 animate-spin" />
-                        ) : (
-                            <UnplugIcon className="size-4" />
-                        )}
-                        Disconnect
-                    </Button>
-                ) : (
-                    <Button
-                        type="button"
-                        disabled={isLoading}
-                        onClick={onConnect}
-                    >
-                        {isLoading ? (
-                            <Loader2Icon className="size-4 animate-spin" />
-                        ) : (
-                            "Connect"
-                        )}
-                    </Button>
-                )}
-            </CardAction>
-        </CardHeader>
-    </Card>
-);
 
 // -- AppsPage ------------------------------------------------------------------
 const AppsPage = () => {

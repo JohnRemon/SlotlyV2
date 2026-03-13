@@ -1,19 +1,13 @@
+import { ExternalLink } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router";
-import { ExternalLink } from "lucide-react";
 import type { ScheduleResponse } from "../../schedule/types/Schedule";
 
 import FormField from "@/components/common/FormField";
 import LoadingSpinner from "@/components/common/LoadingSpinner";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectTrigger } from "@/components/ui/select";
 
 interface Props {
     scheduleId: string;
@@ -81,27 +75,18 @@ export const AvailabilityTab = ({
                         className="w-full"
                         disabled={schedulesLoading || isSwitching}
                     >
-                        <SelectValue
-                            placeholder={
-                                schedulesLoading
-                                    ? "Loading schedules..."
-                                    : "Select a schedule"
-                            }
-                        />
-                        {scheduleIsDefault && (
-                            <Badge variant="secondary">Default</Badge>
-                        )}
+                        <div className="flex items-center gap-2 min-w-0">
+                            <span className="truncate">
+                                {currentSchedule?.name ??
+                                    (schedulesLoading
+                                        ? "Loading schedules..."
+                                        : "Select a schedule")}
+                            </span>
+                            {scheduleIsDefault && (
+                                <Badge variant="secondary">Default</Badge>
+                            )}
+                        </div>
                     </SelectTrigger>
-                    <SelectContent align="start">
-                        {schedules.map((s) => (
-                            <SelectItem key={s.id} value={s.id}>
-                                {s.name}
-                                {s.isDefault && (
-                                    <Badge variant="outline">Default</Badge>
-                                )}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
                 </Select>
             </FormField>
 
