@@ -1,23 +1,23 @@
 import { createContext, useContext } from "react";
 import type {
-    Schedule,
+    ScheduleResponse,
     ScheduleRequest,
     UpdateScheduleRequest,
 } from "../types/Schedule";
 
 export interface SchedulesContextValue {
-    schedules: Schedule[];
+    schedules: ScheduleResponse[];
     isLoading: boolean;
-    create: (request: ScheduleRequest) => Promise<Schedule>;
+    create: (request: ScheduleRequest) => Promise<ScheduleResponse>;
     update: (request: UpdateScheduleRequest, id: string) => Promise<void>;
     remove: (id: string) => Promise<void>;
-    setDefault: (id: string) => Promise<Schedule>;
-    updateLocal: (schedule: Schedule) => void;
+    setDefault: (id: string) => Promise<ScheduleResponse>;
+    updateLocal: (schedule: ScheduleResponse) => void;
 }
 
-export const SchedulesContext = createContext<SchedulesContextValue | undefined>(
-    undefined,
-);
+export const SchedulesContext = createContext<
+    SchedulesContextValue | undefined
+>(undefined);
 
 export const useSchedulesContext = () => {
     const context = useContext(SchedulesContext);

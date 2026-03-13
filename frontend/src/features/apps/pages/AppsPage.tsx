@@ -1,18 +1,28 @@
 import axios from "axios";
-import { Check, ExternalLink, Unplug } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
-import toast from "react-hot-toast";
-import { useSearchParams } from "react-router";
 import {
-    disconnectCalendar,
-    exchangeAuthorizationCode,
-    getConnectionStatus,
-    initiateConnection,
-} from "../../integrations/google-calendar/api/GoogleCalendarApi";
+    CheckIcon,
+    ExternalLinkIcon,
+    Loader2Icon,
+    UnplugIcon,
+} from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
+import { useSearchParams } from "react-router";
+import { GoogleCalendarApi } from "../../integrations/google-calendar/api/GoogleCalendarApi";
+
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+    Card,
+    CardAction,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card";
 
 type Tab = "install" | "installed";
 
-// ── Google Calendar SVG icon ──────────────────────────────────────────────────
+// -- Google Calendar SVG icon --------------------------------------------------
 const GoogleCalendarIcon = () => (
     <img
         src="https://upload.wikimedia.org/wikipedia/commons/a/a5/Google_Calendar_icon_%282020%29.svg"
@@ -28,79 +38,77 @@ interface GoogleCalendarCardProps {
     isLoading: boolean;
 }
 
-// ── App card ──────────────────────────────────────────────────────────────────
+// -- App card ------------------------------------------------------------------
 const GoogleCalendarCard = ({
     connected,
     onConnect,
     onDisconnect,
     isLoading,
 }: GoogleCalendarCardProps) => (
-    <div className="flex items-start justify-between p-5 border border-base-300 rounded-xl">
-        <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-xl bg-base-200 flex items-center justify-center shrink-0">
-                <GoogleCalendarIcon />
-            </div>
-            <div>
-                <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold flex items-center gap-1">
-                        Google Calendar
-                        <a
-                            href="https://calendar.google.com"
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-xs text-primary hover:underline"
-                        >
-                            <ExternalLink className="w-3.5 h-3.5" />
-                        </a>
-                    </span>
-                    {connected && (
-                        <span className="flex items-center gap-1 text-xs bg-success/10 text-success px-1.5 py-0.5 rounded-md font-medium">
-                            <Check className="w-3 h-3" />
-                            Connected
-                        </span>
-                    )}
-                </div>
-                <p className="text-xs text-base-content/50 mt-1 max-w-sm">
-                    Sync your bookings with Google Calendar and block time
-                    automatically based on your calendar events.
-                </p>
-            </div>
-        </div>
-
-        <div className="shrink-0 ml-4">
-            {connected ? (
-                <button
-                    type="button"
-                    className="btn btn-outline btn-sm gap-1.5 text-error border-error hover:bg-error hover:text-white"
-                    disabled={isLoading}
-                    onClick={onDisconnect}
-                >
-                    {isLoading ? (
-                        <span className="loading loading-spinner loading-xs" />
-                    ) : (
-                        <Unplug className="w-3.5 h-3.5" />
-                    )}
-                    Disconnect
-                </button>
-            ) : (
-                <button
-                    type="button"
-                    className="btn btn-primary btn-sm"
-                    disabled={isLoading}
-                    onClick={onConnect}
-                >
-                    {isLoading ? (
-                        <span className="loading loading-spinner loading-xs" />
-                    ) : (
-                        "Connect"
-                    )}
-                </button>
-            )}
-        </div>
-    </div>
+    <Card className="bg-card/60">
+        <CardHeader className="border-b">
+            <CardTitle className="flex items-center gap-2">
+                <span className="inline-flex size-10 items-center justify-center rounded-xl bg-muted ring-1 ring-border">
+                    <GoogleCalendarIcon />
+                </span>
+                <span className="flex items-center gap-2">
+                    Google Calendar
+                    <a
+                        href="https://calendar.google.com"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center text-muted-foreground hover:text-foreground"
+                        aria-label="Open Google Calendar"
+                    >
+                        <ExternalLinkIcon className="size-4" />
+                    </a>
+                </span>
+                {connected && (
+                    <Badge variant="secondary" className="gap-1">
+                        <CheckIcon className="size-3.5" />
+                        Connected
+                    </Badge>
+                )}
+            </CardTitle>
+            <CardDescription>
+                Sync your bookings with Google Calendar and block time
+                automatically based on your calendar events.
+            </CardDescription>
+            <CardAction>
+                {connected ? (
+                    <Button
+                        type="button"
+                        variant="outline"
+                        className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                        disabled={isLoading}
+                        onClick={onDisconnect}
+                    >
+                        {isLoading ? (
+                            <Loader2Icon className="size-4 animate-spin" />
+                        ) : (
+                            <UnplugIcon className="size-4" />
+                        )}
+                        Disconnect
+                    </Button>
+                ) : (
+                    <Button
+                        type="button"
+                        disabled={isLoading}
+                        onClick={onConnect}
+                    >
+                        {isLoading ? (
+                            <Loader2Icon className="size-4 animate-spin" />
+                        ) : (
+                            "Connect"
+                        )}
+                    </Button>
+                )}
+            </CardAction>
+        </CardHeader>
+    </Card>
 );
 
-// ── AppsPage ──────────────────────────────────────────────────────────────────
+// -- AppsPage ------------------------------------------------------------------
 const AppsPage = () => {
     const [searchParams, setSearchParams] = useSearchParams();
     const activeTab = (searchParams.get("tab") as Tab) ?? "install";
@@ -115,8 +123,8 @@ const AppsPage = () => {
     const exchangeInFlightRef = useRef(false);
 
     useEffect(() => {
-        getConnectionStatus()
-            .then(setIsConnected)
+        GoogleCalendarApi.getConnectionStatus()
+            .then((response) => setIsConnected(response.data.data.status))
             .catch(() => toast.error("Failed to load connection status"))
             .finally(() => setIsStatusLoading(false));
     }, []);
@@ -142,7 +150,10 @@ const AppsPage = () => {
             setIsActioning(true);
             setSearchParams({ tab: "installed" });
             try {
-                await exchangeAuthorizationCode(code, state);
+                await GoogleCalendarApi.exchangeAuthorizationCode({
+                    code,
+                    state,
+                });
                 setIsConnected(true);
                 setTab("installed");
                 toast.success("Google Calendar connected");
@@ -167,8 +178,8 @@ const AppsPage = () => {
     const handleConnect = async () => {
         setIsActioning(true);
         try {
-            const url = await initiateConnection();
-            window.location.href = url;
+            const response = await GoogleCalendarApi.initiateConnection();
+            window.location.href = response.data.data.authorizationUrl;
         } catch (error) {
             if (axios.isAxiosError(error)) {
                 toast.error(
@@ -185,7 +196,7 @@ const AppsPage = () => {
     const handleDisconnect = async () => {
         setIsActioning(true);
         try {
-            await disconnectCalendar();
+            await GoogleCalendarApi.disconnectCalendar();
             setIsConnected(false);
             setTab("install");
             toast.success("Google Calendar disconnected");
@@ -205,42 +216,41 @@ const AppsPage = () => {
     const installedApps = isConnected ? ["google-calendar"] : [];
 
     return (
-        <div className="p-6 max-w-3xl mx-auto">
-            <div className="mb-6">
-                <h1 className="text-lg font-bold text-base-content">Apps</h1>
-                <p className="text-xs text-base-content/40 mt-0.5">
+        <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-8">
+            <div>
+                <h1 className="text-base font-semibold tracking-[-0.01em]">
+                    Apps
+                </h1>
+                <p className="mt-1 text-xs text-muted-foreground">
                     Connect your favourite tools to extend Slotly
                 </p>
             </div>
 
             {/* Tabs */}
-            <div className="flex gap-1 mb-6 border-b border-base-300">
+            <div className="inline-flex w-fit items-center gap-1 rounded-xl bg-muted/40 p-1 ring-1 ring-border">
                 {(["install", "installed"] as Tab[]).map((tab) => (
-                    <button
+                    <Button
                         key={tab}
                         type="button"
                         onClick={() => setTab(tab)}
-                        className={`px-4 py-2 text-sm font-medium capitalize border-b-2 -mb-px transition-colors
-                            ${
-                                activeTab === tab
-                                    ? "border-primary text-base-content"
-                                    : "border-transparent text-base-content/40 hover:text-base-content"
-                            }`}
+                        size="sm"
+                        variant={activeTab === tab ? "secondary" : "ghost"}
+                        className="h-8 gap-2 rounded-lg px-3 capitalize"
                     >
                         {tab}
                         {tab === "installed" && installedApps.length > 0 && (
-                            <span className="ml-1.5 text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-medium">
+                            <Badge variant="outline" className="ml-0.5">
                                 {installedApps.length}
-                            </span>
+                            </Badge>
                         )}
-                    </button>
+                    </Button>
                 ))}
             </div>
 
             {/* Content */}
             {isStatusLoading ? (
                 <div className="flex items-center justify-center h-40">
-                    <span className="loading loading-spinner loading-md text-primary" />
+                    <Loader2Icon className="size-5 animate-spin text-muted-foreground" />
                 </div>
             ) : (
                 <>
@@ -255,8 +265,8 @@ const AppsPage = () => {
                                 />
                             )}
                             {isConnected && (
-                                <div className="flex flex-col items-center justify-center py-16 gap-2 text-center border border-dashed border-base-300 rounded-xl">
-                                    <p className="text-sm text-base-content/40">
+                                <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-card/20 p-10 text-center">
+                                    <p className="text-sm text-muted-foreground">
                                         All available apps are installed
                                     </p>
                                 </div>
@@ -274,8 +284,8 @@ const AppsPage = () => {
                                     isLoading={isActioning}
                                 />
                             ) : (
-                                <div className="flex flex-col items-center justify-center py-16 gap-2 text-center border border-dashed border-base-300 rounded-xl">
-                                    <p className="text-sm text-base-content/40">
+                                <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-card/20 p-10 text-center">
+                                    <p className="text-sm text-muted-foreground">
                                         No apps installed yet
                                     </p>
                                 </div>

@@ -2,6 +2,9 @@ import { useEffect, useState, type ReactNode } from "react";
 import { AuthApi } from "../api/AuthApi";
 import type { UserResponse } from "../types/Auth";
 import { AuthContext } from "../context/AuthContext";
+import API from "@/lib/api";
+
+const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [user, setUser] = useState<UserResponse | null>(null);
@@ -27,7 +30,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const loginWithGoogle = async (idToken: string) => {
-        await AuthApi.loginWithGoogle(idToken);
+        await API.post("/api/v1/auth/google", null, {
+            params: { idToken, timeZone },
+        });
         const response = await AuthApi.getCurrentUser();
         setUser(response.data.data);
     };

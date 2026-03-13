@@ -7,7 +7,7 @@ export interface RegisterRequest {
     email: string;
     password: string;
     firstName: string;
-    lastname: string;
+    lastName: string;
     timeZone: string;
 }
 

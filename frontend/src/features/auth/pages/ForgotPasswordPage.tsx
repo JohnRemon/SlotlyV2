@@ -1,25 +1,56 @@
 import axios from "axios";
 import { useState } from "react";
 import { Link } from "react-router";
-import toast from "react-hot-toast";
-import { ArrowLeft, Mail } from "lucide-react";
-import { forgotPassword } from "../api/AuthApi";
+import { toast } from "sonner";
+import { ArrowLeft, Loader2Icon, Mail } from "lucide-react";
+import { AuthApi } from "../api/AuthApi";
+
+import FormField from "@/components/common/FormField";
+import { Button } from "@/components/ui/button";
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardFooter,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+
+const formSchema = z.object({
+    email: z.email("Enter a valid email address."),
+});
+
+type FormData = z.infer<typeof formSchema>;
 
 const ForgotPasswordPage = () => {
-    const [email, setEmail] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [sent, setSent] = useState(false);
+
+    const {
+        register,
+        handleSubmit,
+        watch,
+        formState: { errors },
+    } = useForm<FormData>({
+        resolver: zodResolver(formSchema),
+        defaultValues: {
+            email: "",
+        },
+    });
 
     const getErrorMessage = (error: unknown) =>
         axios.isAxiosError(error)
             ? (error.response?.data?.message ?? "Something went wrong.")
             : "Something went wrong.";
 
-    const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
-        e.preventDefault();
+    const onSubmit = async ({ email }: FormData) => {
         setIsLoading(true);
         try {
-            await forgotPassword(email);
+            await AuthApi.forgotPassword({ email });
             setSent(true);
         } catch (error) {
             toast.error(getErrorMessage(error));
@@ -29,80 +60,98 @@ const ForgotPasswordPage = () => {
     };
 
     return (
-        <div className="min-h-screen bg-base-200 flex items-center justify-center px-4">
-            <div className="w-full max-w-sm flex flex-col gap-6">
-                <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 p-8 flex flex-col gap-5">
-                    {!sent ? (
-                        <>
-                            <p className="text-sm text-base-content/60">
-                                Enter your email and we'll send you a link to
-                                reset your password.
-                            </p>
+        <div className="min-h-dvh bg-gradient-to-b from-background to-muted/30">
+            <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col justify-center px-4 py-12">
+                <Card className="bg-card/75 shadow-sm ring-1 ring-foreground/10 supports-backdrop-filter:backdrop-blur-sm">
+                    <CardHeader className="text-center">
+                        <div className="mx-auto inline-flex items-center gap-2 rounded-full border bg-muted/40 px-3 py-1 text-xs text-muted-foreground">
+                            <span
+                                aria-hidden="true"
+                                className="size-1.5 rounded-full bg-primary"
+                            />
+                            Slotly
+                        </div>
+                        <CardTitle className="mt-3 text-xl font-semibold tracking-[-0.02em]">
+                            Reset your password
+                        </CardTitle>
+                        <CardDescription>
+                            {sent
+                                ? "If the email exists, you'll receive a reset link shortly."
+                                : "Enter your email and we'll send you a reset link."}
+                        </CardDescription>
+                    </CardHeader>
+
+                    <CardContent>
+                        {!sent ? (
                             <form
-                                onSubmit={handleSubmit}
-                                className="flex flex-col gap-4"
+                                onSubmit={handleSubmit(onSubmit)}
+                                className="grid gap-4"
                             >
-                                <div className="flex flex-col gap-1.5">
-                                    <label className="text-sm font-medium text-base-content">
-                                        Email
-                                    </label>
-                                    <input
+                                <FormField id="email" label="Email" required>
+                                    <Input
+                                        id="email"
                                         type="email"
-                                        className="input input-bordered w-full"
                                         placeholder="you@example.com"
-                                        value={email}
-                                        onChange={(e) =>
-                                            setEmail(e.target.value)
-                                        }
-                                        required
+                                        autoComplete="email"
+                                        {...register("email")}
                                     />
-                                </div>
-                                <button
+                                    {errors.email && (
+                                        <p className="text-sm text-destructive">
+                                            {errors.email.message}
+                                        </p>
+                                    )}
+                                </FormField>
+                                <Button
                                     type="submit"
-                                    className="btn btn-primary w-full"
+                                    className="w-full"
                                     disabled={isLoading}
                                 >
-                                    {isLoading ? (
-                                        <span className="loading loading-spinner loading-sm" />
-                                    ) : (
-                                        "Send reset link"
+                                    {isLoading && (
+                                        <Loader2Icon
+                                            aria-hidden="true"
+                                            className="size-4 animate-spin"
+                                        />
                                     )}
-                                </button>
+                                    Send reset link
+                                </Button>
                             </form>
-                        </>
-                    ) : (
-                        // Success State
-                        <div className="flex flex-col items-center gap-4 py-2">
-                            <div className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center">
-                                <Mail className="w-6 h-6" />
+                        ) : (
+                            <div className="flex flex-col items-center gap-4 py-2">
+                                <div className="flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+                                    <Mail className="size-6" />
+                                </div>
+                                <div className="text-center">
+                                    <div className="font-medium leading-snug">
+                                        Check your inbox
+                                    </div>
+                                    <p className="mt-1 text-sm text-muted-foreground">
+                                        We sent a reset link to{" "}
+                                        <span className="font-medium text-foreground">
+                                            {watch("email")}
+                                        </span>
+                                    </p>
+                                </div>
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setSent(false)}
+                                >
+                                    Didn't receive it? Try again
+                                </Button>
                             </div>
-                            <div className="text-center">
-                                <p className="font-semibold text-base-content">
-                                    Check your inbox
-                                </p>
-                                <p className="text-sm text-base-content/50 mt-1">
-                                    We sent a reset link to{" "}
-                                    <span className="font-medium text-base-content">
-                                        {email}
-                                    </span>
-                                </p>
-                            </div>
-                            <button
-                                className="btn btn-ghost btn-sm"
-                                onClick={() => setSent(false)}
-                            >
-                                Didn't receive it? Try again
-                            </button>
-                        </div>
-                    )}
-                </div>
+                        )}
+                    </CardContent>
 
-                <Link
-                    to="/login"
-                    className="flex items-center justify-center gap-1.5 text-sm text-base-content/50 hover:text-base-content transition-colors"
-                >
-                    <ArrowLeft className="w-4 h-4" /> Back to sign in
-                </Link>
+                    <CardFooter className="justify-center">
+                        <Link
+                            to="/login"
+                            className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+                        >
+                            <ArrowLeft className="size-4" /> Back to sign in
+                        </Link>
+                    </CardFooter>
+                </Card>
             </div>
         </div>
     );

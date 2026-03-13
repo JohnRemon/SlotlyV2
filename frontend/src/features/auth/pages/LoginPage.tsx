@@ -1,28 +1,60 @@
-import { GoogleLogin } from "@react-oauth/google";
+import { GoogleLogin, type CredentialResponse } from "@react-oauth/google";
+import axios from "axios";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
+import { toast } from "sonner";
 import { useAuth } from "../hooks/useAuth";
-import toast from "react-hot-toast";
-import axios from "axios";
+
+import { Button } from "@/components/ui/button";
+import {
+    Card,
+    CardContent,
+    CardFooter,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2Icon } from "lucide-react";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+
+const formSchema = z.object({
+    email: z.email("Enter a valid email address."),
+    password: z.string().min(1, "Password is required."),
+});
+
+type FormData = z.infer<typeof formSchema>;
 
 const LoginPage = () => {
     const { login, loginWithGoogle } = useAuth();
     const navigate = useNavigate();
 
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
     const [isLoading, setIsLoading] = useState(false);
 
-    const handleLogin = async (e: React.SubmitEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        setIsLoading(true);
+    const {
+        register,
+        handleSubmit,
+        formState: { errors },
+    } = useForm<FormData>({
+        resolver: zodResolver(formSchema),
+        defaultValues: {
+            email: "",
+            password: "",
+        },
+    });
 
+    const handleLogin = async ({ email, password }: FormData) => {
+        setIsLoading(true);
         try {
             await login(email, password);
             navigate("/events");
         } catch (error) {
             if (axios.isAxiosError(error)) {
-                toast.error(error.response?.data?.message);
+                toast.error(
+                    error.response?.data?.message ?? "Something went wrong.",
+                );
             } else {
                 toast.error("Something went wrong.");
             }
@@ -31,96 +63,126 @@ const LoginPage = () => {
         }
     };
 
+    const handleGoogleSuccess = async ({ credential }: CredentialResponse) => {
+        if (!credential) {
+            toast.error("Google did not return an ID token.");
+            return;
+        }
+
+        try {
+            await loginWithGoogle(credential);
+            navigate("/events");
+            toast.success("Successfully signed in.");
+        } catch {
+            toast.error("Google sign-in failed.");
+        }
+    };
+
     return (
-        <div className="min-h-screen bg-base-200 flex items-center justify-center px-4">
-            <div className="w-full max-w-sm flex flex-col gap-6">
-                {/* Card */}
-                <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 p-8 flex flex-col gap-5">
-                    {/* Form */}
-                    <form
-                        onSubmit={handleLogin}
-                        className="flex flex-col gap-4"
-                    >
-                        <div className="flex flex-col gap-1.5">
-                            <label className="text-sm font-medium text-base-content">
-                                Email
-                            </label>
-                            <input
-                                type="email"
-                                className="input input-bordered w-full"
-                                placeholder="you@example.com"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                required
-                            />
-                        </div>
+        <div className="min-h-dvh bg-linear-to-b from-background to-muted/30">
+            <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col justify-center px-4 py-12">
+                <Card className="bg-card/75 shadow-sm ring-1 ring-foreground/10 supports-backdrop-filter:backdrop-blur-sm">
+                    <CardHeader className="text-center">
+                        <CardTitle className="mt-3 text-xl font-semibold tracking-[-0.02em]">
+                            Welcome back
+                        </CardTitle>
+                    </CardHeader>
 
-                        <div className="flex flex-col gap-1.5">
-                            <div className="flex items-center justify-between">
-                                <label className="text-sm font-medium text-base-content">
-                                    Password
-                                </label>
-                                <a
-                                    href="/forgot-password"
-                                    className="text-xs text-primary hover:underline"
-                                >
-                                    Forgot password?
-                                </a>
-                            </div>
-                            <input
-                                type="password"
-                                className="input input-bordered w-full"
-                                placeholder="••••••••"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
-                            />
-                        </div>
-
-                        <button
-                            type="submit"
-                            className="btn btn-primary w-full mt-1"
-                            disabled={isLoading}
+                    <CardContent className="grid gap-5">
+                        <form
+                            onSubmit={handleSubmit(handleLogin)}
+                            className="grid gap-4"
                         >
-                            {isLoading ? (
-                                <span className="loading loading-spinner loading-sm" />
-                            ) : (
-                                "Sign in"
-                            )}
-                        </button>
-                    </form>
+                            <div className="grid gap-2">
+                                <Label htmlFor="email">Email</Label>
+                                <Input
+                                    id="email"
+                                    type="email"
+                                    placeholder="you@example.com"
+                                    autoComplete="email"
+                                    {...register("email")}
+                                />
+                                {errors.email && (
+                                    <p className="text-sm text-destructive">
+                                        {errors.email.message}
+                                    </p>
+                                )}
+                            </div>
 
-                    {/* Divider */}
-                    <div className="divider text-xs text-base-content/40">
-                        or
-                    </div>
+                            <div className="grid gap-2">
+                                <div className="flex items-center justify-between gap-3">
+                                    <Label htmlFor="password">Password</Label>
+                                    <Link
+                                        to="/forgot-password"
+                                        className="text-xs font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+                                    >
+                                        Forgot password?
+                                    </Link>
+                                </div>
+                                <Input
+                                    id="password"
+                                    type="password"
+                                    placeholder="••••••••"
+                                    autoComplete="current-password"
+                                    {...register("password")}
+                                />
+                                {errors.password && (
+                                    <p className="text-sm text-destructive">
+                                        {errors.password.message}
+                                    </p>
+                                )}
+                            </div>
 
-                    {/* Google */}
-                    <GoogleLogin
-                        onSuccess={(res) => {
-                            loginWithGoogle(res.credential!)
-                                .then(() => navigate("/events"))
-                                .then(() =>
-                                    toast.success("Successfully signed in"),
-                                )
-                                .catch(() =>
-                                    toast.error("Google sign-in failed."),
-                                );
-                        }}
-                        onError={() => toast.error("Google sign-in failed.")}
-                    />
-                </div>
+                            <Button
+                                type="submit"
+                                className="w-full"
+                                disabled={isLoading}
+                            >
+                                {isLoading && (
+                                    <Loader2Icon
+                                        aria-hidden="true"
+                                        className="size-4 animate-spin"
+                                    />
+                                )}
+                                Sign in
+                            </Button>
+                        </form>
 
-                {/* Register link */}
-                <p className="text-center text-sm text-base-content/50">
-                    Don't have an account?{" "}
-                    <Link
-                        to="/register"
-                        className="text-primary font-medium hover:underline"
-                    >
-                        Sign up
-                    </Link>
-                </p>
+                        <div className="relative">
+                            <div className="absolute inset-0 flex items-center">
+                                <span className="w-full border-t" />
+                            </div>
+                            <div className="relative flex justify-center text-xs">
+                                <span className="bg-card px-2 text-muted-foreground">
+                                    or continue with
+                                </span>
+                            </div>
+                        </div>
+
+                        <div className="flex justify-center">
+                            <GoogleLogin
+                                theme="filled_black"
+                                shape="rectangular"
+                                onSuccess={handleGoogleSuccess}
+                                onError={() =>
+                                    toast.error("Google sign-in failed.")
+                                }
+                            />
+                        </div>
+                    </CardContent>
+
+                    <CardFooter className="justify-center">
+                        <p className="text-sm text-muted-foreground">
+                            Don't have an account?{" "}
+                            <Link
+                                to="/register"
+                                className="font-medium text-foreground underline-offset-4 hover:text-foreground hover:underline"
+                            >
+                                Sign up
+                            </Link>
+                        </p>
+                    </CardFooter>
+                </Card>
             </div>
         </div>
     );

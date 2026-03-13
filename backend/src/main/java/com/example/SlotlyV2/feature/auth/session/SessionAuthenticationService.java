@@ -54,7 +54,7 @@ public class SessionAuthenticationService {
             return user;
         }
 
-        return null;
+        throw new UnauthorizedAccessException("User not authenticated");
     }
 
     private Authentication authenticate(String email, String password) {
@@ -62,7 +62,7 @@ public class SessionAuthenticationService {
             return authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(email, password));
         } catch (DisabledException e) {
-            throw new AccountNotVerifiedException("Please verify your account first");
+            throw new AccountNotVerifiedException("Please verify your account");
         } catch (BadCredentialsException e) {
             throw new InvalidCredentialsException("Invalid email or password");
         }

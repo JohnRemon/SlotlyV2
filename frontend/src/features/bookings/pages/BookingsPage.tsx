@@ -1,16 +1,19 @@
-import axios from "axios";
+import { CalendarX, Loader2Icon } from "lucide-react";
 import { useState } from "react";
-import toast from "react-hot-toast";
+import { useSearchParams } from "react-router";
+import { toast } from "sonner";
+import { useApiError } from "@/hooks/useApiError";
+import { Button } from "@/components/ui/button";
 import { BookingCard } from "../components/BookingCard";
 import { BookingDetailModal } from "../components/BookingDetailModal";
 import { CancelBookingModal } from "../components/CancelBookingModal";
-import { useBookings } from "../hooks/useBookings";
-import type { Booking, BookingTab } from "../types/Booking";
+import {
+    useBookings,
+    useCancelBooking,
+    useNoShow,
+} from "../hooks/useBookings";
+import type { BookingResponse, BookingTab } from "../types/Booking";
 import { isPast } from "../utils/DateUtils";
-import { useSearchParams } from "react-router";
-import { CalendarX } from "lucide-react";
-
-// ─── Tab Config ───────────────────────────────────────────────────────────────
 
 const TABS: { label: string; value: BookingTab }[] = [
     { label: "Upcoming", value: "CONFIRMED" },
@@ -19,20 +22,23 @@ const TABS: { label: string; value: BookingTab }[] = [
     { label: "Past", value: "PAST" },
 ];
 
-// ─── Component ───────────────────────────────────────────────────────────────
-
 const BookingsPage = () => {
-    const { bookings, isLoading, cancel, noShow } = useBookings();
+    const { data: bookings = [], isLoading } = useBookings();
+    const cancelBookingMutation = useCancelBooking();
+    const noShowMutation = useNoShow();
+    const handleError = useApiError();
 
     const [searchParams, setSearchParams] = useSearchParams();
-    const [viewBooking, setViewBooking] = useState<Booking | null>(null);
-    const [cancelBooking, setCancelBooking] = useState<Booking | null>(null);
+    const [viewBooking, setViewBooking] = useState<BookingResponse | null>(
+        null,
+    );
+    const [cancelBooking, setCancelBooking] = useState<BookingResponse | null>(
+        null,
+    );
 
     const activeTab = (searchParams.get("tab") as BookingTab) ?? "CONFIRMED";
 
-    const handleTabChange = (tab: BookingTab) => {
-        setSearchParams({ tab });
-    };
+    const handleTabChange = (tab: BookingTab) => setSearchParams({ tab });
 
     const filtered = bookings.filter((booking) => {
         if (activeTab === "CONFIRMED") {
@@ -41,13 +47,11 @@ const BookingsPage = () => {
                 !isPast(booking.endTime)
             );
         }
-
         if (activeTab === "PAST") {
             return (
                 booking.bookingStatus === "CONFIRMED" && isPast(booking.endTime)
             );
         }
-
         return booking.bookingStatus === activeTab;
     });
 
@@ -57,64 +61,70 @@ const BookingsPage = () => {
         reason: string,
     ) => {
         try {
-            await cancel(id, attendeeEmail, reason);
+            await cancelBookingMutation.mutateAsync({
+                id,
+                request: {
+                    bookingId: id,
+                    attendeeEmail,
+                    cancellationReason: reason,
+                },
+            });
             toast.success("Booking cancelled.");
-        } catch (error) {
-            if (axios.isAxiosError(error)) {
-                toast.error(error.response?.data?.message);
-            } else {
-                toast.error("Something went wrong.");
-            }
+        } catch (e) {
+            handleError(e);
         }
     };
 
-    const handleNoShow = async (booking: Booking) => {
+    const handleNoShow = async (booking: BookingResponse) => {
         try {
-            await noShow(booking.id);
+            await noShowMutation.mutateAsync(booking.id);
             toast.success("Marked as no-show.");
-        } catch (error) {
-            if (axios.isAxiosError(error)) {
-                toast.error(error.response?.data?.message);
-            } else {
-                toast.error("Something went wrong.");
-            }
+        } catch (e) {
+            handleError(e);
         }
     };
 
     return (
-        <div className="max-w-7xl mx-auto py-8 px-4 flex flex-col gap-6">
-            {/* Tabs */}
-            <div className="flex items-center gap-1 bg-base-300 p-1 rounded-2xl w-fit">
+        <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-8">
+            <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0">
+                    <h1 className="text-base font-semibold tracking-[-0.01em]">
+                        Bookings
+                    </h1>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                        Review attendee details, reschedule, cancel, and mark
+                        no-shows.
+                    </p>
+                </div>
+            </div>
+
+            <div className="inline-flex w-fit items-center gap-1 rounded-xl bg-muted/40 p-1 ring-1 ring-border">
                 {TABS.map(({ label, value }) => (
-                    <button
+                    <Button
                         key={value}
+                        type="button"
                         onClick={() => handleTabChange(value)}
-                        className={`px-3 py-1.5 rounded-xl text-sm font-medium transition-all cursor-pointer ${
-                            activeTab === value
-                                ? "bg-base-100 text-base-content shadow-sm"
-                                : "text-base-content/50 hover:text-base-content hover:bg-base-200"
-                        }`}
+                        size="sm"
+                        variant={activeTab === value ? "secondary" : "ghost"}
+                        className="h-8 rounded-lg px-3"
                     >
                         {label}
-                    </button>
+                    </Button>
                 ))}
             </div>
 
-            {/* List */}
             {isLoading ? (
                 <div className="flex justify-center py-16">
-                    <span className="loading loading-spinner loading-md text-primary" />
+                    <Loader2Icon className="size-5 animate-spin text-muted-foreground" />
                 </div>
             ) : filtered.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-16 gap-4 border-2 border-dotted border-base-content/30 rounded-sm">
-                    <div className="w-14 h-14 rounded-full bg-base-300 flex items-center justify-center">
-                        <CalendarX className="w-6 h-6 text-base-content/30" />
+                <div className="flex flex-col items-center justify-center gap-4 rounded-xl border border-dashed border-border bg-card/20 p-10 text-center">
+                    <div className="flex size-14 items-center justify-center rounded-full bg-muted ring-1 ring-border">
+                        <CalendarX className="size-6 text-muted-foreground" />
                     </div>
-                    <div className="text-center">
-                        <p className="font-semibold text-base-content/60 text-sm">
-                            No {activeTab.toLowerCase()} bookings yet
-                        </p>
-                    </div>
+                    <p className="text-sm font-medium text-muted-foreground">
+                        No {activeTab.toLowerCase()} bookings yet
+                    </p>
                 </div>
             ) : (
                 <div className="flex flex-col gap-2">
@@ -123,14 +133,11 @@ const BookingsPage = () => {
                             key={booking.id}
                             booking={booking}
                             onView={setViewBooking}
-                            onCancel={setCancelBooking}
-                            onNoShow={handleNoShow}
                         />
                     ))}
                 </div>
             )}
 
-            {/* Modals */}
             <BookingDetailModal
                 booking={viewBooking}
                 onClose={() => setViewBooking(null)}

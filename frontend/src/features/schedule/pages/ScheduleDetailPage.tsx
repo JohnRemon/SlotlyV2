@@ -1,15 +1,25 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router";
-import { ChevronLeft, Pencil, Check, X } from "lucide-react";
-import toast from "react-hot-toast";
-import axios from "axios";
 import {
-    getScheduleById,
-    updateSchedule,
-    updateScheduleName,
-} from "../api/SchedulesApi";
-import type { DailySchedule, Schedule } from "../types/Schedule";
+    CheckIcon,
+    ChevronLeft,
+    Loader2Icon,
+    PencilIcon,
+    XIcon,
+} from "lucide-react";
+import { toast } from "sonner";
+import axios from "axios";
+import { SchedulesApi } from "../api/SchedulesApi";
+import type {
+    DailyScheduleResponse,
+    ScheduleResponse,
+} from "../types/Schedule";
 import { useSchedulesContext } from "../context/schedulesContextStore";
+
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 
 const DAY_NAMES = [
     "",
@@ -22,15 +32,18 @@ const DAY_NAMES = [
     "Sunday",
 ];
 
-const toTimeInput = (time: string) => time.slice(0, 5);
+const DEFAULT_DAY_START = "09:00";
+const DEFAULT_DAY_END = "17:00";
+
+const toTimeInput = (time?: string | null) => (time ? time.slice(0, 5) : "");
 
 const ScheduleDetailPage = () => {
     const { id } = useParams() as { id: string };
     const navigate = useNavigate();
     const { updateLocal } = useSchedulesContext();
 
-    const [schedule, setSchedule] = useState<Schedule | null>(null);
-    const [days, setDays] = useState<DailySchedule[]>([]);
+    const [schedule, setSchedule] = useState<ScheduleResponse | null>(null);
+    const [days, setDays] = useState<DailyScheduleResponse[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
 
@@ -41,8 +54,9 @@ const ScheduleDetailPage = () => {
     const nameInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
-        getScheduleById(id)
-            .then((s) => {
+        SchedulesApi.getById(id)
+            .then((res) => {
+                const s = res.data.data;
                 setSchedule(s);
                 setDays(
                     [...s.dailySchedules].sort(
@@ -81,7 +95,8 @@ const ScheduleDetailPage = () => {
         if (!draftName.trim() || !schedule) return;
         setIsRenaming(true);
         try {
-            const updated = await updateScheduleName(draftName.trim(), id);
+            const updated = (await SchedulesApi.updateName(id, draftName.trim()))
+                .data.data;
             setSchedule(updated);
             updateLocal(updated);
             setEditingName(false);
@@ -99,7 +114,10 @@ const ScheduleDetailPage = () => {
         }
     };
 
-    const updateDay = (dayOfWeek: number, patch: Partial<DailySchedule>) => {
+    const updateDay = (
+        dayOfWeek: number,
+        patch: Partial<DailyScheduleResponse>,
+    ) => {
         setDays((prev) =>
             prev.map((schedule) =>
                 schedule.dayOfWeek === dayOfWeek
@@ -111,21 +129,28 @@ const ScheduleDetailPage = () => {
 
     const handleSave = async () => {
         if (!schedule) return;
+
+        const invalidAvailableDay = days.find(
+            (day) => day.isAvailable && (!day.startTime || !day.endTime),
+        );
+
+        if (invalidAvailableDay) {
+            toast.error("Available days must have both a start and end time");
+            return;
+        }
+
         setIsSaving(true);
         try {
-            const updated = await updateSchedule(
-                {
-                    name: schedule.name,
-                    isDefault: schedule.isDefault,
+            const updated = (
+                await SchedulesApi.updateDays(id, {
                     days: days.map((schedule) => ({
                         dayOfWeek: schedule.dayOfWeek,
                         startTime: schedule.startTime,
                         endTime: schedule.endTime,
                         isAvailable: schedule.isAvailable,
                     })),
-                },
-                id,
-            );
+                })
+            ).data.data;
             setSchedule(updated);
             updateLocal(updated);
             setDays(
@@ -148,36 +173,40 @@ const ScheduleDetailPage = () => {
     if (isLoading)
         return (
             <div className="flex items-center justify-center h-64">
-                <span className="loading loading-spinner loading-md text-primary" />
+                <Loader2Icon className="size-5 animate-spin text-muted-foreground" />
             </div>
         );
 
     if (!schedule)
         return (
-            <div className="flex items-center justify-center h-64 text-base-content/40 text-sm">
+            <div className="flex items-center justify-center h-64 text-sm text-muted-foreground">
                 Schedule not found.
             </div>
         );
 
     return (
-        <div className="p-6 max-w-3xl mx-auto">
+        <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8">
             {/* Header */}
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
-                    <button
-                        className="btn btn-ghost btn-sm btn-circle"
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="rounded-full"
                         onClick={() => navigate(-1)}
+                        aria-label="Back"
                     >
-                        <ChevronLeft className="w-4 h-4" />
-                    </button>
+                        <ChevronLeft className="size-4" />
+                    </Button>
                     <div>
                         <div className="flex items-center gap-2">
                             {editingName ? (
                                 <div className="flex items-center gap-1.5">
-                                    <input
+                                    <Input
                                         ref={nameInputRef}
                                         type="text"
-                                        className="input input-bordered input-sm outline-none text-base font-bold w-48"
+                                        className="h-8 w-56 text-base font-semibold"
                                         value={draftName}
                                         onChange={(e) =>
                                             setDraftName(e.target.value)
@@ -189,60 +218,64 @@ const ScheduleDetailPage = () => {
                                                 cancelEditing();
                                         }}
                                     />
-                                    <button
+                                    <Button
                                         type="button"
-                                        className="btn btn-ghost btn-xs btn-square text-success"
+                                        variant="ghost"
+                                        size="icon-sm"
+                                        className="text-primary"
                                         disabled={isRenaming}
                                         onClick={handleRenameSave}
+                                        aria-label="Save name"
                                     >
                                         {isRenaming ? (
-                                            <span className="loading loading-spinner loading-xs" />
+                                            <Loader2Icon className="size-4 animate-spin" />
                                         ) : (
-                                            <Check className="w-3.5 h-3.5" />
+                                            <CheckIcon className="size-4" />
                                         )}
-                                    </button>
-                                    <button
+                                    </Button>
+                                    <Button
                                         type="button"
-                                        className="btn btn-ghost btn-xs btn-square"
+                                        variant="ghost"
+                                        size="icon-sm"
                                         onClick={cancelEditing}
+                                        aria-label="Cancel rename"
                                     >
-                                        <X className="w-3.5 h-3.5" />
-                                    </button>
+                                        <XIcon className="size-4" />
+                                    </Button>
                                 </div>
                             ) : (
                                 <div className="flex items-center gap-2">
-                                    <h1 className="text-lg font-bold text-base-content">
+                                    <h1 className="text-base font-semibold tracking-[-0.01em]">
                                         {schedule.name}
                                     </h1>
                                     {schedule.isDefault && (
-                                        <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded-md font-medium">
+                                        <Badge variant="secondary">
                                             Default
-                                        </span>
+                                        </Badge>
                                     )}
-                                    <button
+                                    <Button
                                         type="button"
-                                        className="btn btn-ghost btn-xs btn-square text-base-content/40 hover:text-base-content"
+                                        variant="ghost"
+                                        size="icon-sm"
+                                        className="text-muted-foreground"
                                         onClick={startEditing}
+                                        aria-label="Rename schedule"
                                     >
-                                        <Pencil className="w-3.5 h-3.5" />
-                                    </button>
+                                        <PencilIcon className="size-4" />
+                                    </Button>
                                 </div>
                             )}
                         </div>
                     </div>
                 </div>
 
-                <button
-                    className="btn btn-primary btn-sm"
-                    onClick={handleSave}
-                    disabled={isSaving}
-                >
+                <Button type="button" onClick={handleSave} disabled={isSaving}>
                     {isSaving ? (
-                        <span className="loading loading-spinner loading-xs" />
+                        <Loader2Icon className="size-4 animate-spin" />
                     ) : (
                         "Save"
                     )}
-                </button>
+                </Button>
             </div>
 
             {/* Days */}
@@ -250,30 +283,39 @@ const ScheduleDetailPage = () => {
                 {days.map((day) => (
                     <div
                         key={day.dayOfWeek}
-                        className="flex items-center gap-4 px-4 py-3.5 border border-base-300 rounded-xl"
+                        className="flex items-center gap-4 rounded-xl bg-card px-4 py-3.5 ring-1 ring-foreground/10"
                     >
-                        <input
-                            type="checkbox"
-                            className="toggle toggle-primary toggle-sm shrink-0"
+                        <Switch
                             checked={day.isAvailable}
-                            onChange={(e) =>
+                            onCheckedChange={(checked) =>
                                 updateDay(day.dayOfWeek, {
-                                    isAvailable: e.target.checked,
+                                    isAvailable: checked,
+                                    startTime: checked
+                                        ? day.startTime ?? DEFAULT_DAY_START
+                                        : day.startTime,
+                                    endTime: checked
+                                        ? day.endTime ?? DEFAULT_DAY_END
+                                        : day.endTime,
                                 })
                             }
                         />
 
                         <span
-                            className={`text-sm font-medium w-24 shrink-0 ${!day.isAvailable ? "text-base-content/30" : ""}`}
+                            className={
+                                "w-24 shrink-0 text-sm font-medium " +
+                                (!day.isAvailable
+                                    ? "text-muted-foreground/60"
+                                    : "")
+                            }
                         >
                             {DAY_NAMES[day.dayOfWeek]}
                         </span>
 
                         {day.isAvailable ? (
                             <div className="flex items-center gap-2 flex-1">
-                                <input
+                                <Input
                                     type="time"
-                                    className="input input-bordered input-sm outline-none w-32"
+                                    className="h-8 w-32"
                                     value={toTimeInput(day.startTime)}
                                     onChange={(e) =>
                                         updateDay(day.dayOfWeek, {
@@ -281,12 +323,12 @@ const ScheduleDetailPage = () => {
                                         })
                                     }
                                 />
-                                <span className="text-base-content/40 text-sm">
+                                <span className="text-sm text-muted-foreground">
                                     –
                                 </span>
-                                <input
+                                <Input
                                     type="time"
-                                    className="input input-bordered input-sm outline-none w-32"
+                                    className="h-8 w-32"
                                     value={toTimeInput(day.endTime)}
                                     onChange={(e) =>
                                         updateDay(day.dayOfWeek, {
@@ -296,7 +338,7 @@ const ScheduleDetailPage = () => {
                                 />
                             </div>
                         ) : (
-                            <span className="text-sm text-base-content/30 flex-1">
+                            <span className="flex-1 text-sm text-muted-foreground/60">
                                 Unavailable
                             </span>
                         )}

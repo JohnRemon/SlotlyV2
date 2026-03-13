@@ -5,22 +5,30 @@ import {
     FileText,
     Mail,
     RotateCcw,
-    X,
+    XIcon,
 } from "lucide-react";
 import { useNavigate } from "react-router";
-import type { Booking } from "../types/Booking";
+import type { BookingResponse } from "../types/Booking";
 import { isPast, formatDate, formatTime } from "../utils/DateUtils";
 
-// ─── Props ───────────────────────────────────────────────────────────────────
+import { Button } from "@/components/ui/button";
+import {
+    Dialog,
+    DialogClose,
+    DialogContent,
+    DialogTitle,
+} from "@/components/ui/dialog";
+
+// --- Props -------------------------------------------------------------------
 
 interface BookingDetailModalProps {
-    booking: Booking | null;
+    booking: BookingResponse | null;
     onClose: () => void;
-    onCancel: (booking: Booking) => void;
-    onNoShow: (booking: Booking) => void;
+    onCancel: (booking: BookingResponse) => void;
+    onNoShow: (booking: BookingResponse) => void;
 }
 
-// ─── Component ───────────────────────────────────────────────────────────────
+// --- Component ---------------------------------------------------------------
 
 export const BookingDetailModal = ({
     booking,
@@ -39,166 +47,197 @@ export const BookingDetailModal = ({
         booking.formAnswers !== undefined && booking.formAnswers.length > 0;
 
     return (
-        <dialog className="modal modal-open">
-            <div className="modal-box rounded-2xl max-w-lg w-full p-0 overflow-hidden max-h-[90vh] flex flex-col">
-                {/* ── Header ── */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-base-300 shrink-0">
-                    <h3 className="font-bold text-base">Booking Details</h3>
-                    <button
-                        className="btn btn-ghost btn-xs btn-circle"
-                        onClick={onClose}
-                    >
-                        <X className="w-4 h-4" />
-                    </button>
+        <Dialog open onOpenChange={(open) => !open && onClose()}>
+            <DialogContent
+                showCloseButton={false}
+                // TODO: change hardcoded values
+                className="max-h-[calc(100dvh-2rem)] gap-0 overflow-hidden p-0 sm:max-w-lg"
+            >
+                <div className="flex items-center justify-between border-b px-6 py-4">
+                    <DialogTitle>Booking details</DialogTitle>
+                    <DialogClose asChild>
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon-sm"
+                            className="rounded-full"
+                            aria-label="Close"
+                        >
+                            <XIcon className="size-4" />
+                            <span className="sr-only">Close</span>
+                        </Button>
+                    </DialogClose>
                 </div>
 
-                {/* ── Scrollable Body ── */}
-                <div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-5">
-                    {/* Attendee */}
-                    <div className="flex items-center gap-3">
-                        <div className="w-11 h-11 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold shrink-0">
-                            {booking.attendeeName[0].toUpperCase()}
+                <div className="flex-1 overflow-y-auto px-6 py-5">
+                    <div className="flex flex-col gap-5">
+                        {/* Attendee */}
+                        <div className="flex items-center gap-3">
+                            <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary ring-1 ring-primary/15">
+                                <span className="text-sm font-bold">
+                                    {booking.attendeeName[0].toUpperCase()}
+                                </span>
+                            </div>
+                            <div className="min-w-0">
+                                <p className="truncate text-sm font-semibold">
+                                    {booking.attendeeName}
+                                </p>
+                                <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
+                                    <Mail className="size-3" />
+                                    <span className="truncate">
+                                        {booking.attendeeEmail}
+                                    </span>
+                                </p>
+                            </div>
                         </div>
-                        <div>
-                            <p className="font-semibold text-sm">
-                                {booking.attendeeName}
-                            </p>
-                            <p className="text-xs text-base-content/50 flex items-center gap-1">
-                                <Mail className="w-3 h-3" />{" "}
-                                {booking.attendeeEmail}
-                            </p>
-                        </div>
-                    </div>
 
-                    <div className="divider my-0" />
+                        <div className="h-px bg-border" />
 
-                    {/* Booking Details */}
-                    <div className="flex flex-col gap-3 text-sm">
-                        <Row
-                            icon={<Calendar className="w-4 h-4" />}
-                            label="Date"
-                            value={formatDate(booking.startTime)}
-                        />
-                        <Row
-                            icon={<Clock className="w-4 h-4" />}
-                            label="Time"
-                            value={`${formatTime(booking.startTime)} – ${formatTime(booking.endTime)}`}
-                        />
-                        <Row
-                            icon={<FileText className="w-4 h-4" />}
-                            label="Event"
-                            value={booking.eventName}
-                        />
-                        {booking.notes && (
+                        {/* Booking details */}
+                        <div className="flex flex-col gap-3 text-sm">
                             <Row
-                                icon={<FileText className="w-4 h-4" />}
-                                label="Notes"
-                                value={booking.notes}
+                                icon={<Calendar className="size-4" />}
+                                label="Date"
+                                value={formatDate(booking.startTime)}
                             />
+                            <Row
+                                icon={<Clock className="size-4" />}
+                                label="Time"
+                                value={`${formatTime(booking.startTime)} – ${formatTime(booking.endTime)}`}
+                            />
+                            <Row
+                                icon={<FileText className="size-4" />}
+                                label="Event"
+                                value={booking.eventName}
+                            />
+                            {booking.notes && (
+                                <Row
+                                    icon={<FileText className="size-4" />}
+                                    label="Notes"
+                                    value={booking.notes}
+                                />
+                            )}
+                        </div>
+
+                        {/* Cancellation info */}
+                        {isCancelled && (
+                            <>
+                                <div className="h-px bg-border" />
+                                <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-4">
+                                    <p className="text-xs font-semibold uppercase tracking-wide text-destructive">
+                                        Cancellation
+                                    </p>
+
+                                    <div className="mt-3 flex flex-col gap-3">
+                                        {booking.cancelledAt && (
+                                            <Row
+                                                icon={
+                                                    <Clock className="size-4" />
+                                                }
+                                                label="Cancelled at"
+                                                value={formatDate(
+                                                    booking.cancelledAt,
+                                                )}
+                                            />
+                                        )}
+                                        {booking.cancellationReason ? (
+                                            <Row
+                                                icon={
+                                                    <Ban className="size-4" />
+                                                }
+                                                label="Reason"
+                                                value={
+                                                    booking.cancellationReason
+                                                }
+                                            />
+                                        ) : (
+                                            <p className="text-xs text-muted-foreground">
+                                                No reason provided.
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+                            </>
+                        )}
+
+                        {/* Form submissions */}
+                        {hasFormAnswers && (
+                            <>
+                                <div className="h-px bg-border" />
+                                <div className="flex flex-col gap-3">
+                                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                        Form response
+                                    </p>
+                                    {booking.formAnswers!.map((answer) => (
+                                        <div
+                                            key={`${answer.fieldLabel}-${answer.fieldResponse}`}
+                                            className="flex flex-col gap-0.5"
+                                        >
+                                            <p className="text-xs text-muted-foreground">
+                                                {answer.fieldLabel}
+                                            </p>
+                                            <p className="text-sm font-medium">
+                                                {answer.fieldResponse}
+                                            </p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </>
                         )}
                     </div>
-
-                    {/* Cancellation Info */}
-                    {isCancelled && (
-                        <>
-                            <div className="divider my-0" />
-                            <div className="bg-error/5 border border-error/20 rounded-xl px-4 py-3 flex flex-col gap-2">
-                                <p className="text-xs font-semibold text-error uppercase tracking-wide">
-                                    Cancellation
-                                </p>
-                                {booking.cancelledAt && (
-                                    <Row
-                                        icon={<Clock className="w-4 h-4" />}
-                                        label="Cancelled at"
-                                        value={formatDate(booking.cancelledAt)}
-                                    />
-                                )}
-                                {booking.cancellationReason ? (
-                                    <Row
-                                        icon={<Ban className="w-4 h-4" />}
-                                        label="Reason"
-                                        value={booking.cancellationReason}
-                                    />
-                                ) : (
-                                    <p className="text-xs text-base-content/40">
-                                        No reason provided.
-                                    </p>
-                                )}
-                            </div>
-                        </>
-                    )}
-
-                    {/* Form Submissions */}
-                    {hasFormAnswers && (
-                        <>
-                            <div className="divider my-0" />
-                            <div className="flex flex-col gap-3">
-                                <p className="text-xs font-semibold text-base-content/40 uppercase tracking-wide">
-                                    Form Response
-                                </p>
-                                {booking.formAnswers!.map((answer, i) => (
-                                    <div
-                                        key={i}
-                                        className="flex flex-col gap-0.5"
-                                    >
-                                        <p className="text-xs text-base-content/40">
-                                            {answer.fieldLabel}
-                                        </p>
-                                        <p className="text-sm text-base-content font-medium">
-                                            {answer.fieldAnswer}
-                                        </p>
-                                    </div>
-                                ))}
-                            </div>
-                        </>
-                    )}
                 </div>
 
-                {/* ── Footer ── */}
                 {(isUpcoming || isCancelled) && (
-                    <div className="flex gap-2 px-6 py-4 border-t border-base-300 shrink-0">
+                    <div className="flex gap-2 border-t bg-muted/40 px-6 py-4">
                         {isCancelled && (
-                            <button
-                                className="btn btn-outline btn-sm flex-1 gap-2"
+                            <Button
+                                type="button"
+                                variant="outline"
+                                className="flex-1 gap-2"
                                 onClick={() => {
                                     navigate(`/reschedule/${booking.id}`);
                                     onClose();
                                 }}
                             >
-                                <RotateCcw className="w-4 h-4" /> Reschedule
-                            </button>
+                                <RotateCcw className="size-4" />
+                                Reschedule
+                            </Button>
                         )}
+
                         {isUpcoming && (
                             <>
-                                <button
-                                    className="btn btn-outline btn-sm flex-1"
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    className="flex-1"
                                     onClick={() => {
                                         onNoShow(booking);
                                         onClose();
                                     }}
                                 >
                                     Mark no-show
-                                </button>
-                                <button
-                                    className="btn btn-error btn-sm flex-1"
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="destructive"
+                                    className="flex-1"
                                     onClick={() => {
                                         onCancel(booking);
                                         onClose();
                                     }}
                                 >
                                     Cancel booking
-                                </button>
+                                </Button>
                             </>
                         )}
                     </div>
                 )}
-            </div>
-            <div className="modal-backdrop" onClick={onClose} />
-        </dialog>
+            </DialogContent>
+        </Dialog>
     );
 };
 
-// ─── Row ─────────────────────────────────────────────────────────────────────
+// --- Row ---------------------------------------------------------------------
 
 const Row = ({
     icon,
@@ -210,10 +249,10 @@ const Row = ({
     value: string;
 }) => (
     <div className="flex items-start gap-3">
-        <span className="text-base-content/40 mt-0.5">{icon}</span>
+        <span className="mt-0.5 text-muted-foreground">{icon}</span>
         <div>
-            <p className="text-xs text-base-content/40">{label}</p>
-            <p className="text-base-content font-medium">{value}</p>
+            <p className="text-xs text-muted-foreground">{label}</p>
+            <p className="font-medium text-foreground">{value}</p>
         </div>
     </div>
 );

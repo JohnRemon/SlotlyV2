@@ -1,16 +1,17 @@
+import type { PublicEventResponse } from "@/features/events/types/Event";
+import { SlotsApi } from "@/features/slots/api/SlotsApi";
+import type { SlotResponse } from "@/features/slots/types/Slots";
 import axios from "axios";
+import { Loader2Icon } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router";
+import { toast } from "sonner";
 import { BookingForm } from "../components/BookingForm";
 import { EventPanel } from "../components/BookingPanel";
 import { BookingSuccess } from "../components/BookingSucces";
-import { SlotsPanel } from "../components/SlotsPanel";
 import { CalendarPanel } from "../components/CalendarPanel";
-import { getPublicEvent } from "@/features/events/api/EventsApi";
-import type { PublicEvent } from "@/features/events/types/Event";
-import type { Slot } from "@/features/slots/types/Slots";
-import { toast } from "sonner";
-import { getAvailableSlots } from "@/features/slots/api/SlotsApi";
+import { SlotsPanel } from "../components/SlotsPanel";
+import { EventsApi } from "@/features/events/api/EventsApi";
 
 const formatDate = (iso: string) =>
     new Date(iso).toLocaleDateString("en-US", {
@@ -25,21 +26,21 @@ const formatTime = (iso: string) =>
         minute: "2-digit",
     });
 
-const BookingPage = () => {
+const SlotsPage = () => {
     const { shareableId } = useParams() as { shareableId: string };
 
-    const [event, setEvent] = useState<PublicEvent | null>(null);
+    const [event, setEvent] = useState<PublicEventResponse | null>(null);
     const [isLoadingEvent, setLoadingEvent] = useState(true);
-    const [slots, setSlots] = useState<Slot[]>([]);
+    const [slots, setSlots] = useState<SlotResponse[]>([]);
     const [isLoadingSlots, setLoadingSlots] = useState(false);
     const [selectedDate, setSelectedDate] = useState<string | null>(null);
-    const [selectedSlot, setSelectedSlot] = useState<Slot | null>(null);
+    const [selectedSlot, setSelectedSlot] = useState<SlotResponse | null>(null);
     const [showForm, setShowForm] = useState(false);
     const [booked, setBooked] = useState(false);
 
     useEffect(() => {
-        getPublicEvent(shareableId)
-            .then(setEvent)
+        EventsApi.getByShareableId(shareableId)
+            .then((res) => setEvent(res.data.data))
             .catch((error) => {
                 if (axios.isAxiosError(error)) {
                     toast.error(error.response?.data?.message);
@@ -57,8 +58,8 @@ const BookingPage = () => {
             setShowForm(false);
             setLoadingSlots(true);
             try {
-                const data = await getAvailableSlots(shareableId, date);
-                setSlots(data);
+                const res = await SlotsApi.getAvailable(shareableId, date);
+                setSlots(res.data.content);
             } catch (error) {
                 if (axios.isAxiosError(error)) {
                     toast.error(error.response?.data?.message);
@@ -83,29 +84,29 @@ const BookingPage = () => {
         handleSelectDate(dateStr);
     }, [event, handleSelectDate]);
 
-    const handleSelectSlot = (slot: Slot) => {
+    const handleSelectSlot = (slot: SlotResponse) => {
         setSelectedSlot(slot);
         setShowForm(true);
     };
 
     if (isLoadingEvent)
         return (
-            <div className="min-h-screen flex items-center justify-center">
-                <span className="loading loading-spinner loading-md text-primary" />
+            <div className="flex min-h-dvh items-center justify-center bg-background">
+                <Loader2Icon className="size-5 animate-spin text-muted-foreground" />
             </div>
         );
 
     if (!event)
         return (
-            <div className="min-h-screen flex items-center justify-center text-base-content/40 text-sm">
+            <div className="flex min-h-dvh items-center justify-center bg-background text-sm text-muted-foreground">
                 Event not found.
             </div>
         );
 
     if (booked)
         return (
-            <div className="min-h-screen bg-base-200 flex items-center justify-center px-4">
-                <div className="bg-base-100 rounded-2xl border border-base-300 p-10 max-w-md w-full">
+            <div className="flex min-h-dvh items-center justify-center bg-linear-to-b from-background to-muted/30 px-4 py-10">
+                <div className="w-full max-w-md rounded-2xl bg-card p-10 ring-1 ring-foreground/10">
                     <BookingSuccess eventName={event.eventName} />
                 </div>
             </div>
@@ -116,13 +117,13 @@ const BookingPage = () => {
         : undefined;
 
     return (
-        <div className="min-h-screen bg-base-200 flex items-center justify-center px-4 py-10">
+        <div className="flex min-h-dvh items-center justify-center bg-linear-to-b from-background to-muted/30 px-4 py-10">
             <div
-                className={`bg-base-100 rounded-2xl border border-base-300 w-full overflow-hidden shadow-sm transition-all duration-300 ${showForm ? "max-w-4xl" : "max-w-6xl"}`}
+                className={`w-full overflow-hidden rounded-2xl bg-card shadow-sm ring-1 ring-foreground/10 transition-all duration-300 ${showForm ? "max-w-4xl" : "max-w-6xl"}`}
             >
-                {/* ── 3-col: Event + Calendar + Slots ── */}
+                {/* -- 3-col: Event + Calendar + Slots -- */}
                 {!showForm && (
-                    <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-base-300 items-stretch">
+                    <div className="grid grid-cols-1 items-stretch divide-y divide-border md:grid-cols-3 md:divide-y-0 md:divide-x">
                         {/* Left: Event Details */}
                         <div className="px-7 py-8">
                             <EventPanel
@@ -145,14 +146,14 @@ const BookingPage = () => {
                         <div className="px-6 py-8 min-h-96 flex flex-col">
                             {!selectedDate ? (
                                 <div className="flex-1 flex items-center justify-center">
-                                    <p className="text-sm text-base-content/40 text-center">
+                                    <p className="text-center text-sm text-muted-foreground">
                                         Select a date to see available time
                                         slots.
                                     </p>
                                 </div>
                             ) : (
                                 <div className="flex-1 flex flex-col overflow-hidden">
-                                    <p className="text-sm font-semibold text-base-content mb-4">
+                                    <p className="mb-4 text-sm font-semibold">
                                         {formatDate(selectedDate + "T00:00:00")}
                                     </p>
                                     <SlotsPanel
@@ -169,9 +170,9 @@ const BookingPage = () => {
                     </div>
                 )}
 
-                {/* ── 2-col: Event + Booking Form ── */}
+                {/* -- 2-col: Event + Booking Form -- */}
                 {showForm && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-base-300">
+                    <div className="grid grid-cols-1 divide-y divide-border md:grid-cols-2 md:divide-y-0 md:divide-x">
                         {/* Left: Event Details */}
                         <div className="px-7 py-8">
                             <EventPanel
@@ -199,4 +200,4 @@ const BookingPage = () => {
     );
 };
 
-export default BookingPage;
+export default SlotsPage;

@@ -1,41 +1,42 @@
-import { Outlet, useNavigate, useLocation } from "react-router";
-import Sidebar from "../components/layout/Sidebar";
-import { useAuth } from "../features/auth/hooks/useAuth";
-import { logout } from "../features/auth/api/AuthApi";
-import toast from "react-hot-toast";
+import { Outlet, useNavigate } from "react-router";
 
-type ActiveLink = "Events" | "Bookings" | "Schedules" | "Apps";
+import { toast } from "sonner";
+import Sidebar from "../components/common/Sidebar";
+import { useAuth } from "../features/auth/hooks/useAuth";
+
+import { AuthApi } from "@/features/auth/api/AuthApi";
 
 const DashboardPage = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
-    const location = useLocation();
+
+    const username = user
+        ? `${user.firstName} ${user.lastName}`
+        : "Slotly user";
+    const avatarChar = user?.firstName?.[0]?.toUpperCase() ?? "S";
 
     const handleLogout = () => {
-        logout();
+        AuthApi.logout();
         navigate("/");
         toast.success("Successfully signed out");
     };
 
-    const getActiveLink = (pathname: string): ActiveLink => {
-        if (pathname.startsWith("/events")) return "Events";
-        if (pathname.startsWith("/bookings")) return "Bookings";
-        if (pathname.startsWith("/schedules")) return "Schedules";
-        if (pathname.startsWith("/apps")) return "Apps";
-        return "Events";
-    };
-
     return (
-        <div className="flex h-screen bg-base-200">
-            <Sidebar
-                username={`${user?.firstName} ${user?.lastName}`}
-                avatarChar={user?.firstName?.[0]}
-                activeLink={getActiveLink(location.pathname)}
-                onLogout={handleLogout}
-            />
-            <main className="flex-1 overflow-y-auto p-6">
-                <Outlet />
-            </main>
+        <div className="min-h-dvh bg-linear-to-b from-background to-muted/30">
+            <div className="grid min-h-dvh w-full grid-cols-1 md:grid-cols-[18rem_1fr]">
+                <Sidebar
+                    className="hidden md:flex"
+                    username={username}
+                    avatarChar={avatarChar}
+                    onLogout={handleLogout}
+                />
+
+                <div className="flex min-w-0 flex-col">
+                    <main className="min-w-0 flex-1 px-4 py-6 md:px-6 md:py-8">
+                        <Outlet />
+                    </main>
+                </div>
+            </div>
         </div>
     );
 };

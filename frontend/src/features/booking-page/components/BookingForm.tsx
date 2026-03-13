@@ -1,14 +1,20 @@
-import { createBooking } from "@/features/bookings/api/BookingsApi";
-import type { PublicEvent } from "@/features/events/types/Event";
-import type { Slot } from "@/features/slots/types/Slots";
-import axios from "axios";
-import { useState } from "react";
-import { toast } from "sonner";
-import type { FormField } from "../types/BookingForms";
+import type { PublicEventResponse } from "@/features/events/types/Event";
+import type { SlotResponse } from "@/features/slots/types/Slots";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2Icon } from "lucide-react";
+import { useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import type { BookingFormFieldResponse } from "../types/BookingForms";
+import { BookingsApi } from "@/features/bookings/api/BookingsApi";
+
+import FormFieldWrapper from "@/components/common/FormField";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 interface BookingFormProps {
-    event: PublicEvent;
-    slot: Slot;
+    event: PublicEventResponse;
+    slot: SlotResponse;
     onSuccess: () => void;
     onBack: () => void;
 }
@@ -22,45 +28,95 @@ const formatDateTime = (iso: string) =>
         minute: "2-digit",
     });
 
+const buildBookingFormSchema = (fields: BookingFormFieldResponse[]) =>
+    z.object({
+        attendeeName: z.string().trim().min(1, "Your name is required."),
+        attendeeEmail: z.email("Enter a valid email address."),
+        answers: z
+            .record(z.string(), z.string())
+            .superRefine((answers, ctx) => {
+                fields.forEach((field) => {
+                    if (!field.required) {
+                        return;
+                    }
+
+                    if ((answers[field.id] ?? "").trim().length === 0) {
+                        ctx.addIssue({
+                            code: "custom",
+                            path: [field.id],
+                            message: `${field.label} is required.`,
+                        });
+                    }
+                });
+            }),
+    });
+
+type BookingFormValues = {
+    attendeeName: string;
+    attendeeEmail: string;
+    answers: Record<string, string>;
+};
+
 export const BookingForm = ({
     event,
     slot,
     onSuccess,
     onBack,
 }: BookingFormProps) => {
-    const [name, setName] = useState("");
-    const [email, setEmail] = useState("");
     const [isLoading, setIsLoading] = useState(false);
-    const [answers, setAnswers] = useState<Record<string, string>>({});
 
-    const fields: FormField[] = event.bookingForm?.fields ?? [];
+    const fields: BookingFormFieldResponse[] = useMemo(
+        () => event.bookingForm?.fields.fields ?? [],
+        [event.bookingForm?.fields.fields],
+    );
 
-    const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
-        e.preventDefault();
+    const orderedFields = useMemo(
+        () => [...fields].sort((a, b) => a.displayOrder - b.displayOrder),
+        [fields],
+    );
+
+    const bookingFormSchema = useMemo(
+        () => buildBookingFormSchema(orderedFields),
+        [orderedFields],
+    );
+
+    const defaultAnswers = useMemo(
+        () =>
+            Object.fromEntries(orderedFields.map((field) => [field.id, ""])),
+        [orderedFields],
+    );
+
+    const {
+        register,
+        handleSubmit,
+        formState: { errors },
+    } = useForm<BookingFormValues>({
+        resolver: zodResolver(bookingFormSchema),
+        defaultValues: {
+            attendeeName: "",
+            attendeeEmail: "",
+            answers: defaultAnswers,
+        },
+    });
+
+    const handleBookingSubmit = async (data: BookingFormValues) => {
         setIsLoading(true);
         try {
-            await createBooking({
+            await BookingsApi.create({
                 slotId: slot.id,
-                eventId: event.id,
-                attendeeName: name,
-                attendeeEmail: email,
+                attendeeName: data.attendeeName,
+                attendeeEmail: data.attendeeEmail,
                 formSubmission:
-                    fields.length > 0
+                    orderedFields.length > 0
                         ? {
-                              answers: fields.map((f) => ({
+                              answers: orderedFields.map((f) => ({
                                   fieldId: f.id,
-                                  fieldResponse: answers[f.id] ?? "",
+                                  fieldResponse: data.answers[f.id] ?? "",
                               })),
                           }
                         : undefined,
             });
             onSuccess();
-        } catch (error) {
-            if (axios.isAxiosError(error)) {
-                toast.error(error.response?.data?.message);
-            } else {
-                toast.error("Something went wrong");
-            }
         } finally {
             setIsLoading(false);
         }
@@ -68,12 +124,11 @@ export const BookingForm = ({
 
     return (
         <div className="flex flex-col gap-5">
-            {/* Selected slot summary */}
-            <div className="bg-primary/5 border border-primary/20 rounded-xl px-4 py-3">
+            <div className="rounded-xl border border-primary/20 bg-primary/10 px-4 py-3">
                 <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-0.5">
                     Your appointment
                 </p>
-                <p className="text-sm font-medium text-base-content">
+                <p className="text-sm font-medium">
                     {formatDateTime(slot.startTime)} –{" "}
                     {new Date(slot.endTime).toLocaleTimeString("en-US", {
                         hour: "2-digit",
@@ -82,97 +137,97 @@ export const BookingForm = ({
                 </p>
             </div>
 
-            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-                {/* Name */}
-                <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-medium">Your name</label>
-                    <input
+            <form
+                onSubmit={handleSubmit(handleBookingSubmit)}
+                className="flex flex-col gap-4"
+                noValidate
+            >
+                <FormFieldWrapper
+                    id="booking-name"
+                    label="Your name"
+                    required
+                    hint={
+                        errors.attendeeName?.message ? (
+                            <span className="text-destructive">
+                                {errors.attendeeName.message}
+                            </span>
+                        ) : undefined
+                    }
+                >
+                    <Input
+                        id="booking-name"
                         type="text"
-                        className="input input-bordered w-full rounded-sm outline-none"
                         placeholder="John Doe"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        required
+                        {...register("attendeeName")}
                     />
-                </div>
+                </FormFieldWrapper>
 
-                {/* Email */}
-                <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-medium">Email</label>
-                    <input
+                <FormFieldWrapper
+                    id="booking-email"
+                    label="Email"
+                    required
+                    hint={
+                        errors.attendeeEmail?.message ? (
+                            <span className="text-destructive">
+                                {errors.attendeeEmail.message}
+                            </span>
+                        ) : undefined
+                    }
+                >
+                    <Input
+                        id="booking-email"
                         type="email"
-                        className="input input-bordered w-full rounded-sm outline-none"
                         placeholder="you@example.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
+                        {...register("attendeeEmail")}
                     />
-                </div>
+                </FormFieldWrapper>
 
-                {/* Custom form fields */}
-                {fields
-                    .sort((a, b) => a.displayOrder - b.displayOrder)
-                    .map((field) => (
-                        <div key={field.id} className="flex flex-col gap-1.5">
-                            <label className="text-sm font-medium">
-                                {field.label}
-                                {field.required && (
-                                    <span className="text-error ml-1">*</span>
-                                )}
-                            </label>
-                            {field.fieldType === "TEXTAREA" ? (
-                                <textarea
-                                    className="textarea textarea-bordered w-full resize-none rounded-sm outline-none"
-                                    rows={3}
-                                    value={answers[field.id] ?? ""}
-                                    onChange={(e) =>
-                                        setAnswers((prev) => ({
-                                            ...prev,
-                                            [field.id]: e.target.value,
-                                        }))
-                                    }
-                                    required={field.required}
-                                />
-                            ) : (
-                                <input
-                                    type={
-                                        field.fieldType === "NUMBER"
-                                            ? "number"
-                                            : "text"
-                                    }
-                                    className="input input-bordered w-full rounded-sm outline-none"
-                                    value={answers[field.id] ?? ""}
-                                    onChange={(e) =>
-                                        setAnswers((prev) => ({
-                                            ...prev,
-                                            [field.id]: e.target.value,
-                                        }))
-                                    }
-                                    required={field.required}
-                                />
-                            )}
-                        </div>
+                {orderedFields.map((field) => (
+                        <FormFieldWrapper
+                            key={field.id}
+                            id={`booking-field-${field.id}`}
+                            label={field.label}
+                            required={field.required}
+                            hint={
+                                errors.answers?.[field.id]?.message ? (
+                                    <span className="text-destructive">
+                                        {errors.answers[field.id]?.message}
+                                    </span>
+                                ) : undefined
+                            }
+                        >
+                            <Input
+                                id={`booking-field-${field.id}`}
+                                type={
+                                    field.fieldType === "PHONE"
+                                        ? "tel"
+                                        : "text"
+                                }
+                                {...register(`answers.${field.id}`)}
+                            />
+                        </FormFieldWrapper>
                     ))}
 
                 <div className="flex gap-2 pt-2">
-                    <button
+                    <Button
                         type="button"
-                        className="btn btn-outline btn-sm flex-1"
+                        variant="outline"
+                        className="flex-1"
                         onClick={onBack}
                     >
                         Back
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                         type="submit"
-                        className="btn btn-primary btn-sm flex-1"
+                        className="flex-1"
                         disabled={isLoading}
                     >
                         {isLoading ? (
-                            <span className="loading loading-spinner loading-xs" />
+                            <Loader2Icon className="size-4 animate-spin" />
                         ) : (
                             "Confirm booking"
                         )}
-                    </button>
+                    </Button>
                 </div>
             </form>
         </div>

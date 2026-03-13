@@ -1,32 +1,34 @@
 import axios from "axios";
-import { Clock, Trash2 } from "lucide-react";
+import { Clock, Loader2Icon, Trash2 } from "lucide-react";
 import { useState } from "react";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import { useNavigate } from "react-router";
-import {
-    getEventsBySchedule,
-    updateSchedule as updateEventSchedule,
-} from "../../events/api/EventsApi";
-import type { Event } from "../../events/types/Event";
+import { EventsApi } from "../../events/api/EventsApi";
+import type { EventResponse } from "../../events/types/Event";
 import { useSchedulesContext } from "../context/schedulesContextStore";
-import type { Schedule } from "../types/Schedule";
+import type { ScheduleResponse } from "../types/Schedule";
 import SelectNewDefaultModal from "../components/SelectNewDefaultScheduleModal";
 import AffectedEventsModal from "../components/AffectedEventsModal";
+
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 const DAY_NAMES = ["", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 interface ScheduleRowProps {
-    schedule: Schedule;
+    schedule: ScheduleResponse;
     onDelete: (id: string) => Promise<void>;
 }
 
-// ── ScheduleRow ───────────────────────────────────────────────────────────────
+// -- ScheduleRow ---------------------------------------------------------------
 const ScheduleRow = ({ schedule, onDelete }: ScheduleRowProps) => {
     const navigate = useNavigate();
     const { schedules, setDefault } = useSchedulesContext();
 
     const [isDeleting, setIsDeleting] = useState(false);
-    const [affectedEvents, setAffectedEvents] = useState<Event[] | null>(null);
+    const [affectedEvents, setAffectedEvents] = useState<
+        EventResponse[] | null
+    >(null);
     const [step, setStep] = useState<"idle" | "newDefault" | "affectedEvents">(
         "idle",
     );
@@ -49,8 +51,8 @@ const ScheduleRow = ({ schedule, onDelete }: ScheduleRowProps) => {
 
         setIsDeleting(true);
         try {
-            const events = await getEventsBySchedule(schedule.id);
-            setAffectedEvents(events);
+            const res = await EventsApi.getByScheduleId(schedule.id);
+            setAffectedEvents(res.data.content);
             setStep(schedule.isDefault ? "newDefault" : "affectedEvents");
         } catch (error) {
             if (axios.isAxiosError(error)) {
@@ -84,7 +86,7 @@ const ScheduleRow = ({ schedule, onDelete }: ScheduleRowProps) => {
             // Reassign each affected event one by one
             await Promise.all(
                 Object.entries(assignments).map(([eventId, scheduleId]) =>
-                    updateEventSchedule(Number(eventId), scheduleId),
+                    EventsApi.updateSchedule(Number(eventId), scheduleId),
                 ),
             );
             await onDelete(schedule.id);
@@ -108,43 +110,45 @@ const ScheduleRow = ({ schedule, onDelete }: ScheduleRowProps) => {
 
     return (
         <>
-            <div
-                onClick={() => navigate(`/schedules/${schedule.id}`)}
-                className="flex items-center justify-between px-4 py-3.5 border border-base-300 rounded-xl hover:bg-base-200/50 cursor-pointer transition-colors"
-            >
-                <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                        <Clock className="w-4 h-4 text-primary" />
+            <div className="flex items-center justify-between rounded-xl bg-card px-4 py-3.5 ring-1 ring-foreground/10 transition-colors hover:bg-muted/20">
+                <button
+                    type="button"
+                    onClick={() => navigate(`/schedules/${schedule.id}`)}
+                    className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                >
+                    <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 ring-1 ring-primary/15">
+                        <Clock className="size-4 text-primary" />
                     </div>
-                    <div>
+                    <div className="min-w-0">
                         <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium">
+                            <span className="truncate text-sm font-medium">
                                 {schedule.name}
                             </span>
                             {schedule.isDefault && (
-                                <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded-md font-medium">
-                                    Default
-                                </span>
+                                <Badge variant="secondary">Default</Badge>
                             )}
                         </div>
-                        <p className="text-xs text-base-content/40 mt-0.5">
+                        <p className="mt-0.5 text-xs text-muted-foreground">
                             {summary}
                         </p>
                     </div>
-                </div>
+                </button>
 
-                <button
+                <Button
                     type="button"
+                    variant="ghost"
+                    size="icon-sm"
                     disabled={isDeleting}
                     onClick={handleDeleteClick}
-                    className="btn btn-ghost btn-xs btn-square text-error hover:bg-error/10 rounded-lg"
+                    className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                    aria-label={`Delete schedule ${schedule.name}`}
                 >
                     {isDeleting ? (
-                        <span className="loading loading-spinner loading-xs" />
+                        <Loader2Icon className="size-4 animate-spin" />
                     ) : (
-                        <Trash2 className="w-3.5 h-3.5" />
+                        <Trash2 className="size-4" />
                     )}
-                </button>
+                </Button>
             </div>
 
             {step === "newDefault" && (

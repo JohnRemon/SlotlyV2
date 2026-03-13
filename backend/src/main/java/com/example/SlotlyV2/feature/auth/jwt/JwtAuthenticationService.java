@@ -42,7 +42,7 @@ public class JwtAuthenticationService {
         // }
 
         if (!user.isVerified()) {
-            throw new AccountNotVerifiedException("Please verify your account first");
+            throw new AccountNotVerifiedException("Please verify your account");
         }
 
         // Authenticate the user with email and password

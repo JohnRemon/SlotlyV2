@@ -1,11 +1,16 @@
 import { Navigate, Outlet } from "react-router";
 import { useAuth } from "../../features/auth/hooks/useAuth";
+import LoadingSpinner from "./LoadingSpinner";
 
 const ProtectedRoute = () => {
-    const { user, isLoading } = useAuth();
+    const { user, loading } = useAuth();
 
-    if (isLoading) {
-        return <span className="loading loading-spinner" />;
+    if (loading) {
+        return (
+            <div className="flex min-h-dvh items-center justify-center">
+                <LoadingSpinner label="Loading" size="lg" />
+            </div>
+        );
     }
 
     if (!user) {

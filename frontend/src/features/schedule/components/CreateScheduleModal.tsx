@@ -1,24 +1,52 @@
 import axios from "axios";
-import { X } from "lucide-react";
+import { Loader2Icon, XIcon } from "lucide-react";
 import { useState } from "react";
-import toast from "react-hot-toast";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { useSchedulesContext } from "../context/schedulesContextStore";
+
+import { Button } from "@/components/ui/button";
+import {
+    Dialog,
+    DialogContent,
+    DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 
 interface Props {
     onClose: () => void;
     onSuccess: (id: string) => void;
 }
 
+const createScheduleSchema = z.object({
+    name: z.string().trim().min(1, "Name is required."),
+});
+
+type CreateScheduleFormData = z.infer<typeof createScheduleSchema>;
+
 const CreateScheduleModal = ({ onClose, onSuccess }: Props) => {
     const { create } = useSchedulesContext();
-    const [name, setName] = useState("");
     const [isCreating, setIsCreating] = useState(false);
+    const {
+        register,
+        watch,
+        handleSubmit,
+        formState: { errors },
+    } = useForm<CreateScheduleFormData>({
+        resolver: zodResolver(createScheduleSchema),
+        defaultValues: {
+            name: "",
+        },
+    });
+    const name = watch("name");
 
-    const handleCreate = async () => {
+    const onSubmit = async (data: CreateScheduleFormData) => {
         setIsCreating(true);
         try {
             const newSchedule = await create({
-                name: name.trim(),
+                name: data.name.trim(),
             });
             toast.success("Schedule created");
             onSuccess(newSchedule.id);
@@ -35,56 +63,76 @@ const CreateScheduleModal = ({ onClose, onSuccess }: Props) => {
         }
     };
 
+    const handleCreate = handleSubmit(onSubmit);
+
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-            <div className="bg-base-100 rounded-2xl p-6 w-full max-w-sm shadow-xl flex flex-col gap-5">
-                <div className="flex items-center justify-between">
-                    <h2 className="text-sm font-semibold">New schedule</h2>
-                    <button
+        <Dialog open>
+            <DialogContent
+                showCloseButton={false}
+                className="sm:max-w-sm"
+            >
+                <div className="flex items-center justify-between gap-4">
+                    <DialogTitle>New schedule</DialogTitle>
+                    <Button
                         type="button"
-                        className="btn btn-ghost btn-xs btn-square"
+                        variant="ghost"
+                        size="icon-sm"
                         onClick={onClose}
+                        aria-label="Close"
+                        className="rounded-full"
                     >
-                        <X className="w-4 h-4" />
-                    </button>
+                        <XIcon className="size-4" />
+                    </Button>
                 </div>
 
-                <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-medium">Name</label>
-                    <input
+                <div className="grid gap-2">
+                    <label htmlFor="schedule-name" className="text-sm font-medium">
+                        Name
+                    </label>
+                    <Input
+                        id="schedule-name"
                         type="text"
-                        className="input input-bordered w-full outline-none"
                         placeholder="e.g. Work hours"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && handleCreate()}
+                        {...register("name")}
+                        onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                                e.preventDefault();
+                                void handleCreate();
+                            }
+                        }}
                         autoFocus
                     />
+                    {errors.name && (
+                        <p className="text-sm text-destructive">
+                            {errors.name.message}
+                        </p>
+                    )}
                 </div>
 
-                <div className="flex gap-2">
-                    <button
+                <div className="flex gap-2 pt-1">
+                    <Button
                         type="button"
-                        className="btn btn-outline btn-sm flex-1"
+                        variant="outline"
+                        className="flex-1"
                         onClick={onClose}
                     >
                         Cancel
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                         type="button"
-                        className="btn btn-primary btn-sm flex-1"
-                        disabled={!name.trim() || isCreating}
-                        onClick={handleCreate}
+                        className="flex-1"
+                        disabled={!name?.trim() || isCreating}
+                        onClick={() => void handleCreate()}
                     >
                         {isCreating ? (
-                            <span className="loading loading-spinner loading-xs" />
+                            <Loader2Icon className="size-4 animate-spin" />
                         ) : (
                             "Create"
                         )}
-                    </button>
+                    </Button>
                 </div>
-            </div>
-        </div>
+            </DialogContent>
+        </Dialog>
     );
 };
 

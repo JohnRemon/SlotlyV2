@@ -1,9 +1,11 @@
-import { Plus } from "lucide-react";
+import { Loader2Icon, Plus } from "lucide-react";
 import { useState } from "react";
 import ScheduleRow from "./ScheduleRow";
 import CreateScheduleModal from "../components/CreateScheduleModal";
 import { useNavigate } from "react-router";
 import { useSchedulesContext } from "../context/schedulesContextStore";
+
+import { Button } from "@/components/ui/button";
 
 const SchedulesPage = () => {
     const { schedules, isLoading, remove } = useSchedulesContext();
@@ -13,29 +15,26 @@ const SchedulesPage = () => {
     if (isLoading)
         return (
             <div className="flex items-center justify-center h-64">
-                <span className="loading loading-spinner loading-md text-primary" />
+                <Loader2Icon className="size-5 animate-spin text-muted-foreground" />
             </div>
         );
 
     return (
-        <div className="p-6 max-w-7xl mx-auto">
-            <div className="flex items-center justify-between mb-6">
+        <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-8">
+            <div className="flex items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-lg font-bold text-base-content">
-                        Availability
+                    <h1 className="text-base font-semibold tracking-[-0.01em]">
+                        Schedules
                     </h1>
-                    <p className="text-xs text-base-content/40 mt-0.5">
+                    <p className="mt-1 text-xs text-muted-foreground">
                         Manage your working hours and schedules
                     </p>
                 </div>
-                <button
-                    type="button"
-                    className="btn btn-primary btn-sm gap-1.5"
-                    onClick={() => setShowModal(true)}
-                >
-                    <Plus className="w-3.5 h-3.5" />
-                    New availability
-                </button>
+
+                <Button type="button" onClick={() => setShowModal(true)}>
+                    <Plus className="size-4" />
+                    New schedule
+                </Button>
             </div>
 
             <div className="flex flex-col gap-2">

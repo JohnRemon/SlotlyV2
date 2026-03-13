@@ -1,14 +1,14 @@
 export interface DailyScheduleRequest {
     dayOfWeek: number;
-    startTime: string;
-    endTime: string;
+    startTime: string | null;
+    endTime: string | null;
     isAvailable: boolean;
 }
 
 export interface DailyScheduleResponse {
     dayOfWeek: number;
-    startTime: string;
-    endTime: string;
+    startTime: string | null;
+    endTime: string | null;
     isAvailable: boolean;
 }
 

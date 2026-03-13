@@ -1,9 +1,12 @@
-import { Check } from "lucide-react";
+import { CheckIcon } from "lucide-react";
 import { useState } from "react";
-import type { Schedule } from "../types/Schedule";
+import type { ScheduleResponse } from "../types/Schedule";
+
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
 interface SelectNewDefaultModalProps {
-    schedules: Schedule[];
+    schedules: ScheduleResponse[];
     onConfirm: (id: string) => void;
     onClose: () => void;
 }
@@ -15,56 +18,60 @@ const SelectNewDefaultModal = ({
     const [selected, setSelected] = useState<string | null>(null);
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-            <div className="bg-base-100 rounded-2xl p-6 w-full max-w-sm shadow-xl flex flex-col gap-5">
+        <Dialog open>
+            <DialogContent showCloseButton={false} className="sm:max-w-sm">
                 <div>
-                    <h2 className="text-sm font-semibold">Set a new default</h2>
-                    <p className="text-xs text-base-content/40 mt-0.5">
+                    <DialogTitle>Set a new default</DialogTitle>
+                    <p className="mt-1 text-xs text-muted-foreground">
                         Choose a schedule to become the new default before
-                        deleting this one
+                        deleting this one.
                     </p>
                 </div>
 
                 <div className="flex flex-col gap-2">
-                    {schedules.map((s) => (
-                        <button
-                            key={s.id}
-                            type="button"
-                            onClick={() => setSelected(s.id)}
-                            className={`flex items-center justify-between px-3 py-2.5 border rounded-xl text-sm transition-colors text-left
-                                ${
-                                    selected === s.id
-                                        ? "border-primary bg-primary/5"
-                                        : "border-base-300 hover:border-base-content/30"
-                                }`}
-                        >
-                            <span className="font-medium">{s.name}</span>
-                            {selected === s.id && (
-                                <Check className="w-3.5 h-3.5 text-primary" />
-                            )}
-                        </button>
-                    ))}
+                    {schedules.map((s) => {
+                        const isSelected = selected === s.id;
+                        return (
+                            <button
+                                key={s.id}
+                                type="button"
+                                onClick={() => setSelected(s.id)}
+                                className={
+                                    "flex items-center justify-between rounded-xl px-3 py-2.5 text-left text-sm transition-colors ring-1 ring-border hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 " +
+                                    (isSelected
+                                        ? "bg-primary/10 ring-primary/25"
+                                        : "bg-card")
+                                }
+                            >
+                                <span className="font-medium">{s.name}</span>
+                                {isSelected && (
+                                    <CheckIcon className="size-4 text-primary" />
+                                )}
+                            </button>
+                        );
+                    })}
                 </div>
 
-                <div className="flex gap-2">
-                    <button
+                <div className="flex gap-2 pt-1">
+                    <Button
                         type="button"
-                        className="btn btn-outline btn-sm flex-1"
+                        variant="outline"
+                        className="flex-1"
                         onClick={onClose}
                     >
                         Cancel
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                         type="button"
-                        className="btn btn-primary btn-sm flex-1"
+                        className="flex-1"
                         disabled={!selected}
                         onClick={() => selected && onConfirm(selected)}
                     >
                         Continue
-                    </button>
+                    </Button>
                 </div>
-            </div>
-        </div>
+            </DialogContent>
+        </Dialog>
     );
 };
 

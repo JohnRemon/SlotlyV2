@@ -1,6 +1,17 @@
 import { useState } from "react";
-import type { Schedule } from "../types/Schedule";
-import type { Event } from "../../events/types/Event";
+import type { ScheduleResponse } from "../types/Schedule";
+import type { EventResponse } from "../../events/types/Event";
+
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import {
+    Select,
+    SelectContent,
+    SelectGroup,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
 const AffectedEventsModal = ({
     events,
@@ -9,8 +20,8 @@ const AffectedEventsModal = ({
     onConfirm,
     onClose,
 }: {
-    events: Event[];
-    schedules: Schedule[];
+    events: EventResponse[];
+    schedules: ScheduleResponse[];
     currentScheduleId: string;
     onConfirm: (assignments: Record<string, string>) => void;
     onClose: () => void;
@@ -26,72 +37,88 @@ const AffectedEventsModal = ({
     );
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-            <div className="bg-base-100 rounded-2xl p-6 w-full max-w-md shadow-xl flex flex-col gap-5">
+        <Dialog open>
+            <DialogContent showCloseButton={false} className="sm:max-w-md">
                 <div>
-                    <h2 className="text-sm font-semibold">
-                        Reassign affected events
-                    </h2>
-                    <p className="text-xs text-base-content/40 mt-0.5">
+                    <DialogTitle>Reassign affected events</DialogTitle>
+                    <p className="mt-1 text-xs text-muted-foreground">
                         {events.length} event{events.length !== 1 ? "s" : ""}{" "}
                         used this schedule. Choose a replacement for each.
                     </p>
                 </div>
 
                 {events.length === 0 ? (
-                    <p className="text-sm text-base-content/40 text-center py-4">
+                    <p className="py-4 text-center text-sm text-muted-foreground">
                         No events were using this schedule.
                     </p>
                 ) : (
-                    <div className="flex flex-col gap-3 max-h-72 overflow-y-auto">
+                    <div className="flex max-h-72 flex-col gap-3 overflow-y-auto pr-1">
                         {events.map((event) => (
                             <div
                                 key={event.id}
                                 className="flex items-center justify-between gap-3"
                             >
-                                <span className="text-sm font-medium truncate flex-1">
+                                <span className="min-w-0 flex-1 truncate text-sm font-medium">
                                     {event.eventName}
                                 </span>
-                                <select
-                                    className="select select-bordered select-sm outline-none w-40 shrink-0"
-                                    value={assignments[event.id] ?? ""}
-                                    onChange={(e) =>
-                                        setAssignments((prev) => ({
-                                            ...prev,
-                                            [event.id]: e.target.value,
-                                        }))
-                                    }
-                                >
-                                    {availableSchedules.map((s) => (
-                                        <option key={s.id} value={s.id}>
-                                            {s.name}
-                                            {s.isDefault ? " (Default)" : ""}
-                                        </option>
-                                    ))}
-                                </select>
+                                <div className="shrink-0">
+                                    <Select
+                                        value={assignments[event.id] ?? ""}
+                                        onValueChange={(value) =>
+                                            setAssignments((prev) => ({
+                                                ...prev,
+                                                [event.id]: value,
+                                            }))
+                                        }
+                                    >
+                                        <SelectTrigger
+                                            size="sm"
+                                            className="w-44"
+                                        >
+                                            <SelectValue placeholder="Select schedule" />
+                                        </SelectTrigger>
+                                        <SelectContent align="end">
+                                            <SelectGroup>
+                                                {availableSchedules.map((s) => (
+                                                    <SelectItem
+                                                        key={s.id}
+                                                        value={s.id}
+                                                    >
+                                                        {s.name}
+                                                        {s.isDefault
+                                                            ? " (Default)"
+                                                            : ""}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectGroup>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
                             </div>
                         ))}
                     </div>
                 )}
 
-                <div className="flex gap-2">
-                    <button
+                <div className="flex gap-2 pt-1">
+                    <Button
                         type="button"
-                        className="btn btn-outline btn-sm flex-1"
+                        variant="outline"
+                        className="flex-1"
                         onClick={onClose}
                     >
                         Cancel
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                         type="button"
-                        className="btn btn-error btn-sm flex-1"
+                        variant="destructive"
+                        className="flex-1"
                         onClick={() => onConfirm(assignments)}
                     >
                         Delete & reassign
-                    </button>
+                    </Button>
                 </div>
-            </div>
-        </div>
+            </DialogContent>
+        </Dialog>
     );
 };
 

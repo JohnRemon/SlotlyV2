@@ -1,152 +1,114 @@
+import { useDisclosure } from "@mantine/hooks";
 import { CalendarX, Plus, Search } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 import CreateEventModal from "../components/CreateEventModal";
-import { EventRow } from "../components/EventRow";
-import { useEvents } from "../hooks/useEvents";
 import { DeleteEventModal } from "../components/DeleteEventModal";
-import type { Event } from "../types/Event";
-import toast from "react-hot-toast";
-import axios from "axios";
-import { updateEvent } from "../api/EventsApi";
+import { EventCard } from "../components/EventCard";
+import { EventCardSkeleton } from "../components/EventCardSkeleton";
+import {
+    useCreateEvent,
+    useDeleteEvent,
+    useEvents,
+    useUpdateEventVisibility,
+} from "../hooks/useEvents";
+import type { EventRequest, EventResponse } from "../types/Event";
+
+import PageHeader from "@/components/common/PageHeader";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 const EventsPage = () => {
-    const { events, isLoading, create, remove } = useEvents();
+    const { data: events = [], isLoading } = useEvents();
+    const createEventMutation = useCreateEvent();
+    const updateVisibilityMutation = useUpdateEventVisibility();
+    const deleteEventMutation = useDeleteEvent();
     const [query, setQuery] = useState("");
-    const [showModal, setShowModal] = useState(false);
-    const [eventToDelete, setEventToDelete] = useState<Event | null>(null);
-
-    const filtered = events.filter((e) =>
-        e.eventName.toLowerCase().includes(query.toLowerCase()),
+    const [createOpen, { open: openCreate, close: closeCreate }] =
+        useDisclosure(false);
+    const [eventToDelete, setEventToDelete] = useState<EventResponse | null>(
+        null,
     );
 
-    const handleDelete = async (event: Event) => {
-        try {
-            await remove(event.id);
-            toast.success("Event Deleted!");
-        } catch (error) {
-            if (axios.isAxiosError(error)) {
-                toast.error(error.response?.data?.message);
-            } else {
-                toast.error("Something went wrong");
-            }
-        }
+    const normalizedQuery = query.toLowerCase();
+    const filtered = events
+        .filter((e) => e.id != null)
+        .filter((e) =>
+            (e.eventName ?? "Untitled event")
+                .toLowerCase()
+                .includes(normalizedQuery),
+        );
+
+    const handleDelete = async (event: EventResponse) => {
+        await deleteEventMutation.mutateAsync(event.id);
+        setEventToDelete(null);
+        toast.success("Event deleted");
     };
 
-    const handleTogglePublic = async (event: Event, isPublic: boolean) => {
-        await updateEvent(
-            {
-                ...event,
-                availabilityRulesDTO: {
-                    ...event.availabilityRulesDTO,
-                    isPublic,
-                },
-            },
-            event.id,
-        );
+    const handleCreate = async (payload: EventRequest) => {
+        await createEventMutation.mutateAsync(payload);
+        closeCreate();
+        toast.success("Event created");
+    };
+
+    const handleToggleVisibility = async (id: number, isPublic: boolean) => {
+        await updateVisibilityMutation.mutateAsync({ id, isPublic });
     };
 
     return (
-        <div className="max-w-7xl mx-auto py-8 px-4 flex flex-col gap-6">
-            {/* Header */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold text-base-content">
-                        Events
-                    </h1>
-                    <p className="text-sm text-base-content/50 mt-1">
-                        Manage your bookable events
-                    </p>
-                </div>
-                <button
-                    className="btn btn-primary btn-sm gap-2 rounded-sm"
-                    onClick={() => setShowModal(true)}
-                >
-                    <Plus className="w-4 h-4" />
-                    New event
-                </button>
-            </div>
+        <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
+            <PageHeader
+                title="Events"
+                description="Manage your bookable events"
+                actions={
+                    <Button type="button" onClick={openCreate}>
+                        <Plus className="size-4" />
+                        New event
+                    </Button>
+                }
+            />
 
-            {/* Search */}
             <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-base-content/30" />
-                <input
+                <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
                     type="text"
-                    className="input input-bordered w-full pl-9 rounded-lg outline-none"
-                    placeholder="Search"
+                    className="pl-9"
+                    placeholder="Search events..."
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                 />
             </div>
 
-            {/* List */}
             {isLoading ? (
-                <div className="flex justify-center py-16">
-                    <span className="loading loading-spinner loading-md text-primary" />
+                <div className="flex flex-col gap-2">
+                    {[
+                        "events-skeleton-1",
+                        "events-skeleton-2",
+                        "events-skeleton-3",
+                    ].map((key) => (
+                        <EventCardSkeleton key={key} />
+                    ))}
                 </div>
             ) : filtered.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-16 gap-4 border-dashed border-base-content/30 border rounded-sm">
-                    <div className="w-14 h-14 rounded-full bg-base-300 flex items-center justify-center">
-                        <CalendarX className="w-6 h-6 text-base-content/30" />
-                    </div>
-                    {query ? (
-                        <>
-                            <div className="text-center">
-                                <p className="font-semibold text-base-content/60 text-sm">
-                                    No results for "{query}"
-                                </p>
-                                <p className="text-xs text-base-content/40 mt-1">
-                                    Try a different name or create a new event
-                                </p>
-                            </div>
-                            <button
-                                className="btn btn-primary btn-sm gap-2"
-                                onClick={() => setShowModal(true)}
-                            >
-                                <Plus className="w-4 h-4" />
-                                Create Event
-                            </button>
-                        </>
-                    ) : (
-                        <>
-                            <div className="text-center">
-                                <p className="font-semibold text-base-content/60 text-sm">
-                                    No events yet
-                                </p>
-                                <p className="text-xs text-base-content/40 mt-1">
-                                    Create your first event to get started
-                                </p>
-                            </div>
-                            <button
-                                className="btn btn-primary btn-sm gap-2"
-                                onClick={() => setShowModal(true)}
-                            >
-                                <Plus className="w-4 h-4" />
-                                New event
-                            </button>
-                        </>
-                    )}
-                </div>
+                <EmptyEvents query={query} onCreateClick={openCreate} />
             ) : (
                 <div className="flex flex-col gap-2">
                     {filtered.map((event) => (
-                        <EventRow
+                        <EventCard
                             key={event.id}
                             event={event}
                             onDelete={setEventToDelete}
-                            onTogglePublic={handleTogglePublic}
+                            onToggleVisibility={handleToggleVisibility}
                         />
                     ))}
                 </div>
             )}
 
-            {/* Modal */}
-            {showModal && (
-                <CreateEventModal
-                    onClose={() => setShowModal(false)}
-                    onCreate={create}
-                />
-            )}
-
+            <CreateEventModal
+                open={createOpen}
+                onClose={closeCreate}
+                onCreate={handleCreate}
+            />
             <DeleteEventModal
                 event={eventToDelete}
                 onConfirm={handleDelete}
@@ -155,5 +117,34 @@ const EventsPage = () => {
         </div>
     );
 };
+
+interface EmptyEventsProps {
+    query: string;
+    onCreateClick: () => void;
+}
+
+const EmptyEvents = ({ query, onCreateClick }: EmptyEventsProps) => (
+    <div className="rounded-2xl border border-dashed bg-card/40 p-10 shadow-sm ring-1 ring-foreground/5 supports-backdrop-filter:backdrop-blur-sm">
+        <div className="mx-auto flex max-w-sm flex-col items-center justify-center gap-4 text-center">
+            <div className="flex size-14 items-center justify-center rounded-2xl bg-muted/40 ring-1 ring-foreground/10">
+                <CalendarX className="size-6 text-muted-foreground" />
+            </div>
+            <div>
+                <p className="text-sm font-semibold tracking-[-0.01em]">
+                    {query ? `No results for "${query}"` : "No events yet"}
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                    {query
+                        ? "Try a different name or create a new event"
+                        : "Create your first event to get started"}
+                </p>
+            </div>
+            <Button type="button" onClick={onCreateClick}>
+                <Plus className="size-4" />
+                {query ? "Create event" : "New event"}
+            </Button>
+        </div>
+    </div>
+);
 
 export default EventsPage;

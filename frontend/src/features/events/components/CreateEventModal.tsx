@@ -1,168 +1,210 @@
-import axios from "axios";
-import { X } from "lucide-react";
 import { useState } from "react";
-import toast from "react-hot-toast";
 import type { EventRequest } from "../types/Event";
 
+import FormField from "@/components/common/FormField";
+import { Button } from "@/components/ui/button";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2Icon } from "lucide-react";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+
+const createEventSchema = z
+    .object({
+        eventName: z.string().trim().min(1, "Event name is required."),
+        description: z.string(),
+        eventStart: z
+            .string()
+            .min(1, "Start date is required.")
+            .refine(
+                (value) => !Number.isNaN(Date.parse(value)),
+                "Enter a valid start date and time.",
+            ),
+        eventEnd: z
+            .string()
+            .min(1, "End date is required.")
+            .refine(
+                (value) => !Number.isNaN(Date.parse(value)),
+                "Enter a valid end date and time.",
+            ),
+        slotDuration: z
+            .number()
+            .int("Slot duration must be a whole number.")
+            .min(5, "Slot duration must be at least 5 minutes.")
+            .multipleOf(5, "Slot duration must be in 5-minute increments."),
+    })
+    .refine(
+        ({ eventStart, eventEnd }) => new Date(eventEnd) > new Date(eventStart),
+        {
+            path: ["eventEnd"],
+            message: "End date must be after start date.",
+        },
+    );
+
+type CreateEventFormInput = z.input<typeof createEventSchema>;
+type CreateEventFormData = z.output<typeof createEventSchema>;
+
 interface CreateEventModalProps {
+    open: boolean;
     onClose: () => void;
     onCreate: (payload: EventRequest) => Promise<void>;
 }
 
-const CreateEventModal = ({ onClose, onCreate }: CreateEventModalProps) => {
-    const [eventName, setEventName] = useState("");
-    const [description, setDescription] = useState("");
-    const [eventStart, setEventStart] = useState("");
-    const [eventEnd, setEventEnd] = useState("");
-    const [slotDuration, setSlotDuration] = useState(30);
+const CreateEventModal = ({
+    open,
+    onClose,
+    onCreate,
+}: CreateEventModalProps) => {
     const [isLoading, setIsLoading] = useState(false);
+    const {
+        register,
+        handleSubmit,
+        formState: { errors },
+    } = useForm<CreateEventFormInput, unknown, CreateEventFormData>({
+        resolver: zodResolver(createEventSchema),
+        defaultValues: {
+            eventName: "",
+            description: "",
+            eventStart: "",
+            eventEnd: "",
+            slotDuration: 30,
+        },
+    });
 
-    const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
-        e.preventDefault();
+    const onSubmit = async (data: CreateEventFormData) => {
         setIsLoading(true);
-
         try {
             await onCreate({
-                eventName,
-                description,
-                eventStart: new Date(eventStart).toISOString(),
-                eventEnd: new Date(eventEnd).toISOString(),
-                availabilityRulesDTO: {
-                    slotDurationMinutes: slotDuration,
+                eventName: data.eventName.trim(),
+                description: data.description,
+                eventStart: new Date(data.eventStart).toISOString(),
+                eventEnd: new Date(data.eventEnd).toISOString(),
+                availabilityRules: {
+                    slotDurationMinutes: data.slotDuration,
                 },
             });
-            toast.success("Event created!");
             onClose();
-        } catch (error) {
-            if (axios.isAxiosError(error)) {
-                toast.error(error.response?.data?.message);
-            } else {
-                toast.error("Something went wrong.");
-            }
         } finally {
             setIsLoading(false);
         }
     };
+
     return (
-        <dialog className="modal modal-open">
-            <div className="modal-box rounded-2xl max-w-md p-0 overflow-hidden">
-                {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-base-300">
-                    <h3 className="font-bold text-base">New Event</h3>
-                    <button
-                        className="btn btn-ghost btn-xs btn-circle"
-                        onClick={onClose}
-                    >
-                        <X className="w-4 h-4" />
-                    </button>
-                </div>
+        <Dialog
+            open={open}
+            onOpenChange={(next) => {
+                if (!next) onClose();
+            }}
+        >
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>New event</DialogTitle>
+                    <DialogDescription>
+                        Create a bookable event with a default slot duration.
+                    </DialogDescription>
+                </DialogHeader>
 
-                {/* Form */}
-                <form
-                    onSubmit={handleSubmit}
-                    className="px-6 py-5 flex flex-col gap-4"
-                >
-                    <div className="flex flex-col gap-1.5">
-                        <label className="text-sm font-medium">
-                            Event name
-                        </label>
-                        <input
+                <form onSubmit={handleSubmit(onSubmit)} className="grid gap-4">
+                    <FormField label="Event name" required>
+                        <Input
                             type="text"
-                            className="input input-bordered w-full"
                             placeholder="e.g. 30 min meeting"
-                            value={eventName}
-                            onChange={(e) => setEventName(e.target.value)}
-                            required
+                            {...register("eventName")}
                         />
-                    </div>
+                        {errors.eventName && (
+                            <p className="text-sm text-destructive">
+                                {errors.eventName.message}
+                            </p>
+                        )}
+                    </FormField>
 
-                    <div className="flex flex-col gap-1.5">
-                        <label className="text-sm font-medium">
-                            Description{" "}
-                            <span className="text-base-content/40">
-                                (optional)
-                            </span>
-                        </label>
-                        <textarea
-                            className="textarea textarea-bordered w-full resize-none"
+                    <FormField
+                        label="Description"
+                        hint="Optional description shown to attendees"
+                    >
+                        <Textarea
                             rows={2}
                             placeholder="What is this event about?"
-                            value={description}
-                            onChange={(e) => setDescription(e.target.value)}
+                            {...register("description")}
                         />
-                    </div>
+                    </FormField>
 
-                    <div className="flex gap-3">
-                        <div className="flex flex-col gap-1.5 flex-1">
-                            <label className="text-sm font-medium">
-                                Start date
-                            </label>
-                            <input
+                    <div className="grid gap-3 sm:grid-cols-2">
+                        <FormField label="Start date" required>
+                            <Input
                                 type="datetime-local"
-                                className="input input-bordered w-full"
-                                value={eventStart}
-                                onChange={(e) => setEventStart(e.target.value)}
-                                required
+                                {...register("eventStart")}
                             />
-                        </div>
-                        <div className="flex flex-col gap-1.5 flex-1">
-                            <label className="text-sm font-medium">
-                                End date
-                            </label>
-                            <input
+                            {errors.eventStart && (
+                                <p className="text-sm text-destructive">
+                                    {errors.eventStart.message}
+                                </p>
+                            )}
+                        </FormField>
+                        <FormField label="End date" required>
+                            <Input
                                 type="datetime-local"
-                                className="input input-bordered w-full"
-                                value={eventEnd}
-                                onChange={(e) => setEventEnd(e.target.value)}
-                                required
+                                {...register("eventEnd")}
                             />
-                        </div>
+                            {errors.eventEnd && (
+                                <p className="text-sm text-destructive">
+                                    {errors.eventEnd.message}
+                                </p>
+                            )}
+                        </FormField>
                     </div>
 
-                    <div className="flex gap-3 items-end">
-                        <div className="flex flex-col gap-1.5 flex-1">
-                            <label className="text-sm font-medium">
-                                Slot duration (min)
-                            </label>
-                            <input
-                                type="number"
-                                className="input input-bordered w-full"
-                                min={5}
-                                step={5}
-                                value={slotDuration}
-                                onChange={(e) =>
-                                    setSlotDuration(Number(e.target.value))
-                                }
-                                required
-                            />
-                        </div>
-                    </div>
+                    <FormField
+                        label="Slot duration (minutes)"
+                        hint="You can adjust rules later"
+                        required
+                    >
+                        <Input
+                            type="number"
+                            min={5}
+                            step={5}
+                            {...register("slotDuration", {
+                                valueAsNumber: true,
+                            })}
+                        />
+                        {errors.slotDuration && (
+                            <p className="text-sm text-destructive">
+                                {errors.slotDuration.message}
+                            </p>
+                        )}
+                    </FormField>
 
-                    {/* Footer */}
-                    <div className="flex gap-2 pt-1">
-                        <button
+                    <DialogFooter>
+                        <Button
                             type="button"
-                            className="btn btn-outline btn-sm flex-1"
+                            variant="outline"
                             onClick={onClose}
                         >
                             Cancel
-                        </button>
-                        <button
-                            type="submit"
-                            className="btn btn-primary btn-sm flex-1"
-                            disabled={isLoading}
-                        >
+                        </Button>
+                        <Button type="submit" disabled={isLoading}>
                             {isLoading ? (
-                                <span className="loading loading-spinner loading-xs" />
+                                <>
+                                    <Loader2Icon className="size-4 animate-spin" />
+                                    Creating
+                                </>
                             ) : (
                                 "Create event"
                             )}
-                        </button>
-                    </div>
+                        </Button>
+                    </DialogFooter>
                 </form>
-            </div>
-            <div className="modal-backdrop" onClick={onClose} />
-        </dialog>
+            </DialogContent>
+        </Dialog>
     );
 };
 

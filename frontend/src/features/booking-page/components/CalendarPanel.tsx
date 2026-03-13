@@ -1,6 +1,8 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useState } from "react";
 
+import { Button } from "@/components/ui/button";
+
 interface CalendarPanelProps {
     eventStart: string;
     eventEnd: string;
@@ -73,26 +75,34 @@ export const CalendarPanel = ({
         new Date(end.getFullYear(), end.getMonth(), 1);
 
     return (
-        <div className="flex flex-col gap-4 h-full ">
+        <div className="flex h-full flex-col gap-4">
             {/* Month Nav */}
             <div className="flex items-center justify-between">
-                <button
-                    className="btn btn-ghost btn-xs btn-circle"
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
                     onClick={prevMonth}
                     disabled={!canGoPrev}
+                    className="rounded-full"
+                    aria-label="Previous month"
                 >
-                    <ChevronLeft className="w-4 h-4" />
-                </button>
-                <span className="text-sm font-semibold">
+                    <ChevronLeft className="size-4" />
+                </Button>
+                <span className="text-sm font-semibold tracking-[-0.01em]">
                     {MONTHS[month]} {year}
                 </span>
-                <button
-                    className="btn btn-ghost btn-xs btn-circle"
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
                     onClick={nextMonth}
                     disabled={!canGoNext}
+                    className="rounded-full"
+                    aria-label="Next month"
                 >
-                    <ChevronRight className="w-4 h-4" />
-                </button>
+                    <ChevronRight className="size-4" />
+                </Button>
             </div>
 
             {/* Day Headers */}
@@ -100,7 +110,7 @@ export const CalendarPanel = ({
                 {DAYS.map((d) => (
                     <span
                         key={d}
-                        className="text-xs text-base-content/40 font-medium py-1"
+                        className="py-1 text-xs font-medium text-muted-foreground"
                     >
                         {d}
                     </span>
@@ -123,14 +133,14 @@ export const CalendarPanel = ({
                             key={day}
                             disabled={!avail}
                             onClick={() => onSelectDate(dateStr)}
-                            className={`mx-auto w-9 h-9 rounded-sm text-sm font-medium transition-colors flex items-center justify-center
-                                ${
-                                    selected
-                                        ? "bg-primary text-primary-content"
-                                        : avail
-                                          ? "hover:bg-base-200 text-base-content cursor-pointer"
-                                          : "text-base-content/20 cursor-not-allowed"
-                                }`}
+                            className={
+                                "mx-auto flex size-9 items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 " +
+                                (selected
+                                    ? "bg-primary text-primary-foreground"
+                                    : avail
+                                      ? "text-foreground hover:bg-muted/50"
+                                      : "cursor-not-allowed text-muted-foreground/30")
+                            }
                         >
                             {day}
                         </button>
