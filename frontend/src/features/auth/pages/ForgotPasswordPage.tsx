@@ -1,8 +1,6 @@
-import axios from "axios";
+import { ArrowLeft, Loader2Icon, Mail } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router";
-import { toast } from "sonner";
-import { ArrowLeft, Loader2Icon, Mail } from "lucide-react";
 import { AuthApi } from "../api/AuthApi";
 
 import FormField from "@/components/common/FormField";
@@ -16,6 +14,7 @@ import {
     CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { useApiError } from "@/hooks/useApiError";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -29,6 +28,7 @@ type FormData = z.infer<typeof formSchema>;
 const ForgotPasswordPage = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [sent, setSent] = useState(false);
+    const handleError = useApiError();
 
     const {
         register,
@@ -42,25 +42,20 @@ const ForgotPasswordPage = () => {
         },
     });
 
-    const getErrorMessage = (error: unknown) =>
-        axios.isAxiosError(error)
-            ? (error.response?.data?.message ?? "Something went wrong.")
-            : "Something went wrong.";
-
     const onSubmit = async ({ email }: FormData) => {
         setIsLoading(true);
         try {
             await AuthApi.forgotPassword({ email });
             setSent(true);
         } catch (error) {
-            toast.error(getErrorMessage(error));
+            handleError(error);
         } finally {
             setIsLoading(false);
         }
     };
 
     return (
-        <div className="min-h-dvh bg-gradient-to-b from-background to-muted/30">
+        <div className="min-h-dvh bg-linear-to-b from-background to-muted/30">
             <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col justify-center px-4 py-12">
                 <Card className="bg-card/75 shadow-sm ring-1 ring-foreground/10 supports-backdrop-filter:backdrop-blur-sm">
                     <CardHeader className="text-center">

@@ -1,4 +1,4 @@
-import { GoogleLogin } from "@react-oauth/google";
+import { GoogleLogin, type CredentialResponse } from "@react-oauth/google";
 import { Eye, EyeOff, Loader2Icon } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
@@ -60,6 +60,7 @@ const RegisterPage = () => {
     const handleError = useApiError();
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
     const {
         register,
@@ -78,7 +79,7 @@ const RegisterPage = () => {
         },
     });
 
-    const onSubmit = async (data: FormData) => {
+    const handleRegister = async (data: FormData) => {
         try {
             setIsLoading(true);
             await AuthApi.register(data);
@@ -91,15 +92,20 @@ const RegisterPage = () => {
         }
     };
 
-    const handleGoogleSuccess = async (credential: string) => {
+    const handleGoogleSuccess = async ({ credential }: CredentialResponse) => {
+        if (!credential) {
+            toast.error("Google did not return an ID token.");
+            return;
+        }
+        setIsGoogleLoading(true);
         try {
-            setIsLoading(true);
             await loginWithGoogle(credential);
             navigate("/events");
+            toast.success("Successfully signed in.");
         } catch (error) {
             handleError(error);
         } finally {
-            setIsLoading(false);
+            setIsGoogleLoading(false);
         }
     };
 
@@ -118,7 +124,7 @@ const RegisterPage = () => {
 
                     <CardContent className="grid gap-5">
                         <form
-                            onSubmit={handleSubmit(onSubmit)}
+                            onSubmit={handleSubmit(handleRegister)}
                             className="grid gap-4"
                         >
                             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -271,18 +277,28 @@ const RegisterPage = () => {
                             </div>
                         </div>
 
-                        <div className="flex justify-center">
-                            <GoogleLogin
-                                theme="filled_black"
-                                shape="rectangular"
-                                onSuccess={(res) =>
-                                    handleGoogleSuccess(res.credential!)
-                                }
-                                onError={() =>
-                                    toast.error("Google sign-in failed.")
-                                }
-                            />
-                        </div>
+                        {isGoogleLoading ? (
+                            <Button
+                                variant="outline"
+                                className="w-full"
+                                disabled
+                            >
+                                <Loader2Icon className="size-4 animate-spin" />
+                                Signing in with Google...
+                            </Button>
+                        ) : (
+                            <div className="flex justify-center">
+                                <GoogleLogin
+                                    theme="filled_black"
+                                    shape="rectangular"
+                                    width="380"
+                                    onSuccess={handleGoogleSuccess}
+                                    onError={() =>
+                                        toast.error("Google sign-in failed.")
+                                    }
+                                />
+                            </div>
+                        )}
                     </CardContent>
 
                     <CardFooter className="justify-center">

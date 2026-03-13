@@ -1,5 +1,4 @@
 import { GoogleLogin, type CredentialResponse } from "@react-oauth/google";
-import axios from "axios";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { toast } from "sonner";
@@ -15,6 +14,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useApiError } from "@/hooks/useApiError";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2Icon } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -29,9 +29,11 @@ type FormData = z.infer<typeof formSchema>;
 
 const LoginPage = () => {
     const { login, loginWithGoogle } = useAuth();
+    const handleError = useApiError();
     const navigate = useNavigate();
 
     const [isLoading, setIsLoading] = useState(false);
+    const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
     const {
         register,
@@ -51,13 +53,7 @@ const LoginPage = () => {
             await login(email, password);
             navigate("/events");
         } catch (error) {
-            if (axios.isAxiosError(error)) {
-                toast.error(
-                    error.response?.data?.message ?? "Something went wrong.",
-                );
-            } else {
-                toast.error("Something went wrong.");
-            }
+            handleError(error);
         } finally {
             setIsLoading(false);
         }
@@ -69,12 +65,15 @@ const LoginPage = () => {
             return;
         }
 
+        setIsGoogleLoading(true);
         try {
             await loginWithGoogle(credential);
             navigate("/events");
             toast.success("Successfully signed in.");
         } catch {
             toast.error("Google sign-in failed.");
+        } finally {
+            setIsGoogleLoading(false);
         }
     };
 
@@ -159,16 +158,28 @@ const LoginPage = () => {
                             </div>
                         </div>
 
-                        <div className="flex justify-center">
-                            <GoogleLogin
-                                theme="filled_black"
-                                shape="rectangular"
-                                onSuccess={handleGoogleSuccess}
-                                onError={() =>
-                                    toast.error("Google sign-in failed.")
-                                }
-                            />
-                        </div>
+                        {isGoogleLoading ? (
+                            <Button
+                                variant="outline"
+                                className="w-full"
+                                disabled
+                            >
+                                <Loader2Icon className="size-4 animate-spin" />
+                                Signing in with Google...
+                            </Button>
+                        ) : (
+                            <div className="flex justify-center">
+                                <GoogleLogin
+                                    theme="filled_black"
+                                    shape="rectangular"
+                                    width="380"
+                                    onSuccess={handleGoogleSuccess}
+                                    onError={() =>
+                                        toast.error("Google sign-in failed.")
+                                    }
+                                />
+                            </div>
+                        )}
                     </CardContent>
 
                     <CardFooter className="justify-center">

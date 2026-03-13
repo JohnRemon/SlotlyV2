@@ -1,19 +1,15 @@
-import axios from "axios";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2Icon, XIcon } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useSchedulesContext } from "../context/schedulesContextStore";
 
 import { Button } from "@/components/ui/button";
-import {
-    Dialog,
-    DialogContent,
-    DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { useApiError } from "@/hooks/useApiError";
 
 interface Props {
     onClose: () => void;
@@ -41,6 +37,7 @@ const CreateScheduleModal = ({ onClose, onSuccess }: Props) => {
         },
     });
     const name = watch("name");
+    const handleError = useApiError();
 
     const onSubmit = async (data: CreateScheduleFormData) => {
         setIsCreating(true);
@@ -51,14 +48,7 @@ const CreateScheduleModal = ({ onClose, onSuccess }: Props) => {
             toast.success("Schedule created");
             onSuccess(newSchedule.id);
         } catch (error) {
-            if (axios.isAxiosError(error)) {
-                toast.error(
-                    error.response?.data?.message ?? "Failed to create",
-                );
-            } else {
-                toast.error("Something went wrong");
-            }
-        } finally {
+            handleError(error);
             setIsCreating(false);
         }
     };
@@ -67,10 +57,7 @@ const CreateScheduleModal = ({ onClose, onSuccess }: Props) => {
 
     return (
         <Dialog open>
-            <DialogContent
-                showCloseButton={false}
-                className="sm:max-w-sm"
-            >
+            <DialogContent showCloseButton={false} className="sm:max-w-sm">
                 <div className="flex items-center justify-between gap-4">
                     <DialogTitle>New schedule</DialogTitle>
                     <Button
@@ -86,7 +73,10 @@ const CreateScheduleModal = ({ onClose, onSuccess }: Props) => {
                 </div>
 
                 <div className="grid gap-2">
-                    <label htmlFor="schedule-name" className="text-sm font-medium">
+                    <label
+                        htmlFor="schedule-name"
+                        className="text-sm font-medium"
+                    >
                         Name
                     </label>
                     <Input

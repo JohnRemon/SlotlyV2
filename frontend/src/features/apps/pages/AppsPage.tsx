@@ -1,4 +1,3 @@
-import axios from "axios";
 import { Loader2Icon } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router";
@@ -7,6 +6,7 @@ import { GoogleCalendarApi } from "../../integrations/google-calendar/api/Google
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useApiError } from "@/hooks/useApiError";
 import GoogleCalendarCard from "../components/GoogleCalendarCard";
 
 type Tab = "install" | "installed";
@@ -24,6 +24,7 @@ const AppsPage = () => {
     const [isStatusLoading, setIsStatusLoading] = useState(true);
     const [isActioning, setIsActioning] = useState(false);
     const exchangeInFlightRef = useRef(false);
+    const handleError = useApiError();
 
     useEffect(() => {
         GoogleCalendarApi.getConnectionStatus()
@@ -61,13 +62,7 @@ const AppsPage = () => {
                 setTab("installed");
                 toast.success("Google Calendar connected");
             } catch (error) {
-                if (axios.isAxiosError(error)) {
-                    toast.error(
-                        error.response?.data?.message ?? "Failed to connect",
-                    );
-                } else {
-                    toast.error("Something went wrong");
-                }
+                handleError(error);
             } finally {
                 setIsActioning(false);
                 setSearchParams({ tab: "installed" });
@@ -84,14 +79,7 @@ const AppsPage = () => {
             const response = await GoogleCalendarApi.initiateConnection();
             window.location.href = response.data.data.authorizationUrl;
         } catch (error) {
-            if (axios.isAxiosError(error)) {
-                toast.error(
-                    error.response?.data?.message ??
-                        "Failed to initiate connection",
-                );
-            } else {
-                toast.error("Something went wrong");
-            }
+            handleError(error);
             setIsActioning(false);
         }
     };
@@ -104,13 +92,7 @@ const AppsPage = () => {
             setTab("install");
             toast.success("Google Calendar disconnected");
         } catch (error) {
-            if (axios.isAxiosError(error)) {
-                toast.error(
-                    error.response?.data?.message ?? "Failed to disconnect",
-                );
-            } else {
-                toast.error("Something went wrong");
-            }
+            handleError(error);
         } finally {
             setIsActioning(false);
         }

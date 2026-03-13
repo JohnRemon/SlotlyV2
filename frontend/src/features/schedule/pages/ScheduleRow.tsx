@@ -1,17 +1,17 @@
-import axios from "axios";
 import { Clock, Loader2Icon, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { toast } from "sonner";
 import { useNavigate } from "react-router";
+import { toast } from "sonner";
 import { EventsApi } from "../../events/api/EventsApi";
 import type { EventResponse } from "../../events/types/Event";
+import AffectedEventsModal from "../components/AffectedEventsModal";
+import SelectNewDefaultModal from "../components/SelectNewDefaultScheduleModal";
 import { useSchedulesContext } from "../context/schedulesContextStore";
 import type { ScheduleResponse } from "../types/Schedule";
-import SelectNewDefaultModal from "../components/SelectNewDefaultScheduleModal";
-import AffectedEventsModal from "../components/AffectedEventsModal";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useApiError } from "@/hooks/useApiError";
 
 const DAY_NAMES = ["", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
@@ -23,6 +23,7 @@ interface ScheduleRowProps {
 // -- ScheduleRow ---------------------------------------------------------------
 const ScheduleRow = ({ schedule, onDelete }: ScheduleRowProps) => {
     const navigate = useNavigate();
+    const handleError = useApiError();
     const { schedules, setDefault } = useSchedulesContext();
 
     const [isDeleting, setIsDeleting] = useState(false);
@@ -55,11 +56,7 @@ const ScheduleRow = ({ schedule, onDelete }: ScheduleRowProps) => {
             setAffectedEvents(res.data.content);
             setStep(schedule.isDefault ? "newDefault" : "affectedEvents");
         } catch (error) {
-            if (axios.isAxiosError(error)) {
-                toast.error(error.response?.data?.message);
-            } else {
-                toast.error("Something went wrong");
-            }
+            handleError(error);
         } finally {
             setIsDeleting(false);
         }
@@ -70,11 +67,7 @@ const ScheduleRow = ({ schedule, onDelete }: ScheduleRowProps) => {
             await setDefault(newDefaultId);
             setStep("affectedEvents");
         } catch (error) {
-            if (axios.isAxiosError(error)) {
-                toast.error(error.response?.data?.message);
-            } else {
-                toast.error("Something went wrong");
-            }
+            handleError(error);
         }
     };
 
@@ -93,11 +86,7 @@ const ScheduleRow = ({ schedule, onDelete }: ScheduleRowProps) => {
             toast.success("Schedule deleted");
             setStep("idle");
         } catch (error) {
-            if (axios.isAxiosError(error)) {
-                toast.error(error.response?.data?.message);
-            } else {
-                toast.error("Something went wrong");
-            }
+            handleError(error);
         } finally {
             setIsDeleting(false);
         }

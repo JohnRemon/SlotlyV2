@@ -28,9 +28,7 @@ const formSchema = z
                 /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
                 "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.",
             ),
-        confirmPassword: z
-            .string()
-            .min(1, "Please confirm your password."),
+        confirmPassword: z.string().min(1, "Please confirm your password."),
     })
     .refine((data) => data.password === data.confirmPassword, {
         path: ["confirmPassword"],
@@ -86,7 +84,7 @@ const ResetPasswordPage = () => {
     };
 
     return (
-        <div className="min-h-dvh bg-gradient-to-b from-background to-muted/30">
+        <div className="min-h-dvh bg-linear-to-b from-background to-muted/30">
             <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col justify-center px-4 py-12">
                 <Card className="bg-card/75 shadow-sm ring-1 ring-foreground/10 supports-backdrop-filter:backdrop-blur-sm">
                     <CardHeader className="text-center">
@@ -157,14 +155,13 @@ const ResetPasswordPage = () => {
                                 <div className="relative">
                                     <Input
                                         id="confirmPassword"
-                                        type={
-                                            showConfirm ? "text" : "password"
-                                        }
+                                        type={showConfirm ? "text" : "password"}
                                         placeholder="••••••••"
                                         autoComplete="new-password"
                                         {...register("confirmPassword")}
                                         aria-invalid={
-                                            !!errors.confirmPassword || undefined
+                                            !!errors.confirmPassword ||
+                                            undefined
                                         }
                                         className={
                                             errors.confirmPassword
@@ -199,11 +196,12 @@ const ResetPasswordPage = () => {
                                         Passwords match
                                     </p>
                                 )}
-                                {passwordsMismatch && !errors.confirmPassword && (
-                                    <p className="text-xs text-destructive">
-                                        Passwords do not match
-                                    </p>
-                                )}
+                                {passwordsMismatch &&
+                                    !errors.confirmPassword && (
+                                        <p className="text-xs text-destructive">
+                                            Passwords do not match
+                                        </p>
+                                    )}
                                 {errors.confirmPassword && (
                                     <p className="text-sm text-destructive">
                                         {errors.confirmPassword.message}

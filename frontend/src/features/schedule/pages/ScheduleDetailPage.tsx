@@ -1,5 +1,3 @@
-import { useEffect, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router";
 import {
     CheckIcon,
     ChevronLeft,
@@ -7,19 +5,21 @@ import {
     PencilIcon,
     XIcon,
 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
-import axios from "axios";
 import { SchedulesApi } from "../api/SchedulesApi";
+import { useSchedulesContext } from "../context/schedulesContextStore";
 import type {
     DailyScheduleResponse,
     ScheduleResponse,
 } from "../types/Schedule";
-import { useSchedulesContext } from "../context/schedulesContextStore";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import { useApiError } from "@/hooks/useApiError";
 
 const DAY_NAMES = [
     "",
@@ -40,6 +40,7 @@ const toTimeInput = (time?: string | null) => (time ? time.slice(0, 5) : "");
 const ScheduleDetailPage = () => {
     const { id } = useParams() as { id: string };
     const navigate = useNavigate();
+    const handleError = useApiError();
     const { updateLocal } = useSchedulesContext();
 
     const [schedule, setSchedule] = useState<ScheduleResponse | null>(null);
@@ -64,16 +65,7 @@ const ScheduleDetailPage = () => {
                     ),
                 );
             })
-            .catch((error) => {
-                if (axios.isAxiosError(error)) {
-                    toast.error(
-                        error.response?.data?.message ??
-                            "Failed to load schedule",
-                    );
-                } else {
-                    toast.error("Something went wrong");
-                }
-            })
+            .catch((error) => handleError(error))
             .finally(() => setIsLoading(false));
     }, [id]);
 
@@ -95,20 +87,15 @@ const ScheduleDetailPage = () => {
         if (!draftName.trim() || !schedule) return;
         setIsRenaming(true);
         try {
-            const updated = (await SchedulesApi.updateName(id, draftName.trim()))
-                .data.data;
+            const updated = (
+                await SchedulesApi.updateName(id, draftName.trim())
+            ).data.data;
             setSchedule(updated);
             updateLocal(updated);
             setEditingName(false);
             toast.success("Name updated");
         } catch (error) {
-            if (axios.isAxiosError(error)) {
-                toast.error(
-                    error.response?.data?.message ?? "Failed to rename",
-                );
-            } else {
-                toast.error("Something went wrong");
-            }
+            handleError(error);
         } finally {
             setIsRenaming(false);
         }
@@ -160,11 +147,7 @@ const ScheduleDetailPage = () => {
             );
             toast.success("Schedule saved");
         } catch (error) {
-            if (axios.isAxiosError(error)) {
-                toast.error(error.response?.data?.message);
-            } else {
-                toast.error("Something went wrong");
-            }
+            handleError(error);
         } finally {
             setIsSaving(false);
         }
@@ -291,10 +274,10 @@ const ScheduleDetailPage = () => {
                                 updateDay(day.dayOfWeek, {
                                     isAvailable: checked,
                                     startTime: checked
-                                        ? day.startTime ?? DEFAULT_DAY_START
+                                        ? (day.startTime ?? DEFAULT_DAY_START)
                                         : day.startTime,
                                     endTime: checked
-                                        ? day.endTime ?? DEFAULT_DAY_END
+                                        ? (day.endTime ?? DEFAULT_DAY_END)
                                         : day.endTime,
                                 })
                             }

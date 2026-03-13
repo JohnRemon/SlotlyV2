@@ -1,17 +1,16 @@
+import { EventsApi } from "@/features/events/api/EventsApi";
 import type { PublicEventResponse } from "@/features/events/types/Event";
 import { SlotsApi } from "@/features/slots/api/SlotsApi";
 import type { SlotResponse } from "@/features/slots/types/Slots";
-import axios from "axios";
+import { useApiError } from "@/hooks/useApiError";
 import { Loader2Icon } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router";
-import { toast } from "sonner";
 import { BookingForm } from "../components/BookingForm";
 import { EventPanel } from "../components/BookingPanel";
 import { BookingSuccess } from "../components/BookingSucces";
 import { CalendarPanel } from "../components/CalendarPanel";
 import { SlotsPanel } from "../components/SlotsPanel";
-import { EventsApi } from "@/features/events/api/EventsApi";
 
 const formatDate = (iso: string) =>
     new Date(iso).toLocaleDateString("en-US", {
@@ -28,6 +27,7 @@ const formatTime = (iso: string) =>
 
 const SlotsPage = () => {
     const { shareableId } = useParams() as { shareableId: string };
+    const handleError = useApiError();
 
     const [event, setEvent] = useState<PublicEventResponse | null>(null);
     const [isLoadingEvent, setLoadingEvent] = useState(true);
@@ -41,13 +41,7 @@ const SlotsPage = () => {
     useEffect(() => {
         EventsApi.getByShareableId(shareableId)
             .then((res) => setEvent(res.data.data))
-            .catch((error) => {
-                if (axios.isAxiosError(error)) {
-                    toast.error(error.response?.data?.message);
-                } else {
-                    toast.error("Something went wrong");
-                }
-            })
+            .catch((error) => handleError(error))
             .finally(() => setLoadingEvent(false));
     }, [shareableId]);
 
@@ -61,11 +55,7 @@ const SlotsPage = () => {
                 const res = await SlotsApi.getAvailable(shareableId, date);
                 setSlots(res.data.content);
             } catch (error) {
-                if (axios.isAxiosError(error)) {
-                    toast.error(error.response?.data?.message);
-                } else {
-                    toast.error("Something went wrong");
-                }
+                handleError(error);
             } finally {
                 setLoadingSlots(false);
             }
