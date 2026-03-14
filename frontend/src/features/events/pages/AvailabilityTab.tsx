@@ -1,17 +1,19 @@
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Loader2Icon } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router";
 import type { ScheduleResponse } from "../../schedule/types/Schedule";
 
 import FormField from "@/components/common/FormField";
-import LoadingSpinner from "@/components/common/LoadingSpinner";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import { Select, SelectTrigger } from "@/components/ui/select";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+} from "@/components/ui/select";
 
 interface Props {
-    scheduleId: string;
-    scheduleIsDefault: boolean;
+    schedule: ScheduleResponse;
     schedules: ScheduleResponse[];
     schedulesLoading: boolean;
     onScheduleChange: (scheduleId: string) => Promise<void>;
@@ -21,8 +23,6 @@ const DAY_NAMES = ["", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 const formatTime = (time?: string | null) => {
     if (!time) return "--";
-
-    // time is "HH:mm:ss" or "HH:mm"
     const [h, m] = time.split(":");
     const hour = parseInt(h);
     const ampm = hour >= 12 ? "PM" : "AM";
@@ -31,18 +31,15 @@ const formatTime = (time?: string | null) => {
 };
 
 export const AvailabilityTab = ({
-    scheduleId,
-    scheduleIsDefault,
+    schedule,
     schedules,
     schedulesLoading,
     onScheduleChange,
 }: Props) => {
     const [isSwitching, setIsSwitching] = useState(false);
 
-    const currentSchedule = schedules.find((s) => s.id === scheduleId);
-
     const handleSelect = async (id: string) => {
-        if (id === scheduleId) return;
+        if (id === schedule.id) return;
         setIsSwitching(true);
         try {
             await onScheduleChange(id);
@@ -53,99 +50,105 @@ export const AvailabilityTab = ({
 
     return (
         <div className="flex flex-col gap-5">
-            {isSwitching && (
-                <div className="flex justify-end">
-                    <LoadingSpinner label="Switching schedule" size="sm" />
-                </div>
-            )}
-
-            <FormField
-                label="Schedule"
-                hint="Slots are generated based on this schedule's working hours."
-            >
-                <Select
-                    value={currentSchedule?.id}
-                    onValueChange={(value) => {
-                        if (value) {
-                            void handleSelect(value);
-                        }
-                    }}
+            <div className="flex items-end gap-3">
+                <FormField
+                    label="Schedule"
+                    hint="Slots are generated based on this schedule's working hours."
+                    className="flex-1"
                 >
-                    <SelectTrigger
-                        className="w-full"
-                        disabled={schedulesLoading || isSwitching}
+                    <Select
+                        value={schedule.id}
+                        onValueChange={(value) => {
+                            if (value) void handleSelect(value);
+                        }}
                     >
-                        <div className="flex items-center gap-2 min-w-0">
-                            <span className="truncate">
-                                {currentSchedule?.name ??
-                                    (schedulesLoading
-                                        ? "Loading schedules..."
-                                        : "Select a schedule")}
-                            </span>
-                            {scheduleIsDefault && (
-                                <Badge variant="secondary">Default</Badge>
-                            )}
-                        </div>
-                    </SelectTrigger>
-                </Select>
-            </FormField>
+                        <SelectTrigger
+                            className="w-full"
+                            disabled={schedulesLoading || isSwitching}
+                        >
+                            <div className="flex min-w-0 items-center gap-2">
+                                <span className="truncate">
+                                    {schedule.name}
+                                </span>
+                                {schedule.isDefault && (
+                                    <Badge variant="secondary">Default</Badge>
+                                )}
+                            </div>
+                        </SelectTrigger>
+                        <SelectContent align="start">
+                            {schedules.map((s) => (
+                                <SelectItem key={s.id} value={s.id}>
+                                    <span className="flex items-center gap-2">
+                                        {s.name}
+                                        {s.isDefault && (
+                                            <Badge variant="outline">
+                                                Default
+                                            </Badge>
+                                        )}
+                                    </span>
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </FormField>
 
-            {currentSchedule && (
-                <Link
-                    to={`/schedules/${currentSchedule.id}`}
-                    className="inline-flex w-fit items-center gap-1 text-xs text-primary hover:underline"
-                >
-                    <ExternalLink className="size-3" />
-                    Edit this schedule
-                </Link>
-            )}
+                {isSwitching && (
+                    <div className="mb-[9px] shrink-0">
+                        <Loader2Icon className="size-4 animate-spin text-muted-foreground" />
+                    </div>
+                )}
+            </div>
 
-            {currentSchedule && (
-                <Card size="sm" className="gap-0 overflow-hidden">
-                    <CardContent className="px-0">
-                        <div className="divide-y divide-border">
-                            {[...currentSchedule.dailySchedules]
-                                .sort((a, b) => a.dayOfWeek - b.dayOfWeek)
-                                .map((day) => (
-                                    <div
-                                        key={day.dayOfWeek}
-                                        className="flex items-center justify-between gap-4 px-4 py-3"
+            <Link
+                to={`/schedules/${schedule.id}`}
+                className="inline-flex w-fit items-center gap-1 text-xs text-primary hover:underline"
+            >
+                <ExternalLink className="size-3" />
+                Edit this schedule
+            </Link>
+
+            <div className="overflow-hidden rounded-2xl border ring-1 ring-foreground/5">
+                <div className="border-b bg-muted/20 px-4 py-2.5">
+                    <p className="text-xs font-medium text-muted-foreground">
+                        Weekly hours
+                    </p>
+                </div>
+                <div className="divide-y divide-border">
+                    {[...schedule.dailySchedules]
+                        .sort((a, b) => a.dayOfWeek - b.dayOfWeek)
+                        .map((day) => (
+                            <div
+                                key={day.dayOfWeek}
+                                className="flex items-center justify-between gap-4 px-4 py-3"
+                            >
+                                <div className="flex min-w-0 items-center gap-3">
+                                    <span
+                                        className={
+                                            day.isAvailable
+                                                ? "w-8 text-sm font-medium"
+                                                : "w-8 text-sm font-medium text-muted-foreground"
+                                        }
                                     >
-                                        <div className="flex min-w-0 items-center gap-3">
-                                            <span
-                                                className={
-                                                    day.isAvailable
-                                                        ? "w-8 text-sm font-medium"
-                                                        : "w-8 text-sm font-medium text-muted-foreground"
-                                                }
-                                            >
-                                                {DAY_NAMES[day.dayOfWeek]}
-                                            </span>
-                                            {day.isAvailable ? (
-                                                <span className="text-sm text-muted-foreground">
-                                                    {formatTime(day.startTime)}{" "}
-                                                    – {formatTime(day.endTime)}
-                                                </span>
-                                            ) : (
-                                                <span className="text-sm text-muted-foreground">
-                                                    Unavailable
-                                                </span>
-                                            )}
-                                        </div>
-                                        <span
-                                            aria-hidden="true"
-                                            className={
-                                                day.isAvailable
-                                                    ? "size-2 rounded-full bg-primary"
-                                                    : "size-2 rounded-full bg-muted"
-                                            }
-                                        />
-                                    </div>
-                                ))}
-                        </div>
-                    </CardContent>
-                </Card>
-            )}
+                                        {DAY_NAMES[day.dayOfWeek]}
+                                    </span>
+                                    <span className="text-sm text-muted-foreground">
+                                        {day.isAvailable
+                                            ? `${formatTime(day.startTime)} – ${formatTime(day.endTime)}`
+                                            : "Unavailable"}
+                                    </span>
+                                </div>
+                                <span
+                                    aria-hidden="true"
+                                    className={
+                                        day.isAvailable
+                                            ? "size-2 rounded-full bg-primary"
+                                            : "size-2 rounded-full bg-muted"
+                                    }
+                                />
+                            </div>
+                        ))}
+                </div>
+            </div>
         </div>
     );
 };

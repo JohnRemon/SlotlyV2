@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -114,86 +113,86 @@ const ProfileTab = () => {
         updateTimeZone.isPending;
 
     return (
-        <Card className="bg-card/60 supports-backdrop-filter:backdrop-blur-sm">
-            <CardHeader className="border-b">
-                <CardTitle className="text-base">Profile</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <form onSubmit={handleSubmit(onSubmit)} className="grid gap-5">
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                        <div className="grid gap-2">
-                            <Label htmlFor="firstName">First name</Label>
-                            <Input
-                                id="firstName"
-                                placeholder="John"
-                                autoComplete="given-name"
-                                {...register("firstName")}
-                            />
-                            {errors.firstName && (
-                                <p className="text-sm text-destructive">
-                                    {errors.firstName.message}
-                                </p>
-                            )}
-                        </div>
-
-                        <div className="grid gap-2">
-                            <Label htmlFor="lastName">Last name</Label>
-                            <Input
-                                id="lastName"
-                                placeholder="Doe"
-                                autoComplete="family-name"
-                                {...register("lastName")}
-                            />
-                            {errors.lastName && (
-                                <p className="text-sm text-destructive">
-                                    {errors.lastName.message}
-                                </p>
-                            )}
-                        </div>
-                    </div>
-
+        <div className="rounded-2xl border bg-card/40 shadow-sm ring-1 ring-foreground/5 supports-backdrop-filter:backdrop-blur-sm">
+            <div className="border-b px-6 py-4">
+                <p className="text-sm font-semibold tracking-[-0.01em]">
+                    Profile
+                </p>
+            </div>
+            <form onSubmit={handleSubmit(onSubmit)} className="grid gap-5 p-6">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <div className="grid gap-2">
-                        <Label htmlFor="timeZone">Timezone</Label>
-                        <Select
-                            value={timeZone || ""}
-                            onValueChange={(value) =>
-                                setValue("timeZone", value, {
-                                    shouldValidate: true,
-                                    shouldDirty: true,
-                                })
-                            }
-                        >
-                            <SelectTrigger id="timeZone" className="w-full">
-                                <SelectValue placeholder="Select a timezone" />
-                            </SelectTrigger>
-                            <SelectContent align="start">
-                                <SelectGroup>
-                                    {timeZones.map((tz) => (
-                                        <SelectItem key={tz} value={tz}>
-                                            {tz}
-                                        </SelectItem>
-                                    ))}
-                                </SelectGroup>
-                            </SelectContent>
-                        </Select>
-                        {errors.timeZone && (
-                            <p className="text-sm text-destructive">
-                                {errors.timeZone.message}
+                        <Label htmlFor="firstName">First name</Label>
+                        <Input
+                            id="firstName"
+                            placeholder="John"
+                            autoComplete="given-name"
+                            {...register("firstName")}
+                        />
+                        {errors.firstName && (
+                            <p className="text-xs text-destructive">
+                                {errors.firstName.message}
                             </p>
                         )}
                     </div>
 
-                    <div className="flex justify-end">
-                        <Button type="submit" disabled={isLoading}>
-                            {isLoading && (
-                                <Loader2Icon className="size-4 animate-spin" />
-                            )}
-                            Save
-                        </Button>
+                    <div className="grid gap-2">
+                        <Label htmlFor="lastName">Last name</Label>
+                        <Input
+                            id="lastName"
+                            placeholder="Doe"
+                            autoComplete="family-name"
+                            {...register("lastName")}
+                        />
+                        {errors.lastName && (
+                            <p className="text-xs text-destructive">
+                                {errors.lastName.message}
+                            </p>
+                        )}
                     </div>
-                </form>
-            </CardContent>
-        </Card>
+                </div>
+
+                <div className="grid gap-2">
+                    <Label htmlFor="timeZone">Timezone</Label>
+                    <Select
+                        value={timeZone || ""}
+                        onValueChange={(value) =>
+                            setValue("timeZone", value, {
+                                shouldValidate: true,
+                                shouldDirty: true,
+                            })
+                        }
+                    >
+                        <SelectTrigger id="timeZone" className="w-full">
+                            <SelectValue placeholder="Select a timezone" />
+                        </SelectTrigger>
+                        <SelectContent align="start">
+                            <SelectGroup>
+                                {timeZones.map((tz) => (
+                                    <SelectItem key={tz} value={tz}>
+                                        {tz}
+                                    </SelectItem>
+                                ))}
+                            </SelectGroup>
+                        </SelectContent>
+                    </Select>
+                    {errors.timeZone && (
+                        <p className="text-xs text-destructive">
+                            {errors.timeZone.message}
+                        </p>
+                    )}
+                </div>
+
+                <div className="flex justify-end border-t pt-4">
+                    <Button type="submit" disabled={isLoading}>
+                        {isLoading && (
+                            <Loader2Icon className="size-4 animate-spin" />
+                        )}
+                        Save
+                    </Button>
+                </div>
+            </form>
+        </div>
     );
 };
 

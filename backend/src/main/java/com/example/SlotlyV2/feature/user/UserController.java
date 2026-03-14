@@ -54,7 +54,7 @@ public class UserController {
         userService.updateLastName(id, lastName);
     }
 
-    @PatchMapping("/timezone")
+    @PatchMapping("{id}/timezone")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void updateTimezone(@PathVariable Long id, @RequestParam String timeZone) {
         userService.updateTimeZone(id, timeZone);

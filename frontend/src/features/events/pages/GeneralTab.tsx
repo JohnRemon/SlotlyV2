@@ -17,7 +17,7 @@ export const GeneralTab = () => {
                     <Input type="text" {...register("eventName")} />
                 </FormField>
                 {errors.eventName && (
-                    <p className="text-sm text-destructive">
+                    <p className="text-xs text-destructive">
                         {errors.eventName.message}
                     </p>
                 )}
@@ -36,36 +36,6 @@ export const GeneralTab = () => {
                 </FormField>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
-                <div className="grid gap-2">
-                    <FormField label="Start date & time" required>
-                        <Input
-                            type="datetime-local"
-                            {...register("eventStart")}
-                        />
-                    </FormField>
-                    {errors.eventStart && (
-                        <p className="text-sm text-destructive">
-                            {errors.eventStart.message}
-                        </p>
-                    )}
-                </div>
-
-                <div className="grid gap-2">
-                    <FormField label="End date & time" required>
-                        <Input
-                            type="datetime-local"
-                            {...register("eventEnd")}
-                        />
-                    </FormField>
-                    {errors.eventEnd && (
-                        <p className="text-sm text-destructive">
-                            {errors.eventEnd.message}
-                        </p>
-                    )}
-                </div>
-            </div>
-
             <div className="grid gap-2">
                 <FormField
                     label="Slot duration (minutes)"
@@ -82,7 +52,7 @@ export const GeneralTab = () => {
                     />
                 </FormField>
                 {errors.slotDurationMinutes && (
-                    <p className="text-sm text-destructive">
+                    <p className="text-xs text-destructive">
                         {errors.slotDurationMinutes.message}
                     </p>
                 )}

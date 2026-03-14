@@ -14,7 +14,6 @@ import {
 } from "../hooks/useEvents";
 import type { EventRequest, EventResponse } from "../types/Event";
 
-import PageHeader from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -57,26 +56,21 @@ const EventsPage = () => {
 
     return (
         <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
-            <PageHeader
-                title="Events"
-                description="Manage your bookable events"
-                actions={
-                    <Button type="button" onClick={openCreate}>
-                        <Plus className="size-4" />
-                        New event
-                    </Button>
-                }
-            />
-
-            <div className="relative">
-                <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                    type="text"
-                    className="pl-9"
-                    placeholder="Search events..."
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                />
+            <div className="flex items-center gap-2">
+                <div className="relative flex-1">
+                    <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                        type="text"
+                        className="pl-9"
+                        placeholder="Search events..."
+                        value={query}
+                        onChange={(e) => setQuery(e.target.value)}
+                    />
+                </div>
+                <Button type="button" onClick={openCreate}>
+                    <Plus className="size-4" />
+                    New event
+                </Button>
             </div>
 
             {isLoading ? (

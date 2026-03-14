@@ -15,7 +15,6 @@ import com.example.SlotlyV2.common.exception.auth.ForbiddenException;
 import com.example.SlotlyV2.common.exception.event.EventNotFoundException;
 import com.example.SlotlyV2.common.exception.schedule.InvalidScheduleException;
 import com.example.SlotlyV2.common.exception.schedule.ScheduleNotFoundException;
-import com.example.SlotlyV2.common.util.TimeZoneConverter;
 import com.example.SlotlyV2.feature.availability.dto.AvailabilityRulesUpdateRequest;
 import com.example.SlotlyV2.feature.booking.Booking;
 import com.example.SlotlyV2.feature.booking.BookingRepository;
@@ -52,30 +51,16 @@ public class EventService {
     private final SlotService slotService;
     private final UserService userService;
     private final ApplicationEventPublisher eventPublisher;
-    private final TimeZoneConverter timeZoneConverter;
     private final EventValidator eventValidator;
     private final EventFactory eventFactory;
 
     @Transactional
     public EventResponse createEvent(EventRequest request) {
         User currentUser = userService.getCurrentUser();
-        eventValidator.validateEventDates(request.getEventStart(), request.getEventEnd());
         Schedule defaultSchedule = getDefaultSchedule(currentUser);
         Event event = eventRepository.save(eventFactory.createFrom(request, defaultSchedule, currentUser));
         slotService.generateSlots(event, defaultSchedule);
         log.info("Event created eventId={} userId={}", event.getId(), currentUser.getId());
-        return toResponse(event);
-    }
-
-    @Transactional
-    public EventResponse createRecurringEvent(EventRequest request) {
-        User currentUser = userService.getCurrentUser();
-        eventValidator.validateEventDates(request.getEventStart(), request.getEventEnd());
-        eventValidator.validateRecurringEventRules(request);
-        Schedule defaultSchedule = getDefaultSchedule(currentUser);
-        Event event = eventRepository.save(eventFactory.createFrom(request, defaultSchedule, currentUser));
-        slotService.generateSlotsRecurring(event, defaultSchedule);
-        log.info("Recurring event created eventId={} userId={}", event.getId(), currentUser.getId());
         return toResponse(event);
     }
 
@@ -101,7 +86,7 @@ public class EventService {
             throw new EventNotFoundException("Event not found");
         }
 
-        return new PublicEventResponse(event, timeZoneConverter);
+        return new PublicEventResponse(event);
     }
 
     @Transactional(readOnly = true)
@@ -238,6 +223,6 @@ public class EventService {
     }
 
     private EventResponse toResponse(Event event) {
-        return new EventResponse(event, timeZoneConverter);
+        return new EventResponse(event);
     }
 }

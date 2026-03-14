@@ -3,8 +3,6 @@ import * as z from "zod";
 export const eventFormSchema = z.object({
     eventName: z.string().min(1, "Event name is required."),
     description: z.string().optional(),
-    eventStart: z.string().min(1, "Start date is required."),
-    eventEnd: z.string().min(1, "End date is required."),
     slotDurationMinutes: z.number().min(5, "Must be at least 5 minutes."),
     bufferMinutes: z.number().min(0, "Cannot be negative."),
     minimumNoticeHours: z.number().min(0, "Cannot be negative."),
@@ -24,10 +22,3 @@ export const eventFormSchema = z.object({
 });
 
 export type EventFormData = z.infer<typeof eventFormSchema>;
-
-export type FormState = EventFormData;
-
-export const toDateTimeLocal = (iso: string) => {
-    if (!iso) return "";
-    return iso.slice(0, 16);
-};

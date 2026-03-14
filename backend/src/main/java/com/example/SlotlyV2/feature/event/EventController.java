@@ -64,12 +64,6 @@ public class EventController {
         return DataResponse.of(eventService.createEvent(request));
     }
 
-    @PostMapping("/recurring")
-    @ResponseStatus(HttpStatus.CREATED)
-    public DataResponse<EventResponse> createRecurringEvent(@Valid @RequestBody EventRequest request) {
-        return DataResponse.of(eventService.createRecurringEvent(request));
-    }
-
     @PutMapping("/{id}")
     public DataResponse<EventResponse> updateEvent(
             @PathVariable Long id,

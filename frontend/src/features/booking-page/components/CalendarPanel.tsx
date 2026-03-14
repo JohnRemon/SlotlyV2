@@ -1,13 +1,12 @@
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useState } from "react";
-
 import { Button } from "@/components/ui/button";
+import type { ScheduleResponse } from "@/features/schedule/types/Schedule";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 interface CalendarPanelProps {
-    eventStart: string;
-    eventEnd: string;
     selectedDate: string | null;
     onSelectDate: (date: string) => void;
+    schedule?: ScheduleResponse;
 }
 
 const DAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
@@ -26,63 +25,88 @@ const MONTHS = [
     "December",
 ];
 
+const dateGetDayToDayOfWeek = (jsDay: number): number =>
+    jsDay === 0 ? 7 : jsDay;
+
+const getToday = () => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+};
+
 export const CalendarPanel = ({
-    eventStart,
-    eventEnd,
     selectedDate,
     onSelectDate,
+    schedule,
 }: CalendarPanelProps) => {
-    const start = new Date(eventStart);
-    const end = new Date(eventEnd);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = useMemo(() => getToday(), []);
 
-    const [viewDate, setViewDate] = useState(() => {
-        const d = start > today ? new Date(start) : new Date(today);
-        return new Date(d.getFullYear(), d.getMonth(), 1);
-    });
+    const [viewDate, setViewDate] = useState(
+        () => new Date(today.getFullYear(), today.getMonth(), 1),
+    );
 
     const year = viewDate.getFullYear();
     const month = viewDate.getMonth();
-
     const firstDay = new Date(year, month, 1).getDay();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-    const isAvailable = (day: number) => {
-        const d = new Date(year, month, day);
-        d.setHours(0, 0, 0, 0);
-        const s = new Date(start);
-        s.setHours(0, 0, 0, 0);
-        const e = new Date(end);
-        e.setHours(0, 0, 0, 0);
-        return d >= s && d <= e && d >= today;
-    };
+    const isScheduledDay = useCallback(
+        (date: Date): boolean => {
+            if (!schedule) return true;
+            const dayOfWeek = dateGetDayToDayOfWeek(date.getDay());
+            return (
+                schedule.dailySchedules.find((d) => d.dayOfWeek === dayOfWeek)
+                    ?.isAvailable ?? false
+            );
+        },
+        [schedule],
+    );
 
-    const toDateStr = (day: number) => {
-        const month2 = String(month + 1).padStart(2, "0");
-        const day2 = String(day).padStart(2, "0");
-        return `${year}-${month2}-${day2}`;
-    };
+    const toDateStr = useCallback(
+        (day: number): string => {
+            const y = viewDate.getFullYear();
+            const m = String(viewDate.getMonth() + 1).padStart(2, "0");
+            const d = String(day).padStart(2, "0");
+            return `${y}-${m}-${d}`;
+        },
+        [viewDate],
+    );
 
-    const prevMonth = () => setViewDate(new Date(year, month - 1, 1));
-    const nextMonth = () => setViewDate(new Date(year, month + 1, 1));
+    const isAvailable = useCallback(
+        (day: number): boolean => {
+            const d = new Date(
+                viewDate.getFullYear(),
+                viewDate.getMonth(),
+                day,
+            );
+            d.setHours(0, 0, 0, 0);
+            return d >= today && isScheduledDay(d);
+        },
+        [viewDate, today, isScheduledDay],
+    );
+
+    useEffect(() => {
+        if (selectedDate) return;
+        for (let day = 1; day <= daysInMonth; day++) {
+            if (isAvailable(day)) {
+                onSelectDate(toDateStr(day));
+                break;
+            }
+        }
+    }, [selectedDate, daysInMonth, isAvailable, toDateStr, onSelectDate]);
 
     const canGoPrev =
         new Date(year, month - 1, 1) >=
-        new Date(start.getFullYear(), start.getMonth(), 1);
-    const canGoNext =
-        new Date(year, month + 1, 1) <=
-        new Date(end.getFullYear(), end.getMonth(), 1);
+        new Date(today.getFullYear(), today.getMonth(), 1);
 
     return (
         <div className="flex h-full flex-col gap-4">
-            {/* Month Nav */}
             <div className="flex items-center justify-between">
                 <Button
                     type="button"
                     variant="ghost"
                     size="icon-sm"
-                    onClick={prevMonth}
+                    onClick={() => setViewDate(new Date(year, month - 1, 1))}
                     disabled={!canGoPrev}
                     className="rounded-full"
                     aria-label="Previous month"
@@ -96,8 +120,7 @@ export const CalendarPanel = ({
                     type="button"
                     variant="ghost"
                     size="icon-sm"
-                    onClick={nextMonth}
-                    disabled={!canGoNext}
+                    onClick={() => setViewDate(new Date(year, month + 1, 1))}
                     className="rounded-full"
                     aria-label="Next month"
                 >
@@ -105,7 +128,6 @@ export const CalendarPanel = ({
                 </Button>
             </div>
 
-            {/* Day Headers */}
             <div className="grid grid-cols-7 text-center">
                 {DAYS.map((d) => (
                     <span
@@ -117,7 +139,6 @@ export const CalendarPanel = ({
                 ))}
             </div>
 
-            {/* Days */}
             <div className="grid grid-cols-7 gap-y-1 text-center">
                 {Array.from({ length: firstDay }).map((_, i) => (
                     <span key={`empty-${i}`} />
@@ -131,16 +152,18 @@ export const CalendarPanel = ({
                     return (
                         <button
                             key={day}
+                            type="button"
                             disabled={!avail}
-                            onClick={() => onSelectDate(dateStr)}
-                            className={
-                                "mx-auto flex size-9 items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 " +
-                                (selected
+                            onClick={() => avail && onSelectDate(dateStr)}
+                            className={[
+                                "mx-auto flex size-9 items-center justify-center rounded-md text-sm font-medium",
+                                "focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
+                                selected
                                     ? "bg-primary text-primary-foreground"
                                     : avail
-                                      ? "text-foreground hover:bg-muted/50"
-                                      : "cursor-not-allowed text-muted-foreground/30")
-                            }
+                                      ? "text-foreground hover:bg-muted/50 transition-colors"
+                                      : "cursor-not-allowed text-muted-foreground/30 pointer-events-none",
+                            ].join(" ")}
                         >
                             {day}
                         </button>

@@ -18,37 +18,15 @@ import { Loader2Icon } from "lucide-react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 
-const createEventSchema = z
-    .object({
-        eventName: z.string().trim().min(1, "Event name is required."),
-        description: z.string(),
-        eventStart: z
-            .string()
-            .min(1, "Start date is required.")
-            .refine(
-                (value) => !Number.isNaN(Date.parse(value)),
-                "Enter a valid start date and time.",
-            ),
-        eventEnd: z
-            .string()
-            .min(1, "End date is required.")
-            .refine(
-                (value) => !Number.isNaN(Date.parse(value)),
-                "Enter a valid end date and time.",
-            ),
-        slotDuration: z
-            .number()
-            .int("Slot duration must be a whole number.")
-            .min(5, "Slot duration must be at least 5 minutes.")
-            .multipleOf(5, "Slot duration must be in 5-minute increments."),
-    })
-    .refine(
-        ({ eventStart, eventEnd }) => new Date(eventEnd) > new Date(eventStart),
-        {
-            path: ["eventEnd"],
-            message: "End date must be after start date.",
-        },
-    );
+const createEventSchema = z.object({
+    eventName: z.string().trim().min(1, "Event name is required."),
+    description: z.string(),
+    slotDuration: z
+        .number()
+        .int("Slot duration must be a whole number.")
+        .min(5, "Slot duration must be at least 5 minutes.")
+        .multipleOf(5, "Slot duration must be in 5-minute increments."),
+});
 
 type CreateEventFormInput = z.input<typeof createEventSchema>;
 type CreateEventFormData = z.output<typeof createEventSchema>;
@@ -74,8 +52,6 @@ const CreateEventModal = ({
         defaultValues: {
             eventName: "",
             description: "",
-            eventStart: "",
-            eventEnd: "",
             slotDuration: 30,
         },
     });
@@ -86,8 +62,6 @@ const CreateEventModal = ({
             await onCreate({
                 eventName: data.eventName.trim(),
                 description: data.description,
-                eventStart: new Date(data.eventStart).toISOString(),
-                eventEnd: new Date(data.eventEnd).toISOString(),
                 availabilityRules: {
                     slotDurationMinutes: data.slotDuration,
                 },
@@ -137,31 +111,6 @@ const CreateEventModal = ({
                             {...register("description")}
                         />
                     </FormField>
-
-                    <div className="grid gap-3 sm:grid-cols-2">
-                        <FormField label="Start date" required>
-                            <Input
-                                type="datetime-local"
-                                {...register("eventStart")}
-                            />
-                            {errors.eventStart && (
-                                <p className="text-sm text-destructive">
-                                    {errors.eventStart.message}
-                                </p>
-                            )}
-                        </FormField>
-                        <FormField label="End date" required>
-                            <Input
-                                type="datetime-local"
-                                {...register("eventEnd")}
-                            />
-                            {errors.eventEnd && (
-                                <p className="text-sm text-destructive">
-                                    {errors.eventEnd.message}
-                                </p>
-                            )}
-                        </FormField>
-                    </div>
 
                     <FormField
                         label="Slot duration (minutes)"

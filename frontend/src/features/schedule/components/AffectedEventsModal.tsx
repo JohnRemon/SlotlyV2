@@ -26,7 +26,8 @@ const AffectedEventsModal = ({
     onConfirm: (assignments: Record<string, string>) => void;
     onClose: () => void;
 }) => {
-    // default all events to first available schedule that isn't the one being deleted
+    const hasEvents = events.length > 0;
+
     const fallback = schedules.find((s) => s.id !== currentScheduleId);
     const [assignments, setAssignments] = useState<Record<string, string>>(
         Object.fromEntries(events.map((e) => [e.id, fallback?.id ?? ""])),
@@ -40,18 +41,19 @@ const AffectedEventsModal = ({
         <Dialog open>
             <DialogContent showCloseButton={false} className="sm:max-w-md">
                 <div>
-                    <DialogTitle>Reassign affected events</DialogTitle>
+                    <DialogTitle>
+                        {hasEvents
+                            ? "Reassign affected events"
+                            : "Delete schedule"}
+                    </DialogTitle>
                     <p className="mt-1 text-xs text-muted-foreground">
-                        {events.length} event{events.length !== 1 ? "s" : ""}{" "}
-                        used this schedule. Choose a replacement for each.
+                        {hasEvents
+                            ? `${events.length} event${events.length !== 1 ? "s" : ""} used this schedule. Choose a replacement for each.`
+                            : "Are you sure you want to delete this schedule?"}
                     </p>
                 </div>
 
-                {events.length === 0 ? (
-                    <p className="py-4 text-center text-sm text-muted-foreground">
-                        No events were using this schedule.
-                    </p>
-                ) : (
+                {hasEvents && (
                     <div className="flex max-h-72 flex-col gap-3 overflow-y-auto pr-1">
                         {events.map((event) => (
                             <div
@@ -114,7 +116,7 @@ const AffectedEventsModal = ({
                         className="flex-1"
                         onClick={() => onConfirm(assignments)}
                     >
-                        Delete & reassign
+                        {hasEvents ? "Delete & reassign" : "Delete"}
                     </Button>
                 </div>
             </DialogContent>

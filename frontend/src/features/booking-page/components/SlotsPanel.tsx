@@ -20,21 +20,23 @@ export const SlotsPanel = ({
     selectedSlotId,
     onSelectSlot,
 }: SlotsPanelProps) => {
-    if (isLoading)
+    if (isLoading) {
         return (
-            <div className="h-full flex items-center justify-center">
+            <div className="flex flex-1 items-center justify-center">
                 <Loader2Icon className="size-4 animate-spin text-muted-foreground" />
             </div>
         );
+    }
 
-    if (slots.length === 0)
+    if (slots.length === 0) {
         return (
-            <div className="flex-1 flex items-center justify-center text-center">
-                <p className="text-sm text-muted-foreground">
+            <div className="flex flex-1 items-center justify-center text-center">
+                <p className="text-xs text-muted-foreground">
                     No available slots for this day
                 </p>
             </div>
         );
+    }
 
     return (
         <div className="flex h-64 flex-col gap-2 overflow-y-auto px-1 py-1 scrollbar-hide">
@@ -45,12 +47,13 @@ export const SlotsPanel = ({
                         key={slot.id}
                         type="button"
                         onClick={() => onSelectSlot(slot)}
-                        className={
-                            "w-full rounded-xl px-4 py-2.5 text-center text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 " +
-                            (isSelected
+                        className={[
+                            "w-full rounded-xl px-4 py-2.5 text-center text-sm font-medium transition-colors",
+                            "focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
+                            isSelected
                                 ? "bg-primary text-primary-foreground ring-1 ring-primary/25"
-                                : "bg-background/20 text-foreground ring-1 ring-border hover:bg-muted/40")
-                        }
+                                : "bg-background/20 text-foreground ring-1 ring-border hover:bg-muted/40",
+                        ].join(" ")}
                     >
                         {formatTime(slot.startTime)}
                     </button>

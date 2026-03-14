@@ -80,20 +80,15 @@ const BookingsPage = () => {
         }
     };
 
-    return (
-        <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-8">
-            <div className="flex items-start justify-between gap-4">
-                <div className="min-w-0">
-                    <h1 className="text-base font-semibold tracking-[-0.01em]">
-                        Bookings
-                    </h1>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                        Review attendee details, reschedule, cancel, and mark
-                        no-shows.
-                    </p>
-                </div>
-            </div>
+    const emptyLabel: Record<BookingTab, string> = {
+        CONFIRMED: "upcoming",
+        CANCELLED: "cancelled",
+        NO_SHOW: "no-show",
+        PAST: "past",
+    };
 
+    return (
+        <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
             <div className="inline-flex w-fit items-center gap-1 rounded-xl bg-muted/40 p-1 ring-1 ring-border">
                 {TABS.map(({ label, value }) => (
                     <Button
@@ -114,13 +109,20 @@ const BookingsPage = () => {
                     <Loader2Icon className="size-5 animate-spin text-muted-foreground" />
                 </div>
             ) : filtered.length === 0 ? (
-                <div className="flex flex-col items-center justify-center gap-4 rounded-xl border border-dashed border-border bg-card/20 p-10 text-center">
-                    <div className="flex size-14 items-center justify-center rounded-full bg-muted ring-1 ring-border">
-                        <CalendarX className="size-6 text-muted-foreground" />
+                <div className="rounded-2xl border border-dashed bg-card/40 p-10 shadow-sm ring-1 ring-foreground/5 supports-backdrop-filter:backdrop-blur-sm">
+                    <div className="mx-auto flex max-w-sm flex-col items-center justify-center gap-4 text-center">
+                        <div className="flex size-14 items-center justify-center rounded-2xl bg-muted/40 ring-1 ring-foreground/10">
+                            <CalendarX className="size-6 text-muted-foreground" />
+                        </div>
+                        <div>
+                            <p className="text-sm font-semibold tracking-[-0.01em]">
+                                No {emptyLabel[activeTab]} bookings yet
+                            </p>
+                            <p className="mt-1 text-xs text-muted-foreground">
+                                Bookings will appear here once they're made
+                            </p>
+                        </div>
                     </div>
-                    <p className="text-sm font-medium text-muted-foreground">
-                        No {activeTab.toLowerCase()} bookings yet
-                    </p>
                 </div>
             ) : (
                 <div className="flex flex-col gap-2">

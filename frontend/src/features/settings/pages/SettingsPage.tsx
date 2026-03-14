@@ -9,7 +9,7 @@ const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
     {
         id: "profile",
         label: "Profile",
-        icon: <UserIcon className="w-4 h-4" />,
+        icon: <UserIcon className="size-4" />,
     },
 ];
 
@@ -21,7 +21,7 @@ const SettingsPage = () => {
     return (
         <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
             <div>
-                <h1 className="text-xl font-semibold tracking-[-0.02em]">
+                <h1 className="text-base font-semibold tracking-[-0.01em]">
                     Settings
                 </h1>
             </div>
@@ -45,7 +45,6 @@ const SettingsPage = () => {
                         </button>
                     ))}
                 </nav>
-
                 <div>{activeTab === "profile" && <ProfileTab />}</div>
             </div>
         </div>

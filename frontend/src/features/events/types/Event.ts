@@ -2,9 +2,7 @@ import type {
     BookingFormRequest,
     BookingFormResponse,
 } from "@/features/booking-page/types/BookingForms";
-
-export type RecurrenceFrequency = "DAILY" | "WEEKLY" | "MONTHLY" | "CUSTOM";
-export type RecurrenceEndType = "NEVER" | "OCCURRENCES" | "DATE";
+import type { ScheduleResponse } from "@/features/schedule/types/Schedule";
 
 export interface AvailabilityRules {
     slotDurationMinutes: number;
@@ -17,49 +15,34 @@ export interface AvailabilityRules {
     isPublic?: boolean;
 }
 
-export interface RecurringRules {
-    recurrenceFrequency: RecurrenceFrequency;
-    interval: number;
-    recurrenceDayOfWeek: number;
-    recurrenceEndType: RecurrenceEndType;
-    recurrenceOccurrences: number;
-    recurrenceEndDate: string;
-}
-
 export interface EventResponse {
     id: number;
     eventName: string;
     description?: string;
-    eventStart: string;
-    eventEnd: string;
     shareableId: string;
     scheduleId: string;
     scheduleIsDefault: boolean;
     availabilityRules: AvailabilityRules;
-    recurringRules?: RecurringRules;
-    bookingForm?: BookingFormResponse;
+    bookingForm: BookingFormResponse;
+    schedule: ScheduleResponse;
 }
 
 export interface PublicEventResponse {
     eventName: string;
     description?: string;
-    eventStart: string;
-    eventEnd: string;
     host: {
         firstName: string;
         lastName: string;
     };
     slotDurationMinutes: number;
     bookingForm: BookingFormResponse;
+    schedule: ScheduleResponse;
 }
 
 export interface EventRequest {
     eventName: string;
     description?: string;
-    eventStart: string;
-    eventEnd: string;
     availabilityRules: Partial<AvailabilityRules>;
-    recurringRules?: RecurringRules;
     bookingForm?: BookingFormRequest;
 }
 

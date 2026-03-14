@@ -1,4 +1,4 @@
-import { Loader2Icon } from "lucide-react";
+import { LayoutGrid, Loader2Icon } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router";
 import { toast } from "sonner";
@@ -32,7 +32,6 @@ const AppsPage = () => {
             .finally(() => setIsStatusLoading(false));
     }, []);
 
-    // Handle OAuth callback — code + state come back as query params
     useEffect(() => {
         const code = searchParams.get("code");
         const state = searchParams.get("state");
@@ -100,17 +99,7 @@ const AppsPage = () => {
     const installedApps = isConnected ? ["google-calendar"] : [];
 
     return (
-        <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-8">
-            <div>
-                <h1 className="text-base font-semibold tracking-[-0.01em]">
-                    Apps
-                </h1>
-                <p className="mt-1 text-xs text-muted-foreground">
-                    Connect your favourite tools to extend Slotly
-                </p>
-            </div>
-
-            {/* Tabs */}
+        <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
             <div className="inline-flex w-fit items-center gap-1 rounded-xl bg-muted/40 p-1 ring-1 ring-border">
                 {(["install", "installed"] as Tab[]).map((tab) => (
                     <Button
@@ -131,29 +120,23 @@ const AppsPage = () => {
                 ))}
             </div>
 
-            {/* Content */}
             {isStatusLoading ? (
-                <div className="flex items-center justify-center h-40">
+                <div className="flex justify-center py-16">
                     <Loader2Icon className="size-5 animate-spin text-muted-foreground" />
                 </div>
             ) : (
                 <>
                     {activeTab === "install" && (
                         <div className="flex flex-col gap-3">
-                            {!isConnected && (
+                            {isConnected ? (
+                                <EmptyState message="All available apps are installed" />
+                            ) : (
                                 <GoogleCalendarCard
                                     connected={false}
                                     onConnect={handleConnect}
                                     onDisconnect={handleDisconnect}
                                     isLoading={isActioning}
                                 />
-                            )}
-                            {isConnected && (
-                                <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-card/20 p-10 text-center">
-                                    <p className="text-sm text-muted-foreground">
-                                        All available apps are installed
-                                    </p>
-                                </div>
                             )}
                         </div>
                     )}
@@ -168,11 +151,7 @@ const AppsPage = () => {
                                     isLoading={isActioning}
                                 />
                             ) : (
-                                <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-card/20 p-10 text-center">
-                                    <p className="text-sm text-muted-foreground">
-                                        No apps installed yet
-                                    </p>
-                                </div>
+                                <EmptyState message="No apps installed yet" />
                             )}
                         </div>
                     )}
@@ -181,5 +160,18 @@ const AppsPage = () => {
         </div>
     );
 };
+
+const EmptyState = ({ message }: { message: string }) => (
+    <div className="rounded-2xl border border-dashed bg-card/40 p-10 shadow-sm ring-1 ring-foreground/5 supports-backdrop-filter:backdrop-blur-sm">
+        <div className="mx-auto flex max-w-sm flex-col items-center justify-center gap-4 text-center">
+            <div className="flex size-14 items-center justify-center rounded-2xl bg-muted/40 ring-1 ring-foreground/10">
+                <LayoutGrid className="size-6 text-muted-foreground" />
+            </div>
+            <p className="text-sm font-semibold tracking-[-0.01em]">
+                {message}
+            </p>
+        </div>
+    </div>
+);
 
 export default AppsPage;

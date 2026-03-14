@@ -15,7 +15,7 @@ export const SlotsApi = {
             params: { id, timeZone },
         }),
 
-    getAvailable: (shareableId: string, date: string, page = 0, size = 10) =>
+    getAvailable: (shareableId: string, date: string, page = 0, size = 300) =>
         API.get<PagedResponse<SlotResponse>>("/api/v1/slots/available", {
             params: { shareableId, date, timeZone, page, size },
         }),

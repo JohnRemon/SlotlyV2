@@ -27,32 +27,36 @@ type SidebarProps = {
     className?: string;
 };
 
-// --- Constants ---------------------------------------------------------------
-
 const NAV_ITEMS: NavItem[] = [
     {
         label: "Events",
-        icon: <Link2 className="w-4 h-4 shrink-0" />,
+        icon: <Link2 className="size-4 shrink-0" />,
         to: "/events",
     },
     {
         label: "Bookings",
-        icon: <Calendar className="w-4 h-4 shrink-0" />,
+        icon: <Calendar className="size-4 shrink-0" />,
         to: "/bookings",
     },
     {
         label: "Schedules",
-        icon: <Clock className="w-4 h-4 shrink-0" />,
+        icon: <Clock className="size-4 shrink-0" />,
         to: "/schedules",
     },
     {
         label: "Apps",
-        icon: <Package className="w-4 h-4 shrink-0" />,
+        icon: <Package className="size-4 shrink-0" />,
         to: "/apps",
     },
 ];
 
-// --- Component ---------------------------------------------------------------
+const navLinkClass = ({ isActive }: { isActive: boolean }) =>
+    cn(
+        "flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors",
+        "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+        isActive &&
+            "bg-sidebar-accent text-sidebar-accent-foreground ring-1 ring-sidebar-border",
+    );
 
 const Sidebar = ({
     username = "User",
@@ -74,19 +78,13 @@ const Sidebar = ({
                 className,
             )}
         >
-            {/* -- Profile Header -- */}
-            <div className="flex items-center justify-between gap-3 border-b border-sidebar-border px-4 py-4">
-                <div className="flex items-center gap-2">
-                    <div className="flex size-8 items-center justify-center rounded-full bg-sidebar-accent text-sidebar-accent-foreground ring-1 ring-sidebar-border">
-                        <span className="text-xs font-semibold">{initial}</span>
-                    </div>
-                    <span className="font-semibold text-sm text-base-content">
-                        {username}
-                    </span>
+            <div className="flex items-center gap-2 border-b border-sidebar-border px-4 py-4">
+                <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-sidebar-accent text-sidebar-accent-foreground ring-1 ring-sidebar-border">
+                    <span className="text-xs font-semibold">{initial}</span>
                 </div>
+                <span className="text-sm font-semibold">{username}</span>
             </div>
 
-            {/* -- Nav Links -- */}
             <nav className="flex-1 px-2 py-3">
                 <ul className="flex flex-col gap-1">
                     {NAV_ITEMS.map((item) => (
@@ -94,14 +92,7 @@ const Sidebar = ({
                             <NavLink
                                 to={item.to}
                                 onClick={onNavigate}
-                                className={({ isActive }) =>
-                                    cn(
-                                        "flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors",
-                                        "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                                        isActive &&
-                                            "bg-sidebar-accent text-sidebar-accent-foreground ring-1 ring-sidebar-border",
-                                    )
-                                }
+                                className={navLinkClass}
                             >
                                 {item.icon}
                                 {item.label}
@@ -111,22 +102,14 @@ const Sidebar = ({
                 </ul>
             </nav>
 
-            {/*-- Footer Actions --*/}
             <div className="border-t border-sidebar-border p-2">
                 <div className="grid gap-1">
                     <NavLink
                         to="/settings"
                         onClick={onNavigate}
-                        className={({ isActive }) =>
-                            cn(
-                                "flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors",
-                                "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                                isActive &&
-                                    "bg-sidebar-accent text-sidebar-accent-foreground ring-1 ring-sidebar-border",
-                            )
-                        }
+                        className={navLinkClass}
                     >
-                        <Settings className="h-4 w-4 shrink-0" />
+                        <Settings className="size-4 shrink-0" />
                         Settings
                     </NavLink>
 
@@ -139,7 +122,7 @@ const Sidebar = ({
                             onNavigate?.();
                         }}
                     >
-                        <LogOut className="h-4 w-4 shrink-0" />
+                        <LogOut className="size-4 shrink-0" />
                         Logout
                     </Button>
                 </div>

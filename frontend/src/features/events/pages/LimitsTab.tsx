@@ -38,7 +38,7 @@ const NumberField = ({
                 />
             </FormField>
             {errors[name] && (
-                <p className="text-sm text-destructive">
+                <p className="text-xs text-destructive">
                     {errors[name]?.message}
                 </p>
             )}
@@ -84,14 +84,12 @@ export const LimitsTab = () => {
                 />
             </div>
 
-            <div className="flex items-center justify-between gap-4 rounded-xl border bg-muted/20 p-4">
+            <div className="flex items-center justify-between gap-4 rounded-2xl border bg-muted/20 p-4 ring-1 ring-foreground/5">
                 <div className="min-w-0">
-                    <div className="text-sm font-medium">
-                        Allow cancellations
-                    </div>
-                    <div className="mt-0.5 text-xs text-muted-foreground">
+                    <p className="text-sm font-medium">Allow cancellations</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
                         Let attendees cancel their bookings
-                    </div>
+                    </p>
                 </div>
                 <Switch
                     checked={watch("allowCancellations")}

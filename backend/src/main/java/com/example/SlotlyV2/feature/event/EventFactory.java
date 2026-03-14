@@ -1,12 +1,10 @@
 package com.example.SlotlyV2.feature.event;
 
-import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.stereotype.Component;
 
-import com.example.SlotlyV2.common.util.TimeZoneConverter;
 import com.example.SlotlyV2.feature.availability.AvailabilityRules;
 import com.example.SlotlyV2.feature.availability.dto.AvailabilityRulesDTO;
 import com.example.SlotlyV2.feature.availability.dto.AvailabilityRulesUpdateRequest;
@@ -15,8 +13,6 @@ import com.example.SlotlyV2.feature.booking_form.FormQuestion;
 import com.example.SlotlyV2.feature.booking_form.dto.BookingFormRequest;
 import com.example.SlotlyV2.feature.booking_form.enums.FieldType;
 import com.example.SlotlyV2.feature.event.dto.EventRequest;
-import com.example.SlotlyV2.feature.recurrence.RecurrenceRules;
-import com.example.SlotlyV2.feature.recurrence.dto.RecurrenceRulesDTO;
 import com.example.SlotlyV2.feature.schedule.Schedule;
 import com.example.SlotlyV2.feature.user.User;
 
@@ -25,35 +21,18 @@ import lombok.RequiredArgsConstructor;
 @Component
 @RequiredArgsConstructor
 public class EventFactory {
-    private final TimeZoneConverter timeZoneConverter;
-
     public Event createFrom(EventRequest request, Schedule schedule, User user) {
         AvailabilityRules availabilityRules = buildAvailabilityRules(
                 request.getAvailabilityRules());
 
-        OffsetDateTime utcStart = timeZoneConverter.toUtc(request.getEventStart());
-        OffsetDateTime utcEnd = timeZoneConverter.toUtc(request.getEventEnd());
-
-        Event.EventBuilder builder = Event.builder()
+        Event event = Event.builder()
                 .eventName(request.getEventName())
                 .description(request.getDescription())
                 .host(user)
-                .eventStart(utcStart)
-                .eventEnd(utcEnd)
                 .schedule(schedule)
-                .availabilityRules(availabilityRules);
-
-        if (request.getRecurrenceRules() != null) {
-            RecurrenceRules recurrenceRules = buildRecurrenceRules(request.getRecurrenceRules());
-
-            builder.isRecurring(true)
-                    .recurrenceRules(recurrenceRules);
-        }
-
-        Event event = builder.build();
-
+                .availabilityRules(availabilityRules)
+                .build();
         event.setBookingForm(buildBookingForm(request.getBookingForm(), event));
-
         return event;
     }
 
@@ -94,18 +73,6 @@ public class EventFactory {
                 .maxCapacity(maxCapacity)
                 .allowsCancellations(orDefault(allowCancellations, true))
                 .isPublic(orDefault(isPublic, true))
-                .build();
-    }
-
-    private RecurrenceRules buildRecurrenceRules(RecurrenceRulesDTO dto) {
-        return RecurrenceRules.builder()
-                .recurrenceFrequency(dto.getRecurrenceFrequency())
-                .recurrenceEndType(dto.getRecurrenceEndType())
-                .recurrenceDayOfWeek(dto.getRecurrenceDayOfWeek())
-                .recurrenceOccurrences(dto.getRecurrenceOccurrences())
-                .recurrenceEndDate(dto.getRecurrenceEndDate() != null
-                        ? timeZoneConverter.toUtc(dto.getRecurrenceEndDate())
-                        : null)
                 .build();
     }
 

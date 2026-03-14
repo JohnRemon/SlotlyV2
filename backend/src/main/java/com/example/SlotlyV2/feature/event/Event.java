@@ -10,7 +10,6 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import com.example.SlotlyV2.feature.availability.AvailabilityRules;
 import com.example.SlotlyV2.feature.booking_form.BookingForm;
-import com.example.SlotlyV2.feature.recurrence.RecurrenceRules;
 import com.example.SlotlyV2.feature.schedule.Schedule;
 import com.example.SlotlyV2.feature.slot.Slot;
 import com.example.SlotlyV2.feature.user.User;
@@ -66,12 +65,6 @@ public class Event {
     @Column(name = "deleted_at")
     private OffsetDateTime deletedAt;
 
-    @Column(name = "event_start")
-    private OffsetDateTime eventStart;
-
-    @Column(name = "event_end")
-    private OffsetDateTime eventEnd;
-
     @Column(unique = true)
     private String shareableId;
 
@@ -81,9 +74,6 @@ public class Event {
 
     @Embedded
     private AvailabilityRules availabilityRules;
-
-    @Embedded
-    private RecurrenceRules recurrenceRules;
 
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @Builder.Default

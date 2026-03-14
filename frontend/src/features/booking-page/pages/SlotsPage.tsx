@@ -7,10 +7,10 @@ import { Loader2Icon } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router";
 import { BookingForm } from "../components/BookingForm";
-import { EventPanel } from "../components/BookingPanel";
 import { BookingSuccess } from "../components/BookingSucces";
 import { CalendarPanel } from "../components/CalendarPanel";
 import { SlotsPanel } from "../components/SlotsPanel";
+import { EventPanel } from "../components/EventPanel";
 
 const formatDate = (iso: string) =>
     new Date(iso).toLocaleDateString("en-US", {
@@ -43,7 +43,7 @@ const SlotsPage = () => {
             .then((res) => setEvent(res.data.data))
             .catch((error) => handleError(error))
             .finally(() => setLoadingEvent(false));
-    }, [shareableId]);
+    }, [shareableId, handleError]);
 
     const handleSelectDate = useCallback(
         async (date: string) => {
@@ -60,18 +60,15 @@ const SlotsPage = () => {
                 setLoadingSlots(false);
             }
         },
-        [shareableId],
+        [shareableId, handleError],
     );
 
     useEffect(() => {
         if (!event) return;
-        const today = new Date();
-        const start = new Date(event.eventStart);
-        const firstDay = start > today ? start : today;
+        const firstDay = new Date();
         const month = String(firstDay.getMonth() + 1).padStart(2, "0");
         const day = String(firstDay.getDate()).padStart(2, "0");
-        const dateStr = `${firstDay.getFullYear()}-${month}-${day}`;
-        handleSelectDate(dateStr);
+        handleSelectDate(`${firstDay.getFullYear()}-${month}-${day}`);
     }, [event, handleSelectDate]);
 
     const handleSelectSlot = (slot: SlotResponse) => {
@@ -79,42 +76,53 @@ const SlotsPage = () => {
         setShowForm(true);
     };
 
-    if (isLoadingEvent)
+    const selectedSlotLabel = selectedSlot
+        ? `${formatDate(selectedSlot.startTime)}, ${formatTime(selectedSlot.startTime)} – ${formatTime(selectedSlot.endTime)}`
+        : undefined;
+
+    if (isLoadingEvent) {
         return (
             <div className="flex min-h-dvh items-center justify-center bg-background">
                 <Loader2Icon className="size-5 animate-spin text-muted-foreground" />
             </div>
         );
+    }
 
-    if (!event)
+    if (!event) {
         return (
-            <div className="flex min-h-dvh items-center justify-center bg-background text-sm text-muted-foreground">
-                Event not found.
+            <div className="flex min-h-dvh items-center justify-center bg-background">
+                <div className="flex flex-col items-center gap-2 text-center">
+                    <p className="text-sm font-semibold tracking-[-0.01em]">
+                        Event not found
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                        This link may be invalid or the event has been removed.
+                    </p>
+                </div>
             </div>
         );
+    }
 
-    if (booked)
+    if (booked) {
         return (
             <div className="flex min-h-dvh items-center justify-center bg-linear-to-b from-background to-muted/30 px-4 py-10">
-                <div className="w-full max-w-md rounded-2xl bg-card p-10 ring-1 ring-foreground/10">
+                <div className="w-full max-w-md rounded-2xl bg-card p-10 shadow-sm ring-1 ring-foreground/10">
                     <BookingSuccess eventName={event.eventName} />
                 </div>
             </div>
         );
-
-    const selectedSlotLabel = selectedSlot
-        ? `${formatDate(selectedSlot.startTime)}, ${formatTime(selectedSlot.startTime)} – ${formatTime(selectedSlot.endTime)}`
-        : undefined;
+    }
 
     return (
         <div className="flex min-h-dvh items-center justify-center bg-linear-to-b from-background to-muted/30 px-4 py-10">
             <div
-                className={`w-full overflow-hidden rounded-2xl bg-card shadow-sm ring-1 ring-foreground/10 transition-all duration-300 ${showForm ? "max-w-4xl" : "max-w-6xl"}`}
+                className={[
+                    "w-full overflow-hidden rounded-2xl bg-card shadow-sm ring-1 ring-foreground/10 transition-all duration-300",
+                    showForm ? "max-w-4xl" : "max-w-6xl",
+                ].join(" ")}
             >
-                {/* -- 3-col: Event + Calendar + Slots -- */}
-                {!showForm && (
-                    <div className="grid grid-cols-1 items-stretch divide-y divide-border md:grid-cols-3 md:divide-y-0 md:divide-x">
-                        {/* Left: Event Details */}
+                {!showForm ? (
+                    <div className="grid grid-cols-1 items-stretch divide-y divide-border md:grid-cols-3 md:divide-x md:divide-y-0">
                         <div className="px-7 py-8">
                             <EventPanel
                                 event={event}
@@ -122,28 +130,25 @@ const SlotsPage = () => {
                             />
                         </div>
 
-                        {/* Middle: Calendar */}
-                        <div className="px-7 py-8 h-full">
+                        <div className="px-7 py-8">
                             <CalendarPanel
-                                eventStart={event.eventStart}
-                                eventEnd={event.eventEnd}
                                 selectedDate={selectedDate}
                                 onSelectDate={handleSelectDate}
+                                schedule={event.schedule}
                             />
                         </div>
 
-                        {/* Right: Slots */}
-                        <div className="px-6 py-8 min-h-96 flex flex-col">
+                        <div className="flex min-h-96 flex-col px-6 py-8">
                             {!selectedDate ? (
-                                <div className="flex-1 flex items-center justify-center">
-                                    <p className="text-center text-sm text-muted-foreground">
+                                <div className="flex flex-1 items-center justify-center">
+                                    <p className="text-center text-xs text-muted-foreground">
                                         Select a date to see available time
                                         slots.
                                     </p>
                                 </div>
                             ) : (
-                                <div className="flex-1 flex flex-col overflow-hidden">
-                                    <p className="mb-4 text-sm font-semibold">
+                                <div className="flex flex-1 flex-col overflow-hidden">
+                                    <p className="mb-4 text-sm font-semibold tracking-[-0.01em]">
                                         {formatDate(selectedDate + "T00:00:00")}
                                     </p>
                                     <SlotsPanel
@@ -158,12 +163,8 @@ const SlotsPage = () => {
                             )}
                         </div>
                     </div>
-                )}
-
-                {/* -- 2-col: Event + Booking Form -- */}
-                {showForm && (
-                    <div className="grid grid-cols-1 divide-y divide-border md:grid-cols-2 md:divide-y-0 md:divide-x">
-                        {/* Left: Event Details */}
+                ) : (
+                    <div className="grid grid-cols-1 divide-y divide-border md:grid-cols-2 md:divide-x md:divide-y-0">
                         <div className="px-7 py-8">
                             <EventPanel
                                 event={event}
@@ -171,7 +172,6 @@ const SlotsPage = () => {
                             />
                         </div>
 
-                        {/* Right: Booking Form */}
                         <div className="px-7 py-8">
                             <BookingForm
                                 event={event}
