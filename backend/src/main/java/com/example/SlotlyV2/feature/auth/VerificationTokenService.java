@@ -46,7 +46,7 @@ public class VerificationTokenService {
     }
 
     @Transactional
-    public void verifyEmailVerificationToken(String rawToken) {
+    public User verifyEmailVerificationToken(String rawToken) {
         // Find all unused email verification tokens
         List<VerificationToken> tokens = verificationTokenRepository
                 .findAllByTokenTypeAndUsedAtIsNull(TokenType.EMAIL_VERIFICATION);
@@ -77,6 +77,7 @@ public class VerificationTokenService {
         userRepository.save(user);
 
         log.info("Email verified for user: {}", user.getEmail());
+        return user;
     }
 
     @Transactional

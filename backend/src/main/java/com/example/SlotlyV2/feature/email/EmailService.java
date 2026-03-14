@@ -33,6 +33,9 @@ public class EmailService {
     @Value("${app.base-url}")
     private String appBaseUrl;
 
+    @Value("${app.frontend-url}")
+    private String appFrontendUrl;
+
     @Async("emailTaskExecutor")
     public void sendBookingConfirmation(BookingEmailDTO data) {
         try {
@@ -95,7 +98,7 @@ public class EmailService {
         try {
             Map<String, Object> fields = new HashMap<>();
             fields.put("displayName", data.getDisplayName());
-            fields.put("verificationLink", appBaseUrl + "/api/v1/users/verify-email?token=" + data.getToken());
+            fields.put("verificationLink", appFrontendUrl + "/verify-email/confirm?token=" + data.getToken());
 
             String htmlContent = renderTemplate("email/email-verification", fields);
 

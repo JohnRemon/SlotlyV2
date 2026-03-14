@@ -55,7 +55,7 @@ const timeZones = Intl.supportedValuesOf("timeZone");
 type FormData = z.infer<typeof formSchema>;
 
 const RegisterPage = () => {
-    const { login, loginWithGoogle } = useAuth();
+    const { loginWithGoogle } = useAuth();
     const navigate = useNavigate();
     const handleError = useApiError();
     const [showPassword, setShowPassword] = useState(false);
@@ -83,8 +83,9 @@ const RegisterPage = () => {
         try {
             setIsLoading(true);
             await AuthApi.register(data);
-            await login(data.email, data.password);
-            navigate("/events");
+            navigate("/verify-email", {
+                state: { email: data.email, password: data.password },
+            });
         } catch (error) {
             handleError(error);
         } finally {

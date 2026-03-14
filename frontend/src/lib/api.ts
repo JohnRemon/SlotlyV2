@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
-const AUTH_ME_PATH = "/api/v1/auth/me";
+const AUTH_ME_PATH = "/api/v1/users/me";
 
 const isPublicAuthRoute = (pathname: string) =>
     pathname === "/login" ||

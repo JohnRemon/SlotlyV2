@@ -47,14 +47,15 @@ public class SessionAuthenticationService {
         return user;
     }
 
-    public User me() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+    public User login(User user, HttpServletRequest httpServletRequest,
+            HttpServletResponse httpServletResponse) {
+        Authentication authentication = new UsernamePasswordAuthenticationToken(
+                user,
+                null,
+                user.getAuthorities());
 
-        if (auth != null && auth.isAuthenticated() && auth.getPrincipal() instanceof User user) {
-            return user;
-        }
-
-        throw new UnauthorizedAccessException("User not authenticated");
+        persistSession(authentication, httpServletRequest, httpServletResponse);
+        return user;
     }
 
     private Authentication authenticate(String email, String password) {

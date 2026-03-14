@@ -1,10 +1,10 @@
 package com.example.SlotlyV2.feature.user;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -24,6 +24,12 @@ public class UserController {
     private final UserService userService;
     private final RateLimitHelper rateLimitHelper;
 
+    @GetMapping("/me")
+    public DataResponse<UserResponse> me() {
+        User user = userService.getCurrentUser();
+        return DataResponse.of(new UserResponse(user));
+    }
+
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
     public DataResponse<UserResponse> registerUser(
@@ -33,9 +39,4 @@ public class UserController {
         return DataResponse.of(userService.registerUser(request));
     }
 
-    @PostMapping("/verify-email")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void verifyEmail(@RequestParam String token) {
-        userService.verifyEmail(token);
-    }
 }

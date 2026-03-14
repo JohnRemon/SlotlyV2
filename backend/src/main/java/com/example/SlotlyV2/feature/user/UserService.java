@@ -53,10 +53,12 @@ public class UserService {
 
     public User getCurrentUser() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !auth.isAuthenticated() || !(auth.getPrincipal() instanceof User)) {
-            throw new UnauthorizedAccessException("User not authenticated");
+
+        if (auth != null && auth.isAuthenticated() && auth.getPrincipal() instanceof User user) {
+            return user;
         }
-        return (User) auth.getPrincipal();
+
+        throw new UnauthorizedAccessException("User not authenticated");
     }
 
     // -- Private helpers -------------------------------------------------------

@@ -14,7 +14,7 @@ export const AuthApi = {
     login: (payload: LoginRequest) => API.post("/api/v1/auth/login", payload),
 
     loginWithGoogle: (idToken: string) =>
-        API.post("/api/v1/auth/google", {
+        API.post("/api/v1/auth/google", null, {
             params: { idToken, timeZone },
         }),
 
@@ -24,7 +24,7 @@ export const AuthApi = {
         API.post("/api/v1/users/register", payload),
 
     getCurrentUser: () =>
-        API.get<DataResponse<UserResponse>>("/api/v1/auth/me"),
+        API.get<DataResponse<UserResponse>>("/api/v1/users/me"),
 
     forgotPassword: (payload: PasswordResetRequest) =>
         API.post("/api/v1/password-reset/request", payload),
@@ -33,6 +33,22 @@ export const AuthApi = {
         API.post("/api/v1/password-reset/confirm", payload, {
             params: {
                 token,
+            },
+        }),
+
+    verifyEmail: (token: string) =>
+        API.post<DataResponse<UserResponse>>(
+            "/api/v1/auth/verify-email/confirm",
+            null,
+            {
+            params: { token },
+            },
+        ),
+
+    resendVerificationEmail: (email: string) =>
+        API.post("/api/v1/auth/verify-email/resend", null, {
+            params: {
+                email,
             },
         }),
 };
