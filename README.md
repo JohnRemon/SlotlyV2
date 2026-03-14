@@ -182,13 +182,3 @@ The main frontend routes are defined in `frontend/src/App.tsx` and include:
 - `/apps`
 - `/settings`
 
-## Notes for Contributors
-
-- Backend code is organized by feature under `backend/src/main/java/com/example/SlotlyV2/feature`.
-- Frontend code is organized by feature under `frontend/src/features`.
-- There is no root-level dev orchestrator script today; run frontend and backend separately.
-- The checked-in `frontend/README.md` is still the default Vite template; this root README is the project-level source of truth.
-
-## Status
-
-This repository is actively evolving. If you are onboarding to the project, treat the codebase as the authoritative source for current behavior and endpoint details.
