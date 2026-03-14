@@ -1,162 +1,194 @@
 # SlotlyV2
 
-Enterprise scheduling and time-slot booking platform built with Java 21 and Spring Boot 4.0.1.
+SlotlyV2 is a full-stack scheduling and booking application with a Spring Boot backend and a React + Vite frontend. It supports authenticated scheduling workflows, public booking links, Google sign-in, Google Calendar connection, and email-based account flows.
 
-## Features
+## What It Does
 
-- **User Management** - Registration, login, email verification, password reset
-- **Event Management** - Create events with custom availability rules and timezone support
-- **Recurring Events** - Strategy-based recurrence (daily, weekly, monthly with end conditions)
-- **Slot Booking** - Real-time slot booking with capacity validation and conflict prevention
-- **Email Notifications** - Event-driven async emails via Resend
-- **Calendar Export** - Download bookings as .ics files
-- **Shareable Links** - Unique public links for event access
-- **Rate Limiting** - Bucket4j-based API protection
-- **Dual Authentication** - JWT (stateless) + Session-based auth
+- Create and manage booking events
+- Configure schedules and blocked periods
+- Share public booking links and let guests reserve slots
+- Manage bookings with timezone-aware availability
+- Authenticate with email/password or Google OAuth
+- Verify email addresses and reset passwords by email
+- Connect a Google Calendar account from the app
 
-## Architecture
+## Stack
 
+### Backend
+
+- Java 21
+- Spring Boot 4
+- Spring Security
+- Spring Data JPA
+- PostgreSQL
+- Maven
+- Resend for transactional email
+- Google OAuth / Google Calendar APIs
+- Bucket4j + Caffeine for rate limiting
+
+### Frontend
+
+- React 19
+- TypeScript
+- Vite
+- React Router
+- TanStack Query
+- Tailwind CSS 4
+- React Hook Form + Zod
+- Google OAuth client
+
+## Repository Layout
+
+```text
+.
+├── backend/   # Spring Boot API, auth, booking logic, integrations
+└── frontend/  # React app, routed product UI, API client
 ```
-com.example.SlotlyV2/
-├── feature/
-│   ├── auth/           # JWT & session authentication
-│   ├── availability/   # Availability rules
-│   ├── calendar/       # .ics file generation
-│   ├── email/          # Async email events & listeners
-│   ├── event/          # Event management & recurrence strategies
-│   ├── schedule/       # Schedule entities
-│   ├── slot/           # Slot booking system
-│   └── user/           # User management
-├── config/             # Security, async, rate limiting
-├── controller/         # REST endpoints
-├── dto/                # Data transfer objects
-├── event/              # Spring application events
-├── exception/          # Custom exceptions
-├── listener/           # Event listeners
-├── model/              # JPA entities
-├── repository/         # Data access
-└── security/           # JWT filters & security
-```
 
-## Tech Stack
+## Product Areas
 
-| Technology | Purpose |
-|------------|---------|
-| Java 21 | Language |
-| Spring Boot 4.0.1 | Framework |
-| Spring Security 6.x | Authentication & authorization |
-| Spring Data JPA | Database access |
-| PostgreSQL | Database |
-| Resend 3.0.0 | Email delivery |
-| Thymeleaf | Email templates |
-| JJWT 0.12.5 | JWT tokens |
-| Bucket4j 8.16.0 | Rate limiting |
-| Caffeine 3.2.3 | Caching |
-| Lombok | Boilerplate reduction |
-| JaCoCo | Test coverage |
+The current app surface is split across these main areas:
 
-## API Endpoints
+- `Events` - create and edit booking event definitions
+- `Bookings` - review booking records
+- `Schedules` - manage working hours and schedule details
+- `Apps` - connect external services such as Google Calendar
+- `Settings` - manage account/profile data
+- Public booking flow - guest-facing booking page via shareable links
 
-### Authentication
+## Architecture Notes
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/v1/users/register` | User registration |
-| POST | `/api/v1/users/login` | Session login |
-| POST | `/api/v1/auth/jwt/login` | JWT login |
-| POST | `/api/v1/auth/jwt/refresh` | Refresh token |
-| POST | `/api/v1/users/logout` | Logout |
+- The frontend uses `axios` with `withCredentials: true` and relies on backend session auth for the main web app.
+- The backend stores authenticated sessions with Spring Security's `HttpSessionSecurityContextRepository`.
+- The backend also includes JWT auth endpoints, but the current frontend app flow is session-oriented.
+- Backend configuration loads local environment variables from `backend/.env` via Spring config import.
 
-### Events
+## Prerequisites
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/v1/events` | Create event |
-| GET | `/api/v1/events` | List user events |
-| GET | `/api/v1/events/{id}` | Get event details |
-| DELETE | `/api/v1/events/{id}` | Delete event |
-| GET | `/api/v1/events/{shareableId}` | Public event access |
+Before running locally, install:
 
-### Slots & Booking
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/v1/{shareableId}` | Get available slots |
-| POST | `/api/v1/{shareableId}` | Book a slot |
-| GET | `/api/v1/users/me/bookings` | User bookings |
-| GET | `/api/v1/users/me/bookings/{id}/calendar` | Download .ics |
-
-### User
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/v1/users/password-reset/request` | Request password reset |
-| POST | `/api/v1/users/password-reset/confirm` | Confirm reset |
-| POST | `/api/v1/users/verify-email` | Verify email |
-| GET | `/api/v1/users/me` | Get profile |
-
-## Recurrence Strategies
-
-Event recurrence uses the Strategy pattern:
-
-- **Daily** - Never ends / Ends on date / Ends after N occurrences
-- **Weekly** - Never ends / Ends on date / Ends after N occurrences
-- **Monthly** - Never ends / Ends on date / Ends after N occurrences
-
-## Quick Start
-
-```bash
-# Prerequisites
 - Java 21
 - Maven 3.9+
-- PostgreSQL 15+
+- Node.js and npm
+- PostgreSQL
 
-# Environment variables
-export DATABASE_URL=jdbc:postgresql://localhost:5432/slotlyv2
-export DATABASE_USERNAME=your_user
-export DATABASE_PASSWORD=your_password
-export JWT_SECRET_KEY=your-secret
-export RESEND_API_KEY=your-resend-key
-export EMAIL_FROM=noreply@example.com
-export APP_BASE_URL=http://localhost:8080
+## Environment Variables
 
-# Run
-./mvnw spring-boot:run
+Do not commit real credentials. Use local `.env` files only.
 
-# Test
-./mvnw clean test
+### Backend
+
+The backend reads configuration from `backend/.env` and `backend/src/main/resources/application.properties`.
+
+Required values used by the app:
+
+```env
+DATABASE_URL=jdbc:postgresql://localhost:5432/slotlyv2
+DATABASE_USERNAME=postgres
+DATABASE_PASSWORD=your-password
+JWT_SECRET_KEY=replace-with-a-long-random-secret
+RESEND_API_KEY=your-resend-api-key
+EMAIL_FROM=noreply@example.com
+APP_BASE_URL=http://localhost:8080
+APP_FRONTEND_URL=http://localhost:5173
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+GOOGLE_REDIRECT_URI=http://localhost:5173/apps
 ```
 
-## Configuration
+### Frontend
 
-Rate limiting settings in `application.properties`:
+The frontend reads configuration from `frontend/.env`.
 
-| Endpoint Type | Capacity | Refill Rate |
-|--------------|----------|-------------|
-| Global API | 100 | 1 minute |
-| Login | 5 | 5 minutes |
-| Registration | 3 | 1 hour |
-| Booking | 10 | 1 minute |
-| Password Reset | 3 | 1 hour |
+```env
+VITE_API_BASE_URL=http://localhost:8080
+VITE_GOOGLE_CLIENT_ID=your-google-client-id
+```
 
-## Build
+## Local Development
+
+Run the backend and frontend in separate terminals.
+
+### 1. Start the backend
+
+From `backend/`:
 
 ```bash
-# Package
-./mvnw clean package -DskipTests
-
-# Run JAR
-java -jar target/SlotlyV2-0.0.1-SNAPSHOT.jar
+mvn spring-boot:run
 ```
 
-## Project Stats
+The API runs on `http://localhost:8080` by default.
 
-- 117 Java source files
-- 10 test files
-- Feature-based modular architecture
-- Event-driven email processing
-- Strategy pattern for recurrence rules
+### 2. Start the frontend
 
-## License
+From `frontend/`:
 
-MIT
+```bash
+npm install
+npm run dev
+```
+
+The Vite dev server runs on `http://localhost:5173` by default.
+
+## Common Commands
+
+### Backend
+
+From `backend/`:
+
+```bash
+mvn test
+mvn clean package
+```
+
+### Frontend
+
+From `frontend/`:
+
+```bash
+npm run dev
+npm run build
+npm run lint
+npm run preview
+```
+
+## API Surface Overview
+
+The backend currently exposes endpoints for:
+
+- user registration and profile retrieval
+- session login/logout and JWT auth endpoints
+- email verification and password reset
+- event CRUD and event scheduling updates
+- schedule CRUD and blocked periods
+- slot lookup and public slot availability
+- booking creation and management
+- Google Calendar connection status and OAuth exchange
+
+See controllers under `backend/src/main/java/com/example/SlotlyV2/feature/` for the current endpoint layout.
+
+## Frontend Routing Overview
+
+The main frontend routes are defined in `frontend/src/App.tsx` and include:
+
+- `/login`
+- `/register`
+- `/forgot-password`
+- `/verify-email`
+- `/book/:shareableId`
+- `/events`
+- `/bookings`
+- `/schedules`
+- `/apps`
+- `/settings`
+
+## Notes for Contributors
+
+- Backend code is organized by feature under `backend/src/main/java/com/example/SlotlyV2/feature`.
+- Frontend code is organized by feature under `frontend/src/features`.
+- There is no root-level dev orchestrator script today; run frontend and backend separately.
+- The checked-in `frontend/README.md` is still the default Vite template; this root README is the project-level source of truth.
+
+## Status
+
+This repository is actively evolving. If you are onboarding to the project, treat the codebase as the authoritative source for current behavior and endpoint details.
