@@ -67,7 +67,7 @@ const ScheduleDetailPage = () => {
             })
             .catch((error) => handleError(error))
             .finally(() => setIsLoading(false));
-    }, [id]);
+    }, [id, handleError]);
 
     useEffect(() => {
         if (editingName) nameInputRef.current?.focus();

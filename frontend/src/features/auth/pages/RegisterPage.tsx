@@ -33,21 +33,24 @@ import * as z from "zod";
 const formSchema = z.object({
     firstName: z
         .string()
+        .trim()
         .min(1, "First name must not be empty.")
         .max(32, "First name must be at most 32 characters."),
     lastName: z
         .string()
+        .trim()
         .min(1, "Last name must not be empty.")
         .max(32, "Last name must be at most 32 characters."),
     email: z.email("Enter a valid email address."),
     password: z
         .string()
+        .trim()
         .min(8, "Password must be at least 8 characters.")
         .regex(
             /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@#$!%*?&])[A-Za-z\d@#$!%*?&]{8,}$/,
             "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.",
         ),
-    timeZone: z.string().min(1),
+    timeZone: z.string().trim().min(1),
 });
 
 const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;

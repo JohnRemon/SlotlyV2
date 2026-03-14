@@ -7,11 +7,7 @@ import { Button } from "@/components/ui/button";
 import { BookingCard } from "../components/BookingCard";
 import { BookingDetailModal } from "../components/BookingDetailModal";
 import { CancelBookingModal } from "../components/CancelBookingModal";
-import {
-    useBookings,
-    useCancelBooking,
-    useNoShow,
-} from "../hooks/useBookings";
+import { useBookings, useCancelBooking, useNoShow } from "../hooks/useBookings";
 import type { BookingResponse, BookingTab } from "../types/Booking";
 import { isPast } from "../utils/DateUtils";
 
@@ -79,13 +75,13 @@ const BookingsPage = () => {
         try {
             await noShowMutation.mutateAsync(booking.id);
             toast.success("Marked as no-show.");
-        } catch (e) {
-            handleError(e);
+        } catch (error) {
+            handleError(error);
         }
     };
 
     return (
-        <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-8">
+        <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-8">
             <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
                     <h1 className="text-base font-semibold tracking-[-0.01em]">

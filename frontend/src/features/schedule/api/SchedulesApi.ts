@@ -27,6 +27,7 @@ export const SchedulesApi = {
     updateName: (id: string, name: string) =>
         API.patch<DataResponse<ScheduleResponse>>(
             `/api/v1/schedules/${id}/name`,
+            null,
             {
                 params: { name },
             },

@@ -21,6 +21,7 @@ import DashboardPage from "./pages/DashboardPage";
 import HomePage from "./pages/HomePage";
 import VerifyEmailPage from "./features/auth/pages/VerifyEmailPage";
 import VerifyEmailConfirmPage from "./features/auth/pages/VerifyEmailConfirmPage";
+import SettingsPage from "./features/settings/pages/SettingsPage";
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
@@ -92,8 +93,10 @@ function App() {
                                         path="/apps"
                                         element={<AppsPage />}
                                     />
-                                    {/* <Route path="/me" element={<ProfilePage />} /> */}
-                                    {/* <Route path="/settings" element={<SettingsPage />} /> */}
+                                    <Route
+                                        path="/settings"
+                                        element={<SettingsPage />}
+                                    />
                                 </Route>
                             </Route>
                         </Routes>

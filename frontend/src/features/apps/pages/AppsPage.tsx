@@ -11,7 +11,6 @@ import GoogleCalendarCard from "../components/GoogleCalendarCard";
 
 type Tab = "install" | "installed";
 
-// -- AppsPage ------------------------------------------------------------------
 const AppsPage = () => {
     const [searchParams, setSearchParams] = useSearchParams();
     const activeTab = (searchParams.get("tab") as Tab) ?? "install";
@@ -71,7 +70,7 @@ const AppsPage = () => {
         };
 
         exchange();
-    }, [searchParams, setSearchParams, setTab]);
+    }, [searchParams, setSearchParams, setTab, handleError]);
 
     const handleConnect = async () => {
         setIsActioning(true);

@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.SlotlyV2.common.exception.auth.UnauthorizedAccessException;
 import com.example.SlotlyV2.common.exception.user.UserAlreadyExistsException;
+import com.example.SlotlyV2.common.exception.user.UserNotFoundException;
 import com.example.SlotlyV2.common.util.NameUtils;
 import com.example.SlotlyV2.feature.auth.VerificationTokenService;
 import com.example.SlotlyV2.feature.email.event.EmailVerificationEvent;
@@ -53,14 +54,39 @@ public class UserService {
 
     public User getCurrentUser() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-
-        if (auth != null && auth.isAuthenticated() && auth.getPrincipal() instanceof User user) {
-            return user;
+        if (auth != null && auth.isAuthenticated() && auth.getPrincipal() instanceof User principal) {
+            return userRepository.findById(principal.getId())
+                    .orElseThrow(() -> new UnauthorizedAccessException("User not authenticated"));
         }
-
         throw new UnauthorizedAccessException("User not authenticated");
     }
 
+    @Transactional
+    public void updateFirstName(Long id, String firstName) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
+
+        user.setFirstName(firstName);
+        userRepository.save(user);
+    }
+
+    @Transactional
+    public void updateLastName(Long id, String lastName) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
+
+        user.setLastName(lastName);
+        userRepository.save(user);
+    }
+
+    @Transactional
+    public void updateTimeZone(Long id, String timeZone) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
+
+        user.setTimeZone(timeZone);
+        userRepository.save(user);
+    }
     // -- Private helpers -------------------------------------------------------
 
     private void publishVerificationEmail(User user) {
