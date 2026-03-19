@@ -1,6 +1,11 @@
-# IDE
+# IDE & Tooling
 .idea/
+*.iml
 .vscode/
+.settings/
+.classpath
+.project
+.factorypath
 *.swp
 *.swo
 
@@ -8,10 +13,17 @@
 .DS_Store
 Thumbs.db
 
-# Logs
+# Dependencies & Build
+node_modules/
+target/
+dist/
+build/
+
+# Environment & Logs
+.env
+.env.*
 *.log
 
-# Environment
-.env
-
+# Misc
 HELP.md
+.gitattributes
